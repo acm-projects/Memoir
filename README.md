@@ -217,5 +217,11 @@ Memoir is meant to preserve those old memories while also encouraging people to 
 ### ⭐ Project Manager
 Tamanna Khurana
 
+### ⭐ Industry Mentor
+Umaymah Sultana
+
 ### ⭐ Team Members
-Coming Soon
+1. Jiya Khurana
+2. Tejasvi Annamaraju
+3. Harleen Gill
+4. Kasish Jain
