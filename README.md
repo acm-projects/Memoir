@@ -1,7 +1,7 @@
 <h1 align="center">˖°.✧✒️ Memoir ✒️✧˖°</h1>
 
 <p align="center">
-  <img src="" width="300" alt="Handwritten Letter Aesthetic">
+  <img src="https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif" width="300" alt="Handwritten Letter Aesthetic">
 </p>
 
 <h2 align="center">✨ Summary</h2>
@@ -23,14 +23,14 @@ By blending nostalgia with modern AI tools, Memoir preserves the past while help
 
 ### 2. Folder Organization System  
 - Automatic AI-powered tagging  
-- Sorting by occasion (birthday, graduation, anniversary, etc.)  
+- Sorting by occasion  
 - Custom folder names  
 - Organized memory library  
 
 ### 3. Personalized Card Creation  
 - Choose templates  
-- Customize fonts, colors, and stickers  
-- Drag and drop design features  
+- Customize fonts, colors, stickers  
+- Drag-and-drop design features  
 - Add music or voice notes  
 - Save and send digital cards  
 
@@ -44,138 +44,171 @@ By blending nostalgia with modern AI tools, Memoir preserves the past while help
 <h2 align="center">🎯 Stretch Goals</h2>
 
 - Timeline View → Display cards chronologically  
-- Reflections Section → Add personal notes to saved cards  
-- Calendar + Reminders → Upcoming birthdays/holidays + reminders to create cards  
-- Generative AI Card Designer → Enter an occasion + message, AI designs the card  
+- Reflections Section → Add personal notes  
+- Calendar + Reminders → Upcoming events + reminders  
+- Generative AI Card Designer → AI designs card from prompt  
 - Analytics Dashboard → Spotify Wrapped–style yearly recap  
-  - Number of cards saved  
-  - Most common occasions  
-  - Frequent senders  
-  - Emotional trends  
 
 ---
 
 <h2 align="center">🗓️ Milestones</h2>
 
 Week 1  
-- Finalize tech stack, MVPs, stretch goals  
-- Assign roles (frontend, backend, full-stack)  
-- Install necessary software  
-- Frontend: begin wireframing on Figma  
-- Backend: practice authentication flows  
+- Finalize tech stack  
+- Assign roles  
+- Install software  
+- Frontend wireframing (Figma)  
+- Backend auth practice  
 
 Week 2  
-- Frontend: finish wireframes, build login/signup pages  
-- Backend: complete authentication and connect with frontend  
+- Login / Signup pages  
+- Connect authentication  
 
 Week 3  
-- Frontend: build search pages and card storage UI  
-- Backend: create database tables and relationships  
+- Search UI + card storage  
+- Database schema design  
 
 Week 4  
-- Backend: build REST API endpoints, integrate Expo Camera + OCR  
-- Frontend: polish UI and design editor (fonts, colors, drag-and-drop)  
+- REST APIs  
+- Integrate Expo Camera + OCR  
+- UI polish  
 
 Week 5  
-- Backend: integrate OpenAI for tagging + suggestions  
-- Frontend: begin presentation prep  
+- OpenAI tagging integration  
+- Presentation prep  
 
 Week 6  
-- Backend: refine OCR + integrate vector search  
-- Frontend: complete all core pages  
+- Refine OCR  
+- Integrate vector search  
 
 Week 7  
 - Attempt stretch goals  
-- Finalize presentation  
 
 Week 8  
 - Practice presentation  
 
 Week 9  
-- Polish presentation and gather feedback  
+- Final polish  
 
 ---
 
 <h2 align="center">💻 Tech Stack</h2>
 
-Wireframing: Figma  
-IDE: VSCode  
-Version Control: Git  
+**Wireframing:** Figma  
+**IDE:** VSCode  
+**Version Control:** Git  
 
-Frontend: React Native Expo (TypeScript)  
-- Cross-platform iOS + Android  
-- Component-based architecture  
+**Frontend:** React Native Expo (TypeScript)  
 - Tailwind via NativeWind  
 
-Backend: Supabase  
-- PostgreSQL database  
-- Built-in authentication  
-- Realtime updates  
+**Backend:** Supabase  
+- PostgreSQL  
+- Authentication  
 - Storage  
 - Edge Functions  
 
-Database: PostgreSQL (via Supabase)  
-
-AI:  
-- Google Cloud Vision API (OCR)  
-- OpenAI API (tagging, search, design suggestions)  
+**AI:**  
+- Google Cloud Vision API  
+- OpenAI API  
 - Supabase Vector Search  
-
-Useful APIs:  
-- Unsplash API  
-- ElevenLabs Voice AI API  
-- Spotify API  
-- Giphy API  
 
 ---
 
 <h2 align="center">⚙️ Software to Install</h2>
 
-- VSCode  
-- Git  
-- Node.js (optional but recommended: NVM)  
-- Postman  
-- Expo Go app  
+- [VSCode](https://code.visualstudio.com/download)  
+- [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) → [Quick Guide](https://rogerdudler.github.io/git-guide/)  
+- [Node.js](https://nodejs.org/en) (Optional: [NVM](https://github.com/nvm-sh/nvm))  
+- [Postman](https://www.postman.com/downloads/)  
+- Expo Go app (mobile)
+
+---
+
+<h2 align="center">📚 Documentation</h2>
+
+**Core Stack**
+- [React Native Docs](https://reactnative.dev/docs/getting-started)  
+- [Expo Docs](https://docs.expo.dev/)  
+- [Supabase Docs](https://supabase.com/docs)  
+- [PostgreSQL Docs](https://www.postgresql.org/docs/)  
+
+**Styling + UI**
+- [NativeWind Docs](https://www.nativewind.dev/)  
+- [React Native Gesture Handler](https://docs.swmansion.com/react-native-gesture-handler/)  
+- [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/)  
+- [React Native Skia](https://shopify.github.io/react-native-skia/)  
+
+**Camera + OCR**
+- [Expo Camera Docs](https://docs.expo.dev/versions/latest/sdk/camera/)  
+- [Google Cloud Vision API](https://cloud.google.com/vision/docs)  
+- [Open Source OCR Tools Guide](https://unstract.com/blog/best-opensource-ocr-tools-in-2025/)  
+
+**AI + Search**
+- [OpenAI API Docs](https://platform.openai.com/docs)  
+- [Supabase Vector Search](https://supabase.com/docs/guides/ai/vector-columns)  
+
+---
+
+<h2 align="center">🎥 Tutorials</h2>
+
+**Full Stack Setup**
+- [React Native + Supabase Full Stack Tutorial](https://www.youtube.com/watch?v=kyphLGnSz6Q)  
+- [TikTok Clone with React Native + Supabase](https://www.youtube.com/watch?v=hV6Lc6zePrU)  
+
+**Authentication**
+- [Supabase Auth Tutorial](https://www.youtube.com/watch?v=AE7dKIKMJy4)  
+- [React Native Login/Signup](https://www.youtube.com/watch?v=M8u_w6_o584)  
+
+**Camera + Image Upload**
+- [React Native Image Uploading](https://www.youtube.com/watch?v=uX5E_QFJubU)  
+- [Snapchat Clone with Expo Camera](https://www.youtube.com/watch?v=Cw08RqFel6I)  
+
+**Drag & Drop + Design**
+- [Gesture Handler for Stickers](https://www.youtube.com/watch?v=yBuhnVDXekQ)  
+- [Drawing with React Native Skia](https://www.youtube.com/watch?v=EHxEX78alZE)  
+
+**Backend + APIs**
+- [Intro to APIs](https://www.youtube.com/watch?v=WXsD0ZgxjRw)  
+- [REST APIs Explained](https://www.youtube.com/watch?v=-0exw-9YJBo)  
+- [Designing a Database](https://www.youtube.com/watch?v=ztHopE5Wnpc)  
+- [Supabase Database Course](https://www.youtube.com/watch?v=4yVSwHO5QHU)  
 
 ---
 
 <h2 align="center">🚧 Roadblocks</h2>
 
 OCR Quality on Handwritten Cards  
-- Handwriting varies in cursive, print, faded ink  
-- Solution: show OCR text beside image and allow manual correction  
-- Optional preprocessing for improved recognition  
+- Handwriting varies widely  
+- Solution: show OCR text beside image + allow manual edits  
 
 Automatic Tagging Accuracy  
-- AI may misinterpret emotion or occasion  
-- Suggest tags for user approval instead of auto-assigning  
-- Prioritize user tags in vector search  
+- AI may misinterpret emotion  
+- Suggest tags for approval instead of auto-assign  
 
 Drag and Drop Performance  
-- Multiple stickers, animations, and gestures may cause lag  
-- Use React Native Gesture Handler + Reanimated  
-- Limit design elements per card  
-- Save card state as JSON instead of rendered images  
+- Too many animations may lag  
+- Use Gesture Handler + Reanimated  
+- Save card state as JSON  
 
 ---
 
 <h2 align="center">🌱 Inspiration</h2>
 
-I read about elderly families who lost fifty years of handwritten letters and cards in the Palisades fire. It really stuck with me how something so meaningful could disappear overnight.
+I read about elderly families who lost fifty years of handwritten letters and memories in the Palisades fire. It made me realize how fragile meaningful memories can be.
 
-Almost everyone has a box somewhere filled with birthday cards, letters, and drawings from people they love. Those aren’t just pieces of paper, they hold relationships and moments. But today, most personal messages are reduced to quick texts or screenshots that eventually get lost.
+Almost everyone has a box filled with birthday cards and handwritten notes. They hold moments, not just words. But today, personal messages are reduced to texts and screenshots that disappear over time.
 
-Memoir is meant to preserve old memories while also keeping the act of sending thoughtful, personal messages alive. It’s a place to safely store meaningful cards and letters, and also create new personalized ones, especially when distance makes it hard to show up in person.
+Memoir is meant to preserve those old memories while also encouraging people to continue creating thoughtful ones.
 
 ---
 
 <h2 align="center">⚔️ Competition</h2>
 
-Photomyne → Scans photos and documents but lacks personalization  
-Canva → Great for design but no long-term memory preservation  
-Greetings Island → Quick card creation, no memory storage  
-Evite → Digital invitations only  
-Paperless Post → Digital invites, not memory archiving  
+- Photomyne  
+- Canva  
+- Greetings Island  
+- Evite  
+- Paperless Post  
 
 ---
 
@@ -185,4 +218,4 @@ Paperless Post → Digital invites, not memory archiving
 Tamanna Khurana
 
 ### ⭐ Team Members
-(Coming Soon)
+Coming Soon
