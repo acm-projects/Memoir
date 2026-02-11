@@ -1,7 +1,7 @@
 <h1 align="center">˖°.✧✒️ Memoir ✒️✧˖°</h1>
 
 <p align="center">
-  <img src="gif" width="300" alt="Gif">
+  <img src="gif" width="600" alt="Gif">
 </p>
 
 <h2 align="center">✨ Summary</h2>
