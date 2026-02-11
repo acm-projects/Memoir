@@ -1,7 +1,7 @@
 <h1 align="center">˖°.✧✒️ Memoir ✒️✧˖°</h1>
 
 <p align="center">
-  <img src="https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif" width="300" alt="Handwritten Letter Aesthetic">
+  <img src="[https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif](https://y.yarn.co/70f7a135-e0a0-4b41-bd70-bbb8d0e8e8f9_text.gif)" width="300" alt="Handwritten Letter Aesthetic">
 </p>
 
 <h2 align="center">✨ Summary</h2>
