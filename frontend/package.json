@@ -15,7 +15,7 @@
     "@react-navigation/elements": "^2.8.1",
     "@react-navigation/native": "^7.1.28",
     "@types/react-native": "^0.70.19",
-    "expo": "~55.0.4",
+    "expo": "^55.0.4",
     "expo-constants": "~55.0.7",
     "expo-device": "~55.0.9",
     "expo-font": "~55.0.4",
