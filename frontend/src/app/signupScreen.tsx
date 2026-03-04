@@ -6,20 +6,22 @@ import { hide } from "expo-router/build/utils/splash";
 
 export default function Signup() {
  return (
+
    <View style={styles.container}>
 
 
    
      <ImageBackground
      
-       source = {require('../../assets/images/vintage-paper-background.jpg')}
+       source = {require('../../assets/images/vintage-paper-background.jpg')} //paper background
        style = {styles.paperBackground}
        imageStyle = {{ width:'100%', height:'100%' }}
      >
-       <View style={styles.border}>
-       <Text style={styles.loginHeader}> Sign Up</Text>
+       <View style={styles.border}>  {/*border around paper background*/}
+       <Text style={styles.loginHeader}> Sign Up</Text>{/*header*/}
       
       
+        {/* inputs */}
        <Text style={styles.name}> Name</Text>
        <TextInput
          style = {styles.input}
@@ -52,16 +54,16 @@ export default function Signup() {
          secureTextEntry = {true}
          />
       
-       <TouchableOpacity onPress = {() => {}} style={styles.signupButton} activeOpacity={0.5}>
+       <TouchableOpacity onPress = {() => {}} style={styles.signupButton} activeOpacity={0.5}>{/*create create account button, and lower opacity when pressed*/}
          <Text style ={styles.login}> Create Account </Text>
        </TouchableOpacity>
 
 
 
 
-       <View style = {{ flexDirection: 'row' ,justifyContent:'center', padding:5}}>
+       <View style = {{ flexDirection: 'row' ,justifyContent:'center', padding:5}}>{/*have account text and log in button next to each other s*/}
          <Text style = {styles.noAccount}>Already have an account?</Text>
-         <TouchableOpacity onPress = {() => {router.replace('/loginScreen')}} activeOpacity={0.7}>
+         <TouchableOpacity onPress = {() => {router.replace('/loginScreen')}} activeOpacity={0.7}>{/*create button to go to login page*/}
            <Text style ={styles.noAccount}> Log in</Text>
          </TouchableOpacity>
        </View>
@@ -74,7 +76,7 @@ export default function Signup() {
        style = {styles.frontEnvelopeWrapper}
        pointerEvents = "none">
      <Image
-         source = {require('../../assets/images/front-envelope.png')}
+         source = {require('../../assets/images/front-envelope.png')} 
          style = {styles.frontEnvelope}
         
        />
@@ -87,6 +89,8 @@ export default function Signup() {
 
 
 const styles = StyleSheet.create({
+
+
  container:{
     flex: 1,
      backgroundColor: "#557263",
@@ -100,8 +104,8 @@ const styles = StyleSheet.create({
      marginTop:10,
      width:'95%',
      height:'96%',
-     borderWidth: 2,           // Thickness of the line
-     borderColor: '#A64444',   // That deep red from your stamps
+     borderWidth: 2,           
+     borderColor: '#557263',   
      borderStyle: 'dashed',
    },
 
@@ -134,6 +138,9 @@ const styles = StyleSheet.create({
    borderRadius: 8,
    alignSelf:'center',
    marginBottom: 10,
+   borderWidth: .25,           
+   borderColor: '#590502',   
+   borderStyle: 'solid',
  },
 
 
