@@ -3,7 +3,7 @@ import { router } from "expo-router";
 
 
 
-
+//<Redirect href="/loginScreen" />
 export default function Login() {
  return (
    <View style={styles.container}>
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
      width:'95%',
      height:'96%',
      borderWidth: 2,           // Thickness of the line
-     borderColor: '#A64444',   // That deep red from your stamps
+     borderColor: '#557263',   // That deep red from your stamps
      borderStyle: 'dashed',
    },
 
@@ -125,6 +125,10 @@ const styles = StyleSheet.create({
    borderRadius: 8,
    alignSelf:'center',
    marginBottom: 10,
+   borderWidth: .25,           
+   borderColor: '#590502',   
+   borderStyle: 'solid',
+
  },
 
 
@@ -175,11 +179,7 @@ const styles = StyleSheet.create({
    color: "#5A390E",
  },
 
-
-
-
-
-
+ 
  frontEnvelope:{
    position: 'absolute',
    resizeMode: 'contain',

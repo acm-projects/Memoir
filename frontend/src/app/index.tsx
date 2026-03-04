@@ -3,10 +3,9 @@ import {Redirect } from 'expo-router'
 
 export default function Index() {
   return (
-    /*<View style={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.text}>Home screen</Text>
-    </View>*/
-     <Redirect href="/loginScreen" />
+    </View>
   );
 }
 
