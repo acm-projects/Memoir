@@ -17,7 +17,7 @@ export default function Login() {
        imageStyle = {{ width:'100%', height:'100%' }}
      >
         <View style={styles.border}>
-       <Text style={styles.loginHeader}> Login</Text>
+       <Text style={styles.loginHeader}> Login</Text>{/*hi*/ }
       
       
        <Text style={styles.email}> Email </Text>
@@ -91,8 +91,8 @@ const styles = StyleSheet.create({
      marginTop:10,
      width:'95%',
      height:'96%',
-     borderWidth: 2,           // Thickness of the line
-     borderColor: '#557263',   // That deep red from your stamps
+     borderWidth: 2,           
+     borderColor: '#557263',   
      borderStyle: 'dashed',
    },
 
