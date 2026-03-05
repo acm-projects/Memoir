@@ -10,4 +10,7 @@ export default function RootLayout() {
     'Inter': Inter_400Regular,
   });
   return <Stack screenOptions={{ headerShown: false }}/>;
+import "./global.css"
+export default function RootLayout() {
+  return <Stack />;
 }
