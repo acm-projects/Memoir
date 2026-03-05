@@ -1,10 +1,17 @@
-import { Text, View,  StyleSheet } from 'react-native';
-import {Redirect } from 'expo-router'
+import React, { useState } from 'react';
+import { Text, View, StyleSheet } from 'react-native';
+import EnvelopeLoading from '../components/EnvelopeLoading';
 
 export default function Index() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  if (isLoading) {
+    return <EnvelopeLoading onComplete={() => setIsLoading(false)} />;
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Home screen</Text>
+      <Text style={styles.text}>Welcome to the App!</Text>
     </View>
   );
 }
@@ -18,22 +25,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
 });
-import React, { useState } from 'react';
-import EnvelopeLoading from '../components/EnvelopeLoading';
-import { View, Text } from 'react-native';
-
-export default function Index() {
-  const [isLoading, setIsLoading] = useState(true);
-
-  if (isLoading) {
-    return <EnvelopeLoading onComplete={() => setIsLoading(false)} />;
-  }
-
-  return (
-    <View className="flex-1 items-center justify-center">
-      <Text className="text-xl font-bold">Welcome to the App!</Text>
-    </View>
-  );
-}
