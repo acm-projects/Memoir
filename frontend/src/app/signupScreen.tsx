@@ -17,8 +17,10 @@ export default function Signup() {
        style = {styles.paperBackground}
        imageStyle = {{ width:'100%', height:'100%' }}
      >
-       <View style={styles.border}>  {/*border around paper background*/}
-       <Text style={styles.loginHeader}> Sign Up</Text>{/*header*/}
+       {/*dashed border around paper background*/}
+       <View style={styles.border}>  
+        {/*header*/}
+       <Text style={styles.loginHeader}> Sign Up</Text>
       
       
         {/* inputs */}
@@ -105,7 +107,7 @@ const styles = StyleSheet.create({
      width:'95%',
      height:'96%',
      borderWidth: 2,           
-     borderColor: '#557263',   
+     borderColor: '#590502',   
      borderStyle: 'dashed',
    },
 
