@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground,  Image, TouchableOpacity, } from "react-native";
 import { router } from "expo-router";
-import { hide } from "expo-router/build/utils/splash";
 
 
 export default function Signup() {
