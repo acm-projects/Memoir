@@ -1,5 +1,6 @@
 import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground,  Image, TouchableOpacity, } from "react-native";
 import { router } from "expo-router";
+import { RedButton } from '../components/redButton';
 
 
 
@@ -12,12 +13,12 @@ export default function Login() {
    
      <ImageBackground
      
-       source = {require('../../assets/images/vintage-paper-background.jpg')}
+       source = {require('../../assets/images/vintage-paper-background.png')}
        style = {styles.paperBackground}
        imageStyle = {{ width:'100%', height:'100%' }}
      >
         <View style={styles.border}>
-       <Text style={styles.loginHeader}> Login</Text>{/*hi*/ }
+       <Text style={styles.loginHeader}> Login</Text>
       
       
        <Text style={styles.email}> Email </Text>
@@ -31,11 +32,10 @@ export default function Login() {
        <Text style={styles.password}> Password </Text>
        <TextInput
          style = {styles.input}
-         keyboardType="email-address"
          secureTextEntry = {true}
          />
       
-       <TouchableOpacity onPress = {() => {}} style={styles.loginButton} activeOpacity={0.8}>
+       <TouchableOpacity onPress = {() => {router.replace('/timelineScreen')}} style={styles.loginButton} activeOpacity={0.8}>
          <Text style ={styles.login}> Login</Text>
        </TouchableOpacity>
 
@@ -63,7 +63,11 @@ export default function Login() {
       </View>
      </ImageBackground>
     
-
+     
+     <Image
+         source = {require('../../assets/images/envelope-stamp.png')}
+         style = {styles.stamps}
+       />
 
      <Image
          source = {require('../../assets/images/front-envelope.png')}
@@ -92,7 +96,7 @@ const styles = StyleSheet.create({
      width:'95%',
      height:'96%',
      borderWidth: 2,           
-     borderColor: '#557263',   
+     borderColor: '#590502',   
      borderStyle: 'dashed',
    },
 
@@ -187,6 +191,15 @@ const styles = StyleSheet.create({
    width: '100%',
    zIndex: 3,
   
+ },
+
+ stamps:{
+  position: 'absolute',
+  resizeMode: 'contain',
+  bottom : -100,
+  width: 450,  
+  height: 500,
+  zIndex: 2,
  }
 
 
