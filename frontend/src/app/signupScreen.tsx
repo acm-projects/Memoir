@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground,  Image, TouchableOpacity, } from "react-native";
-import { router } from "expo-router";
+import { useRouter } from 'expo-router';
 
 
 export default function Signup() {
+  const router = useRouter();
  return (
 
    <View style={styles.container}>
@@ -62,7 +63,7 @@ export default function Signup() {
 
        <View style = {{ flexDirection: 'row' ,justifyContent:'center', padding:5}}>{/*have account text and log in button next to each other s*/}
          <Text style = {styles.noAccount}>Already have an account?</Text>
-         <TouchableOpacity onPress = {() => {router.replace('/loginScreen')}} activeOpacity={0.7}>{/*create button to go to login page*/}
+         <TouchableOpacity onPress = {() => {router.replace('/loginScreen' as any)}} activeOpacity={0.7}>{/*create button to go to login page*/}
            <Text style ={styles.noAccount}> Log in</Text>
          </TouchableOpacity>
        </View>
