@@ -3,33 +3,45 @@ import { useState } from 'react' // Importing the useState hook from React to ma
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native' // Importing various components from React Native to build the user interface of the login screen.
 import { Link, router } from 'expo-router' // Importing the Link component from Expo Router to enable navigation between different screens in the app.
 
-export default function LoginScreen() {
-    //state memory to hold what user types
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+export default function SignUpScreen() {
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
 
-  // Handle email/password login
-  async function handleLogin() {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter your email and password')
-      return
-    }
-    setIsLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    if (error) {
-      Alert.alert('Login Error', error.message)
-    }
-    setIsLoading(false)
-  }
-  //visuals (what the user sees) of the login screen -----FRONTEND CHANGES START HERE-----
-  return (
+    async function handleSignUp() {
+        //Validation checks for user input
+        if(!email || !password || !confirmPassword) {
+            Alert.alert('Error', 'Please fill in all fields')
+            return
+        }
+        if(password.length < 6) {
+            Alert.alert('Error', 'Password must be at least 6 characters')
+            return
+        }if(password !== confirmPassword) {
+            Alert.alert('Error', 'Passwords do not match')
+            return
+        }
+
+        setIsLoading(true)
+        const { error } = await supabase.auth.signUp({
+            email,
+            password,
+        })
+        if (error) {
+            Alert.alert('Sign Up Error', error.message)
+            setIsLoading(false)
+            return
+        }
+
+        //Success - go to avatar selection screen
+        router.replace('/avatar-selection')
+        setIsLoading(false)
+}
+return (
     <View style={styles.container}>
       <Text style={styles.title}>Memoir</Text>
-      <Text style={styles.subtitle}>Sign in to continue</Text>
+      <Text style={styles.subtitle}>Create your account</Text>
 
       <TextInput
         style={styles.input}
@@ -50,19 +62,28 @@ export default function LoginScreen() {
         secureTextEntry
       />
 
+      <TextInput
+        style={styles.input}
+        placeholder="Confirm Password"
+        placeholderTextColor="#999"
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        secureTextEntry
+      />
+
       <TouchableOpacity
         style={styles.button}
-        onPress={handleLogin}
+        onPress={handleSignUp}
         disabled={isLoading}
       >
         <Text style={styles.buttonText}>
-          {isLoading ? 'Loading...' : 'Login'}
+          {isLoading ? 'Loading...' : 'Sign Up'}
         </Text>
       </TouchableOpacity>
 
-      <Link href="/signup" style={styles.link}>
+      <Link href="/login" style={styles.link}>
         <Text style={styles.linkText}>
-          Don't have an account? Sign Up
+          Already have an account? Login
         </Text>
       </Link>
     </View>
