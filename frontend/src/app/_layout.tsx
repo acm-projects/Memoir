@@ -18,7 +18,9 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={!isLoggedIn}>
         <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="signup" options={{ headerShown: false }} />
       </Stack.Protected>
+      <Stack.Screen name="avatar-selection" options={{ headerShown: false }} />
     </Stack>
   )
 }
@@ -36,33 +38,3 @@ export default function RootLayout() {
     </ThemeProvider>
   )
 }
-
-// import "./global.css"
-// import { Stack } from "expo-router"
-// import AuthProvider from '@/providers/auth-provider'
-// import { SplashScreenController } from "@/components/splash-screen-controller"
-// import { useAuthContext } from '@/hooks/use-auth-context'
-
-// function RootNavigator() {
-//   const { isLoggedIn } = useAuthContext()
-
-//   return (
-//     <Stack>
-//       <Stack.Protected guard={isLoggedIn}>
-//         <Stack.Screen name="index" options={{ headerShown: false }} />
-//       </Stack.Protected>
-//       <Stack.Protected guard={!isLoggedIn}>
-//         <Stack.Screen name="login" options={{ headerShown: false }} />
-//       </Stack.Protected>
-//     </Stack>
-//   )
-// }
-
-// export default function RootLayout() {
-//   return (
-//     <AuthProvider>
-//       <SplashScreenController />
-//       <RootNavigator />
-//     </AuthProvider>
-//   )
-// }
