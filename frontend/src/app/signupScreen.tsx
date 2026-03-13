@@ -1,3 +1,53 @@
+import React,{useState} from 'react';
+import { Button, View, Text, TextInput , StyleSheet, ImageBackground,  Image, TouchableOpacity, Platform,Pressable } from "react-native";
+import { router } from "expo-router";
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { RedButton } from '../components/redButton';
+
+
+export default function Signup() {
+  const [name, setName] = useState("");
+  const [email, setemail] = useState("");
+  const [dateofBirth, setdateofBirth] = useState("");
+  const [date, setDate] = useState(new Date());
+  const [show, setShow] = useState(false); 
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+
+  
+
+  const toggleDatePicker = () => {
+    setShow(!show);
+  };
+
+  const onChange = (event : DateTimePickerEvent, selectedDate?:Date) => {
+    const currentDate = selectedDate || date;
+    setShow(Platform.OS === 'ios'); 
+    setShow(false);
+    setDate(currentDate);
+  };
+
+  const handleSignup = () => {
+    
+    if (!name || !email) {
+      alert("Please fill in all fields");
+      return;
+    }
+  
+    
+    const userData = {
+      fullName: name,
+      email: email,
+      birthday: date.toISOString(), 
+    };
+
+    
+    
+    router.push('/avatar-selection');
+  };
+
+
 import React from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground,  Image, TouchableOpacity, } from "react-native";
 import { useRouter } from 'expo-router';
@@ -13,56 +63,102 @@ export default function Signup() {
    
      <ImageBackground
      
-       source = {require('../../assets/images/vintage-paper-background.jpg')} //paper background
+       source = {require('../../assets/images/vintage-paper-background.png')} //paper background
        style = {styles.paperBackground}
        imageStyle = {{ width:'100%', height:'100%' }}
      >
-       <View style={styles.border}>  {/*border around paper background*/}
-       <Text style={styles.loginHeader}> Sign Up</Text>{/*header*/}
+       {/*dashed border around paper background*/}
+       <View style={styles.border}>  
+        {/*header*/}
+       <Text style={styles.loginHeader}> Sign Up</Text>
       
       
         {/* inputs */}
        <Text style={styles.name}> Name</Text>
        <TextInput
-         style = {styles.input}
-         />
+        style={styles.input}
+        value={name}
+        onChangeText={(text) => setName(text)}
+        />
+
+       
+    
+          <Text style={styles.date}> Birthday</Text>
+          {show && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display="spinner" 
+              maximumDate={new Date()} 
+            />
+          )}
+          
+        {show && (
+          <View>
+            <TouchableOpacity
+            style = {styles.confirmDateButton}
+              onPress = {toggleDatePicker}>
+              <Text style = {styles.confirmButtonText}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
 
-       <Text style={styles.password}> Birthday</Text>
-         <TextInput
-         style = {styles.input}
-        
-       />
+          {!show && (
+             <Pressable onPress={toggleDatePicker}>
+              <View pointerEvents="none">
+             <TextInput
+                style={styles.input}
+                placeholder="Select Birthday"
+                value={date.toLocaleDateString()} 
+                editable={false}
+              />
+              </View>
+            </Pressable>
+            )}  
 
 
-       <Text style={styles.password}> Email</Text>
-         <TextInput
-         style = {styles.input}
-         keyboardType="email-address"
-       />
 
 
-       <Text style={styles.password}> Password </Text>
-         <TextInput
-         style = {styles.input}
-         secureTextEntry = {true}
-         />       
-     
-       <Text style={styles.password}> Confirm Password </Text>
-       <TextInput
-         style = {styles.input}
-         secureTextEntry = {true}
-         />
+        <Text style={styles.password}> Email </Text>
+        <TextInput
+        style={styles.input}
+        value={email}
+        onChangeText={(text) => setemail(text)}
+        keyboardType="email-address"
+        />
+
+      <Text style={styles.password}> Password </Text>
+        <TextInput
+          style={styles.input}
+          secureTextEntry={true}
+          value={password}
+          onChangeText={(text) => setPassword(text)} // Saves typing to state
+        />       
+
+      <Text style={styles.password}> Confirm Password </Text>
+      <TextInput
+        style={styles.input}
+        secureTextEntry={true}
+        value={confirmPassword}
+        onChangeText={(text) => setConfirmPassword(text)} // Saves typing to state
+      />              
       
-       <TouchableOpacity onPress = {() => {}} style={styles.signupButton} activeOpacity={0.5}>{/*create create account button, and lower opacity when pressed*/}
-         <Text style ={styles.login}> Create Account </Text>
-       </TouchableOpacity>
+       
 
+
+        <RedButton 
+          title="Create Account" 
+          onPress={handleSignup} 
+        />
 
 
 
        <View style = {{ flexDirection: 'row' ,justifyContent:'center', padding:5}}>{/*have account text and log in button next to each other s*/}
          <Text style = {styles.noAccount}>Already have an account?</Text>
+         <TouchableOpacity onPress = {() => {router.replace('/loginScreen')}} activeOpacity={0.7}>{/*create button to go to login page*/}
+         <Text style ={styles.noAccount}> Log in</Text>
+        </TouchableOpacity>
          <TouchableOpacity onPress = {() => {router.replace('/loginScreen' as any)}} activeOpacity={0.7}>{/*create button to go to login page*/}
            <Text style ={styles.noAccount}> Log in</Text>
          </TouchableOpacity>
@@ -80,6 +176,12 @@ export default function Signup() {
          style = {styles.frontEnvelope}
         
        />
+
+      <Image
+         source = {require('../../assets/images/envelope-stamp.png')}
+         style = {styles.stamps}
+       />
+
        </View>
   
     
@@ -105,7 +207,7 @@ const styles = StyleSheet.create({
      width:'95%',
      height:'96%',
      borderWidth: 2,           
-     borderColor: '#557263',   
+     borderColor: '#590502',   
      borderStyle: 'dashed',
    },
 
@@ -130,6 +232,30 @@ const styles = StyleSheet.create({
    marginBottom: 3,
  },
 
+ date: {
+  paddingTop: 3,
+  fontFamily:'Inter',
+  fontSize : 18,
+  color: "#5A390E",
+  marginLeft: 34,
+},
+
+
+confirmDateButton: {
+  backgroundColor: '#590502', 
+  padding: 10,
+  borderRadius: 10,
+  alignSelf: 'center',
+  marginTop: 10,
+  marginBottom: 20,
+},
+
+confirmButtonText: {
+  color: 'white',
+  fontWeight: 'bold',
+  fontFamily: 'Inter',
+},
+
 
  input:{
    backgroundColor:'#F5EEE1',
@@ -151,6 +277,7 @@ const styles = StyleSheet.create({
    marginLeft: 34,
    marginBottom: 3,
  },
+
   paperBackground:{
    width: '93%',
    height: '80%',
@@ -198,16 +325,26 @@ const styles = StyleSheet.create({
    position: 'absolute',
    width: '100%',
    zIndex: 3,
+   alignItems: 'center',
 
 
+ },
+
+ stamps:{
+  position: 'absolute',
+  resizeMode: 'contain',
+  bottom : 0,
+  width: 450,  
+  height: 500,
+  zIndex: 2,
+  
  },
 
 
  frontEnvelope:{
    resizeMode: 'contain',
    width: '100%',
-  
-  
+   zIndex : 3,
   
  }
 

@@ -1,3 +1,9 @@
+import { Text, View,  StyleSheet } from 'react-native';
+import { Redirect } from 'expo-router'
+
+//View style={styles.container}>
+      //<Text style={styles.text}>Home screen</Text>
+    //</View>/
 import React, { useState } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import EnvelopeLoading from '../components/EnvelopeLoading';
@@ -20,6 +26,9 @@ export default function Index() {
 
   // Fallback while routing
   return (
+    
+
+    <Redirect href="/signupScreen" />
     <View style={styles.container}>
       <Text style={styles.text}>Redirecting…</Text>
     </View>
@@ -39,3 +48,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
