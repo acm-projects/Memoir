@@ -48,6 +48,13 @@ export default function Signup() {
   };
 
 
+import React from 'react';
+import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground,  Image, TouchableOpacity, } from "react-native";
+import { useRouter } from 'expo-router';
+
+
+export default function Signup() {
+  const router = useRouter();
  return (
 
    <View style={styles.container}>
@@ -152,6 +159,9 @@ export default function Signup() {
          <TouchableOpacity onPress = {() => {router.replace('/loginScreen')}} activeOpacity={0.7}>{/*create button to go to login page*/}
          <Text style ={styles.noAccount}> Log in</Text>
         </TouchableOpacity>
+         <TouchableOpacity onPress = {() => {router.replace('/loginScreen' as any)}} activeOpacity={0.7}>{/*create button to go to login page*/}
+           <Text style ={styles.noAccount}> Log in</Text>
+         </TouchableOpacity>
        </View>
 
 
