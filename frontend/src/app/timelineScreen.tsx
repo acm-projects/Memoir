@@ -223,7 +223,7 @@ export default function Timeline() {
                             </Text>
                             <Pressable
                               style={styles.openButton}
-                              onPress={() => { router.replace('/captionCard') }}
+                              onPress={() => { router.replace('/view-folder') }}
                             >
                               <Text style={styles.openButtonText}>
                                 Open Folder
