@@ -86,7 +86,7 @@ export default function EnvelopeLoading({ onComplete }: { onComplete: () => void
     return () => {
       animationSequence.stop();
     };
-  }, []);
+  }, [onComplete]);
 
   // Interpolate flap rotation (0 to 180 degrees)
   const flapRotateX = flapRotation.interpolate({
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     height: FLAP_HEIGHT,
     top: 0,
     zIndex: 30,
-    transformOrigin: 'center top',
+    // transformOrigin is not supported in React Native styles; removed to avoid warnings
   },
   flapImage: {
     width: '100%',
