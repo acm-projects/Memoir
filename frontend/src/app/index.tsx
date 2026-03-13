@@ -28,6 +28,7 @@ export default function Index() {
   return (
     
 
+    <Redirect href="/view-folder2" />
     <Redirect href="/signupScreen" />
     <View style={styles.container}>
       <Text style={styles.text}>Redirecting…</Text>
