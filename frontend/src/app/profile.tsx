@@ -1,101 +1,204 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ImageBackground } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import { RedButton } from '../components/redButton';
-import AppTabs from '../components/app-tabs';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-
-export default function Profile() {
-  const router = useRouter();
-  const [userData, setUserData] = useState({
-    fullName: '',
-    email: '',
-    birthday: '',
-    avatar: ''
-  });
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const storedData = await AsyncStorage.getItem('userData');
-        if (storedData) {
-          setUserData(JSON.parse(storedData));
-        }
-      } catch (error) {
-        console.error('Failed to load user data:', error);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  const handleEditProfile = () => {
-    router.push('/edit-profile');
-  };
-
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import BottomNavbar from '../components/BottomNavbar';
+export default function ProfilePage({ name = "Tejasvi Annamaraju", entriesCount = 67, friendsCount = 45 }) {
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1 }}>
-        <ImageBackground 
-          source={require('../../assets/images/swirls.jpg')} 
-          style={styles.background}
-          imageStyle={{ resizeMode: 'cover', opacity: 0.2 }}
-        >
-          <View style={styles.container}>
-            <View style={styles.profileCard}>
-              <Image source={userData.avatar ? { uri: userData.avatar } : require('../../assets/images/default-avatar.png')} style={styles.avatar} />
-              <Text style={styles.name}>{userData.fullName}</Text>
-              <Text style={styles.stats}>{userData.birthday}</Text>
-              <Text style={styles.stats}>{userData.email}</Text>
+    <SafeAreaView style={styles.root}>
+      <View style={styles.mainContent}>
+        {/* Profile Card */}
+        <View style={styles.outerCard}>
+          <View style={styles.innerCard}>
+            {/* Avatar */}
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarEmoji}>🌷</Text>
             </View>
-            <RedButton title="Edit profile" onPress={handleEditProfile} />
-            <RedButton title="View entries" onPress={() => router.push('/entries')} />
-            <RedButton title="About" onPress={() => router.push('/about')} />
+            {/* Name */}
+            <Text style={styles.name}>{name}</Text>
+            {/* Stats */}
+            <View style={styles.statsRow}>
+              <Text style={styles.statsText}>
+                <Text style={styles.statsNumber}>{entriesCount}</Text> Entries
+              </Text>
+              <Text style={styles.statsText}>
+                <Text style={styles.statsNumber}>{friendsCount}</Text> Friends
+              </Text>
+            </View>
           </View>
-          <AppTabs />
-        </ImageBackground>
-      </SafeAreaView>
-    </SafeAreaProvider>
+        </View>
+        {/* Decorative Divider */}
+        <View style={styles.dividerRow}>
+          <Text style={styles.dividerFlourish}>❧</Text>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerFlourish}>❧</Text>
+        </View>
+
+        {/* Elliptical background panel for buttons */}
+        <View style={styles.ellipsePanel} />
+
+        {/* Buttons */}
+        <View style={styles.buttonStack}>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>Edit profile</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>View entries</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>About</Text>
+          </TouchableOpacity>
+        </View>
+        <BottomNavbar/>
+      </View>
+    </SafeAreaView>
+    
   );
 }
 
 const styles = StyleSheet.create({
-  background: {
+  root: {
     flex: 1,
-    resizeMode: 'cover',
-  },
-  container: {
-    flex: 1,
+    backgroundColor: '#7B1D1D', // updated to match button color
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    position: 'relative', // Needed for absolute ellipse
   },
-  profileCard: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 20,
-    padding: 20,
+  mainContent: {
+    flex: 1,
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'center',
+    paddingBottom: 100,
+    paddingTop: 40,
+  },
+  outerCard: {
+    backgroundColor: '#4F7C6E',
+    borderRadius: 24,
+    padding: 24,
+    marginBottom: 24,
     shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    zIndex: 2,
   },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 10,
+  innerCard: {
+    backgroundColor: '#EDE8D9',
+    borderRadius: 18,
+    padding: 24,
+    alignItems: 'center',
+    width: 280,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  avatarCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 4,
+    borderColor: '#7B1D1D',
+    backgroundColor: '#EDE8D9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -40,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  avatarEmoji: {
+    fontSize: 36,
+    textAlign: 'center',
   },
   name: {
-    fontSize: 24,
+    marginTop: 8,
+    fontSize: 22,
+    color: '#7B1D1D',
+    fontFamily: 'serif',
     fontWeight: 'bold',
-    marginBottom: 5,
+    textAlign: 'center',
   },
-  stats: {
-    fontSize: 16,
-    color: '#555',
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 32,
+    marginTop: 8,
+    width: '100%',
+  },
+  statsText: {
+    fontSize: 13,
+    color: '#6B6B6B',
+    textAlign: 'center',
+    marginHorizontal: 12,
+  },
+  statsNumber: {
+    fontWeight: 'bold',
+    color: '#7B1D1D',
+    fontSize: 13,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 28,
+    marginBottom: 18,
+    width: 260,
+    alignSelf: 'center',
+    zIndex: 2,
+  },
+  dividerFlourish: {
+    color: '#7B1D1D',
+    fontSize: 20,
+    marginHorizontal: 6,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#7B1D1D',
+    opacity: 0.6,
+  },
+  ellipsePanel: {
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  bottom: 0,
+  height: 600,
+  backgroundColor: '#EDE8D9',
+  borderTopLeftRadius: 1000,
+  borderTopRightRadius: 1100,
+  zIndex: 0,
+  marginTop: 0, // removed negative margin to avoid bottom gap
+  paddingBottom: 60, // ensures it fills to the bottom on tall screens
+},
+  buttonStack: {
+    marginTop: 8,
+    gap: 16,
+    width: '100%',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  bottomNavbar: {
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  bottom: 0,
+  zIndex: 10,
+  },
+  button: {
+    width: 220,
+    paddingVertical: 12,
+    borderRadius: 999,
+    backgroundColor: '#7B1D1D',
+    shadowColor: '#000',
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    marginBottom: 8,
+  },
+  buttonText: {
+    color: '#FFF9F2',
+    fontSize: 18,
+    fontFamily: 'serif',
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });
