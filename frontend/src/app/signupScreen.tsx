@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase' // Importing the Supabase client insta
 import { useState } from 'react' // Importing the useState hook from React to manage local state within the component.
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native' // Importing various components from React Native to build the user interface of the login screen.
 import { Link, router } from 'expo-router' // Importing the Link component from Expo Router to enable navigation between different screens in the app.
+import { createDefaultFolder } from '@/services/folders.service' // Importing a function to create a default folder for the user after they sign up. This will be called in the signup flow to ensure every user starts with a default "All Memories" folder.
 
 export default function SignUpScreen() {
     const [email, setEmail] = useState('')
@@ -24,7 +25,7 @@ export default function SignUpScreen() {
         }
 
         setIsLoading(true)
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
         })
@@ -32,6 +33,10 @@ export default function SignUpScreen() {
             Alert.alert('Sign Up Error', error.message)
             setIsLoading(false)
             return
+        }
+
+        if (data.user) {
+          await createDefaultFolder(data.user.id) // Automatically create the default "All Memories" folder for the new user. This ensures that every user starts with a folder to store their memories, improving the initial user experience.
         }
 
         //Success - go to avatar selection screen
