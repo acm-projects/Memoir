@@ -3,28 +3,26 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Platfo
 import { useRouter } from 'expo-router';
 import { v4 as uuidv4 } from 'uuid';
 import ImagePreview from '../components/ImagePreview';
-import FolderCard from '../components/FolderCard';
 import BottomNavbar from '../components/BottomNavbar';
-
-type Folder = { id: string | number; name: string; thumbnail?: any };
-
-const foldersMock: Folder[] = [
-  { id: 1, name: "16th Birthday", thumbnail: require('../../assets/images/tutorial-web.png') },
-  { id: 2, name: "Prom", thumbnail: require('../../assets/images/react-logo.png') },
-  { id: 3, name: "Mom's Birthday", thumbnail: require('../../assets/images/react-logo.png') },
-];
 
 export default function UploadCard() {
   const router = useRouter();
   const fileInputRef = useRef<any>(null);
+  const fileInputCameraRef = useRef<any>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<number | string | null>(null);
-  const [folders] = useState<Folder[]>(foldersMock);
 
-  const onPickFileWeb = (e: any) => {
+  const onPickFileWebGallery = (e: any) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setUploadedImage(url);
+  };
+
+  const onPickFileWebCamera = (e: any) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
@@ -36,7 +34,7 @@ export default function UploadCard() {
       fileInputRef.current && fileInputRef.current.click();
       return;
     }
-    // Native: use Expo ImagePicker dynamically (so bundler doesn't require it at build time)
+    // Native gallery
     let ImagePickerModule: any;
     try {
       ImagePickerModule = await import('expo-image-picker');
@@ -51,13 +49,48 @@ export default function UploadCard() {
       alert('Permission required to access photos.');
       return;
     }
-    const res = await ImagePickerModule.launchImageLibraryAsync({ mediaTypes: ImagePickerModule.MediaTypeOptions.Images, quality: 0.8 });
+    const res = await ImagePickerModule.launchImageLibraryAsync({ quality: 0.8 });
     if (!res.cancelled) {
       setUploadedImage(res.uri);
     }
   };
 
-  const onSave = () => {
+  const triggerCamera = async () => {
+    if (Platform.OS === 'web') {
+      // open mobile camera capture if available
+      fileInputCameraRef.current && fileInputCameraRef.current.click();
+      return;
+    }
+
+    // Native camera
+    let ImagePickerModule: any;
+    try {
+      ImagePickerModule = await import('expo-image-picker');
+    } catch (err) {
+      console.warn('expo-image-picker not available:', err);
+      alert('Please install expo-image-picker (run: expo install expo-image-picker) to use the camera on native devices.');
+      return;
+    }
+
+    // Request camera permission using whichever API is available
+    const cameraPermission = ImagePickerModule.requestCameraPermissionsAsync
+      ? await ImagePickerModule.requestCameraPermissionsAsync()
+      : ImagePickerModule.requestPermissionsAsync
+      ? await ImagePickerModule.requestPermissionsAsync()
+      : null;
+
+    if (cameraPermission && !cameraPermission.granted) {
+      alert('Camera permission required to take photos.');
+      return;
+    }
+
+    const res = await ImagePickerModule.launchCameraAsync({ quality: 0.8 });
+    if (!res.cancelled) {
+      setUploadedImage(res.uri);
+    }
+  };
+
+  const onNext = () => {
     const card = {
       id: uuidv4(),
       image: uploadedImage,
@@ -66,48 +99,41 @@ export default function UploadCard() {
       date: selectedDate ? selectedDate.toISOString() : null,
       folderId: selectedFolder,
     };
-    console.log('Saved card', card);
-    // keep routing simple for testing
-    router.replace('/');
-  };
-
-  const onDiscard = () => {
-    setUploadedImage(null);
-    setTitle('');
-    setCaption('');
-    setSelectedDate(null);
-    setSelectedFolder(null);
+    console.log('Next (saved to temp)', card);
+    // proceed to next step (folder selection will be separate)
+    router.push('/timelineScreen');
   };
 
   return (
     <View style={styles.screen}>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.push('/timelineScreen' as any)} style={styles.backButton}>
           <Text style={styles.backChevron}>{'<'} </Text>
         </TouchableOpacity>
         <Text style={styles.topTitle}>Upload Card</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
+        {/* push content further down to avoid clashing with top decorations */}
         <View style={styles.previewArea}>
           <ImagePreview uri={uploadedImage} />
 
           <View style={styles.uploadRow}>
-            <TouchableOpacity onPress={triggerFileInput} style={styles.uploadButton}>
-              <Text style={styles.uploadButtonText}>+</Text>
+            <TouchableOpacity onPress={triggerCamera} style={styles.smallButton}>
+              <Text style={styles.smallButtonText}>📷</Text>
             </TouchableOpacity>
-            {/* web file input */}
-            {Platform.OS === 'web' && (
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={onPickFileWeb}
-              />
-            )}
+            <TouchableOpacity onPress={triggerFileInput} style={styles.smallButton}>
+              <Text style={styles.smallButtonText}>🖼️</Text>
+            </TouchableOpacity>
           </View>
 
+          {/* web hidden inputs for gallery and camera capture */}
+          {Platform.OS === 'web' && (
+            <>
+              <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onPickFileWebGallery} />
+              <input ref={fileInputCameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={onPickFileWebCamera} />
+            </>
+          )}
         </View>
 
         <View style={styles.form}>
@@ -130,24 +156,9 @@ export default function UploadCard() {
           )}
         </View>
 
-        <View style={styles.folderSection}>
-          <Text style={styles.folderTitle}>Add to a folder</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.folderList}>
-            <TouchableOpacity style={[styles.folderCard, styles.createCard]} onPress={() => alert('Create folder (not implemented)')}>
-              <Text style={styles.plusSign}>+</Text>
-            </TouchableOpacity>
-            {folders.map((f) => (
-              <FolderCard key={String(f.id)} folder={f} selected={selectedFolder === f.id} onSelect={(id: string | number) => setSelectedFolder(id)} />
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={styles.buttonsRow}>
-          <TouchableOpacity style={styles.discardButton} onPress={onDiscard}>
-            <Text style={styles.discardText}>Discard</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.saveButton} onPress={onSave}>
-            <Text style={styles.saveText}>Save</Text>
+        <View style={styles.buttonsRowSingle}>
+          <TouchableOpacity style={styles.nextButton} onPress={onNext}>
+            <Text style={styles.nextText}>Next</Text>
           </TouchableOpacity>
         </View>
 
@@ -164,30 +175,15 @@ const styles = StyleSheet.create({
   backButton: { padding: 8 },
   backChevron: { fontSize: 20, color: '#5A390E' },
   topTitle: { fontSize: 18, fontWeight: '600', color: '#5A390E', marginLeft: 8 },
-  content: { padding: 16, paddingBottom: 120 },
-  previewArea: { backgroundColor: '#557263', borderRadius: 8, padding: 12, alignItems: 'center', justifyContent: 'center' },
-  uploadRow: { position: 'absolute', right: 16, top: 16 },
-  uploadButton: { width: 44, height: 44, borderRadius: 8, backgroundColor: '#2b6b5a', alignItems: 'center', justifyContent: 'center' },
-  uploadButtonText: { color: '#fff', fontSize: 24 },
+  content: { padding: 16, paddingTop: 80, paddingBottom: 160 },
+  previewArea: { backgroundColor: '#F5EEE1', borderRadius: 8, padding: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  uploadRow: { flexDirection: 'row', gap: 12, marginTop: 12 },
+  smallButton: { width: 52, height: 36, borderRadius: 8, backgroundColor: '#7a2a2a', alignItems: 'center', justifyContent: 'center', marginHorizontal: 8 },
+  smallButtonText: { color: '#fff', fontSize: 18 },
   form: { marginTop: 16 },
   input: { backgroundColor: '#F5EEE1', padding: 12, borderRadius: 8, marginBottom: 12, borderWidth: 1, borderColor: '#d9cfc0' },
   dateField: { backgroundColor: '#F5EEE1', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#d9cfc0' },
-  folderSection: { marginTop: 20 },
-  folderTitle: { fontSize: 24, color: '#5A390E', marginBottom: 12 },
-  folderList: { flexDirection: 'row' },
-  folderCard: { width: 96, height: 120, marginRight: 12, backgroundColor: '#8e2f2f', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  folderCardSelected: { borderWidth: 3, borderColor: '#ffd6d3' },
-  folderThumb: { width: 64, height: 64, borderRadius: 6, backgroundColor: '#fff' },
-  folderName: { color: '#fff', marginTop: 6, fontSize: 12, textAlign: 'center' },
-  createCard: { backgroundColor: '#7a2a2a', alignItems: 'center', justifyContent: 'center' },
-  plusSign: { fontSize: 32, color: '#fff' },
-  buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 },
-  discardButton: { backgroundColor: '#7a2a2a', paddingVertical: 12, paddingHorizontal: 28, borderRadius: 24 },
-  discardText: { color: '#fff' },
-  saveButton: { backgroundColor: '#557263', paddingVertical: 12, paddingHorizontal: 28, borderRadius: 24 },
-  saveText: { color: '#fff' },
-  bottomNavbar: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, backgroundColor: '#e9dccd', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
-  navButton: { alignItems: 'center' },
-  centerButton: { marginTop: -28 },
-  centerTouchable: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#7a2a2a', alignItems: 'center', justifyContent: 'center' },
+  buttonsRowSingle: { alignItems: 'center', marginTop: 24 },
+  nextButton: { backgroundColor: '#7a2a2a', paddingVertical: 14, paddingHorizontal: 36, borderRadius: 28 },
+  nextText: { color: '#fff', fontSize: 20 },
 });

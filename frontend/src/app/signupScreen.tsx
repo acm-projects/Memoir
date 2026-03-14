@@ -1,11 +1,12 @@
 import React,{useState} from 'react';
 import { Button, View, Text, TextInput , StyleSheet, ImageBackground,  Image, TouchableOpacity, Platform,Pressable } from "react-native";
-import { router } from "expo-router";
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useRouter } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { RedButton } from '../components/redButton';
 
 
 export default function Signup() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setemail] = useState("");
   const [dateofBirth, setdateofBirth] = useState("");
@@ -15,13 +16,11 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
 
-  
-
   const toggleDatePicker = () => {
     setShow(!show);
   };
 
-  const onChange = (event : DateTimePickerEvent, selectedDate?:Date) => {
+  const onChange = (event: any, selectedDate?: Date) => {
     const currentDate = selectedDate || date;
     setShow(Platform.OS === 'ios'); 
     setShow(false);
@@ -29,35 +28,20 @@ export default function Signup() {
   };
 
   const handleSignup = () => {
-    
     if (!name || !email) {
       alert("Please fill in all fields");
       return;
     }
-  
-    
     const userData = {
       fullName: name,
       email: email,
       birthday: date.toISOString(), 
     };
-
-    
-    
     router.push('/avatar-selection');
   };
 
-
-import React from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground,  Image, TouchableOpacity, } from "react-native";
-import { useRouter } from 'expo-router';
-
-
-export default function Signup() {
-  const router = useRouter();
- return (
-
-   <View style={styles.container}>
+  return (
+    <View style={styles.container}>
 
 
    
@@ -156,10 +140,7 @@ export default function Signup() {
 
        <View style = {{ flexDirection: 'row' ,justifyContent:'center', padding:5}}>{/*have account text and log in button next to each other s*/}
          <Text style = {styles.noAccount}>Already have an account?</Text>
-         <TouchableOpacity onPress = {() => {router.replace('/loginScreen')}} activeOpacity={0.7}>{/*create button to go to login page*/}
-         <Text style ={styles.noAccount}> Log in</Text>
-        </TouchableOpacity>
-         <TouchableOpacity onPress = {() => {router.replace('/loginScreen' as any)}} activeOpacity={0.7}>{/*create button to go to login page*/}
+         <TouchableOpacity onPress = {() => {router.push('/loginScreen' as any)}} activeOpacity={0.7}>{/*create button to go to login page*/}
            <Text style ={styles.noAccount}> Log in</Text>
          </TouchableOpacity>
        </View>

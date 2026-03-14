@@ -4,6 +4,7 @@ import { ImageBackground } from 'expo-image';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { router } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
+import BottomNavbar from '../components/BottomNavbar';
 
 const MOCK_API = {
   data: [
@@ -254,6 +255,7 @@ export default function Timeline() {
           </ImageBackground>
         </View>
       </ImageBackground>
+      <BottomNavbar />
     </View>
   );
 }

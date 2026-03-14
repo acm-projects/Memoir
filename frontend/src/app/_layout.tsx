@@ -2,7 +2,6 @@ import { Stack } from "expo-router";
 import { useFonts, Montaga_400Regular } from '@expo-google-fonts/montaga';
 import { Inter_400Regular } from '@expo-google-fonts/inter';
 import { Calistoga_400Regular } from '@expo-google-fonts/calistoga';
-import "./global.css"; 
 import "./global.css";
 
 export default function RootLayout() {
@@ -12,13 +11,6 @@ export default function RootLayout() {
     'Calistoga': Calistoga_400Regular,
   });
 
-  if (!loaded && !error) {
-    return null; 
-  }
-
-  return (
-    <Stack screenOptions={{ headerShown: false }} />
-  );
   if (!loaded) return null;
 
   return <Stack screenOptions={{ headerShown: false }} />;
