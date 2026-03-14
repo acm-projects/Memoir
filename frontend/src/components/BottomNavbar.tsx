@@ -6,30 +6,30 @@ import { Ionicons } from '@expo/vector-icons';
 export default function BottomNavbar() {
   const router = useRouter();
   return (
-    <View style={styles.bottomNavbar}>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/timelineScreen' as any)}>
-        <Image source={require('../../assets/images/tabIcons/home.png')} style={styles.icon} />
-        <Text style={styles.navText}>Home</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/messages' as any)}>
-        <Image source={require('../../assets/images/tabIcons/explore.png')} style={styles.icon} />
-        <Text style={styles.navText}>Messages</Text>
-      </TouchableOpacity>
-      <View style={styles.centerButtonWrap}>
-        <TouchableOpacity onPress={() => router.push('/upload-card' as any)} style={styles.centerTouchable}>
-          <Ionicons name="add" size={44} color={'#fff'} />
-        </TouchableOpacity>
-      </View>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/folders' as any)}>
-        <Image source={require('../../assets/images/tabIcons/folder.png')} style={styles.icon} />
-        <Text style={styles.navText}>Folders</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/profile' as any)}>
-        <Image source={require('../../assets/images/tabIcons/profile.png')} style={styles.icon} />
-        <Text style={styles.navText}>Profile</Text>
+  <View style={styles.bottomNavbar}>
+    <TouchableOpacity style={styles.navButton} onPress={() => router.push('/timelineScreen' as any)}>
+      <Ionicons name="home-outline" size={28} color="#7a2a2a" style={styles.icon} />
+      <Text style={styles.navText}>Home</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.navButton} onPress={() => router.push('/messages' as any)}>
+      <Ionicons name="mail-outline" size={28} color="#7a2a2a" style={styles.icon} />
+      <Text style={styles.navText}>Messages</Text>
+    </TouchableOpacity>
+    <View style={styles.centerButtonWrap}>
+      <TouchableOpacity onPress={() => router.push('/upload-card' as any)} style={styles.centerTouchable}>
+        <Ionicons name="add" size={44} color={'#fff'} />
       </TouchableOpacity>
     </View>
-  );
+    <TouchableOpacity style={styles.navButton} onPress={() => router.push('/folders' as any)}>
+      <Ionicons name="folder-outline" size={28} color="#7a2a2a" style={styles.icon} />
+      <Text style={styles.navText}>Folders</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.navButton} onPress={() => router.push('/profile' as any)}>
+      <Ionicons name="person-outline" size={28} color="#7a2a2a" style={styles.icon} />
+      <Text style={styles.navText}>Profile</Text>
+    </TouchableOpacity>
+  </View>
+);
 }
 
 const styles = StyleSheet.create({
