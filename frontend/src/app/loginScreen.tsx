@@ -1,14 +1,11 @@
-import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground,  Image, TouchableOpacity, } from "react-native";
-import { router } from "expo-router";
+import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground,  Image, TouchableOpacity } from "react-native";
+import { useRouter } from 'expo-router';
 import { RedButton } from '../components/redButton';
 
-
-
-//<Redirect href="/loginScreen" />
 export default function Login() {
   const router = useRouter();
- return (
-   <View style={styles.container}>
+  return (
+    <View style={styles.container}>
 
 
    
@@ -36,8 +33,7 @@ export default function Login() {
          secureTextEntry = {true}
          />
       
-       <TouchableOpacity onPress = {() => {router.replace('/timelineScreen')}} style={styles.loginButton} activeOpacity={0.8}>
-       <TouchableOpacity onPress = {() => {router.replace('/upload-card' as any)}} style={styles.loginButton} activeOpacity={0.8}>
+       <TouchableOpacity onPress={() => { router.push('/timelineScreen'); }} style={styles.loginButton} activeOpacity={0.8}>
          <Text style ={styles.login}> Login</Text>
        </TouchableOpacity>
 
@@ -46,7 +42,7 @@ export default function Login() {
 
        <View style = {{ flexDirection: 'row' ,justifyContent:'center', padding:5}}>
          <Text style = {styles.noAccount}>Don't have an account?</Text>
-         <TouchableOpacity onPress = {() => {router.replace('/signupScreen' as any)}} activeOpacity={0.7}>
+         <TouchableOpacity onPress = {() => {router.push('/signupScreen')}} activeOpacity={0.7}>
            <Text style ={styles.noAccount}> Sign Up</Text>
          </TouchableOpacity>
        </View>

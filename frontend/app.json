@@ -8,7 +8,7 @@
     "scheme": "frontend",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.jiyakhurana.frontend"
     },
     "android": {
@@ -37,8 +37,7 @@
         }
       ],
       "expo-font",
-      "@react-native-community/datetimepicker"
-      
+      "@react-native-community/datetimepicker",
       "expo-web-browser"
     ],
     "experiments": {

@@ -1,27 +1,32 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function BottomNavbar() {
   const router = useRouter();
   return (
     <View style={styles.bottomNavbar}>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.replace('/' as any)}>
-        <Text>Home</Text>
+      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/timelineScreen' as any)}>
+        <Image source={require('../../assets/images/tabIcons/home.png')} style={styles.icon} />
+        <Text style={styles.navText}>Home</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.replace('/messages' as any)}>
-        <Text>Messages</Text>
+      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/messages' as any)}>
+        <Image source={require('../../assets/images/tabIcons/explore.png')} style={styles.icon} />
+        <Text style={styles.navText}>Messages</Text>
       </TouchableOpacity>
-      <View style={styles.centerButton}>
-        <TouchableOpacity onPress={() => router.replace('/upload-card' as any)} style={styles.centerTouchable}>
-          <Text style={{ color: '#fff' }}>✉︎</Text>
+      <View style={styles.centerButtonWrap}>
+        <TouchableOpacity onPress={() => router.push('/upload-card' as any)} style={styles.centerTouchable}>
+          <Ionicons name="add" size={44} color={'#fff'} />
         </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.replace('/folders' as any)}>
-        <Text>Folders</Text>
+      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/folders' as any)}>
+        <Image source={require('../../assets/images/tabIcons/folder.png')} style={styles.icon} />
+        <Text style={styles.navText}>Folders</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.replace('/profile' as any)}>
-        <Text>Profile</Text>
+      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/profile' as any)}>
+        <Image source={require('../../assets/images/tabIcons/profile.png')} style={styles.icon} />
+        <Text style={styles.navText}>Profile</Text>
       </TouchableOpacity>
     </View>
   );
@@ -29,7 +34,10 @@ export default function BottomNavbar() {
 
 const styles = StyleSheet.create({
   bottomNavbar: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, backgroundColor: '#e9dccd', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
-  navButton: { alignItems: 'center' },
-  centerButton: { marginTop: -28 },
-  centerTouchable: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#7a2a2a', alignItems: 'center', justifyContent: 'center' },
+  navButton: { alignItems: 'center', justifyContent: 'center' },
+  navText: { marginTop: 4, fontSize: 12, color: '#5A390E' },
+  icon: { width: 28, height: 28, marginBottom: 2 },
+  centerButtonWrap: { marginTop: -36, zIndex: 2 },
+  centerTouchable: { width: 72, height: 72, borderRadius: 36, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center', shadowColor: '#7a2a2a', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 },
+  centerIcon: { display: 'none' },
 });

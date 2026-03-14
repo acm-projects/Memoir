@@ -7,7 +7,7 @@ import { RedButton } from '../components/redButton';
 
       const AVATAR_DATA = [
         {id:'1', image: require('../../assets/images/origami-gorilla.png')},
-        {id:'2', image: require('../../assets/images/origami-alpaca.png')},
+        {id:'2', image: require('../../assets/images/default-avatar.png')},
         {id:'3', image: require('../../assets/images/origami-fox.png')},
 
         {id:'4', image: require('../../assets/images/origami-purpleflower.png')},
@@ -65,7 +65,7 @@ import { RedButton } from '../components/redButton';
         />
 
 
-        <TouchableOpacity onPress = {() => {router.replace('/timelineScreen')}} style= {styles.continueButton}activeOpacity={0.7}>
+        <TouchableOpacity onPress = {() => {router.push('/timelineScreen')}} style= {styles.continueButton}activeOpacity={0.7}>
          <Text style ={styles.continue}> Continue</Text>
         </TouchableOpacity>
         </ImageBackground>
