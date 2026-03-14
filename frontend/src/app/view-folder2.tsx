@@ -41,13 +41,31 @@ export default function viewFolder() {
                     data={folders}
                     numColumns={2}
                     keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.listContainer}
+                    columnWrapperStyle={styles.row}
                     renderItem={({ item }) => (
-                    <FolderItem 
-                        title={item.title} 
-                        imageSource={item.image} 
-                        isAddButton={item.isAdd} 
-                    />
-        )}
+                        <TouchableOpacity 
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            if (item.isAdd) {
+                              // Navigate to a "Create Folder" screen
+                              router.push('/create-folder'); 
+                            } else {
+                              // Navigate to the folder detail screen and pass the ID
+                              router.push({
+                                pathname: '/bulletin-board',
+                                params: { id: item.id, title: item.title }
+                              });
+                            }
+                          }}
+                        >
+                          <FolderItem 
+                            title={item.title} 
+                            imageSource={item.image} 
+                            isAddButton={item.isAdd} 
+                          />
+                        </TouchableOpacity>
+                      )}
         showsVerticalScrollIndicator={false}
       />
            
@@ -92,9 +110,19 @@ export default function viewFolder() {
             fontWeight: 'bold',
             color: '#5A390E',
             textAlign: 'center',
-            marginTop:40,
+            marginTop:30,
             
 
+          },
+          listContainer: {
+            paddingHorizontal: 20,
+            paddingBottom: 40,
+          },
+          
+          row: {
+            justifyContent: 'space-between', 
+            //gap:5,
+            marginBottom: 10, 
           },
 
 

@@ -41,17 +41,20 @@ interface FolderItemProps {
   
   const styles = StyleSheet.create({
     cardContainer: {
-      width: '40%',
+      width: '60%',
       aspectRatio: 0.9,
-      margin: '5%',
+      marginBottom:6,
+      paddingTop: 45,
       alignItems: 'center',
       justifyContent: 'flex-end',
+    
     },
+
     folderBase: {
       width: '100%',
-      height: '75%', // Increased slightly to give the stamp more room
+      height: '100%', 
       borderRadius: 12,
-      //overflow: 'hidden', // This ensures the stamp is "cut off" at the bottom of the folder
+      
       borderWidth: 0.5,
       borderColor: 'rgba(0,0,0,0.1)',
     },
@@ -68,11 +71,12 @@ interface FolderItemProps {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 20, 
-      borderRadius:10,
+      borderBottomRightRadius:10,
+      borderBottomLeftRadius:10,
     },
     stampInsideContainer: {
       position: 'absolute',
-      top: -40, // Adjust this to move the stamp up or down relative to the top of the folder
+      top: -50, 
       left: 20,
       right: 0,
       alignItems: 'center',
@@ -90,15 +94,15 @@ interface FolderItemProps {
     },
     plusContainer: {
       position: 'absolute',
-      top: '35%',
-      width: 60,
-      height: 60,
+      top: '55%',
+      width: 50,
+      height: 50,
       borderRadius: 8,
       borderWidth: 2,
       borderColor: '#D9C5A3',
       justifyContent: 'center',
       alignItems: 'center',
-      zIndex: 30,
+      zIndex: 20,
     },
     
   });

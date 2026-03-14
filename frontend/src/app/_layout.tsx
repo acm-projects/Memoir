@@ -12,7 +12,7 @@ export default function RootLayout() {
     'Calistoga': Calistoga_400Regular,
   });
 
-  if (!loaded && !error) {
+  if (!loaded ) {
     return null; 
   }
 

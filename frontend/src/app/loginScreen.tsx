@@ -6,7 +6,7 @@ import { RedButton } from '../components/redButton';
 
 //<Redirect href="/loginScreen" />
 export default function Login() {
-  const router = useRouter();
+  //const router = Router();
  return (
    <View style={styles.container}>
 
@@ -37,7 +37,6 @@ export default function Login() {
          />
       
        <TouchableOpacity onPress = {() => {router.replace('/timelineScreen')}} style={styles.loginButton} activeOpacity={0.8}>
-       <TouchableOpacity onPress = {() => {router.replace('/upload-card' as any)}} style={styles.loginButton} activeOpacity={0.8}>
          <Text style ={styles.login}> Login</Text>
        </TouchableOpacity>
 
