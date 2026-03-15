@@ -6,34 +6,38 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 // Envelope dimensions - keep proportionate
 const ENVELOPE_WIDTH = 280;
 const ENVELOPE_HEIGHT = 180;
-const FLAP_HEIGHT = ENVELOPE_HEIGHT * 0.65;
+const FLAP_HEIGHT = ENVELOPE_HEIGHT * 0.7; // Flap is smaller
+const FLAP_WIDTH = ENVELOPE_WIDTH * 1.1; // Flap is wider
 
-// Final positions
-const ENVELOPE_FINAL_Y = SCREEN_HEIGHT / 2 - ENVELOPE_HEIGHT / 2 + 50; // Move envelope to bottom
+// Center envelope vertically
+const ENVELOPE_Y_CENTER = (SCREEN_HEIGHT - ENVELOPE_HEIGHT) / 2;
 
 export default function EnvelopeLoading({ onComplete }: { onComplete: () => void }) {
   // Animation values
   const flapRotation = useRef(new Animated.Value(0)).current;
   const flapOpacity = useRef(new Animated.Value(1)).current;
+  const envelopeBackOpacity = useRef(new Animated.Value(1)).current;
   const letterTranslateY = useRef(new Animated.Value(0)).current;
   const letterScale = useRef(new Animated.Value(1)).current;
   const envelopeTranslateY = useRef(new Animated.Value(0)).current;
+  const letterOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Animation sequence
     const animationSequence = Animated.sequence([
-      // 1. Wait briefly before starting
       Animated.delay(500),
-      
-      // 2. Open the flap (rotate it back)
       Animated.timing(flapRotation, {
         toValue: 1,
         duration: 600,
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       }),
-      
-      // 3. Letter rises up while envelope moves down
+      // Fade in letter after flap opens
+      Animated.timing(letterOpacity, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
       Animated.parallel([
         Animated.timing(letterTranslateY, {
           toValue: 1,
@@ -41,18 +45,13 @@ export default function EnvelopeLoading({ onComplete }: { onComplete: () => void
           easing: Easing.out(Easing.back(1.2)),
           useNativeDriver: true,
         }),
-        // Fade out flap as letter rises
         Animated.timing(flapOpacity, {
           toValue: 0,
           duration: 400,
           useNativeDriver: true,
         }),
       ]),
-      
-      // 4. Brief pause
       Animated.delay(200),
-      
-      // 5. Letter scales up slightly and envelope slides to bottom
       Animated.parallel([
         Animated.timing(letterScale, {
           toValue: 1.8,
@@ -66,6 +65,11 @@ export default function EnvelopeLoading({ onComplete }: { onComplete: () => void
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
+        Animated.timing(envelopeBackOpacity, {
+          toValue: 0,
+          duration: 800,
+          useNativeDriver: true,
+        }),
         Animated.timing(envelopeTranslateY, {
           toValue: 1,
           duration: 800,
@@ -73,13 +77,10 @@ export default function EnvelopeLoading({ onComplete }: { onComplete: () => void
           useNativeDriver: true,
         }),
       ]),
-      
-      // 6. Hold final state briefly
       Animated.delay(500),
     ]);
 
     animationSequence.start(() => {
-      // Animation complete, transition to next screen
       onComplete();
     });
 
@@ -94,16 +95,20 @@ export default function EnvelopeLoading({ onComplete }: { onComplete: () => void
     outputRange: ['0deg', '180deg'],
   });
 
-  // Letter rises up, then moves to final centered position
+  // Letter rises up a bit, then stays centered
   const letterY = letterTranslateY.interpolate({
     inputRange: [0, 1, 2],
-    outputRange: [0, -80, -SCREEN_HEIGHT * 0.15],
+    outputRange: [
+      0, // Start at center
+      -ENVELOPE_HEIGHT * 0.3, // Rise up a bit
+      0, // Return to center for zoom out
+    ],
   });
 
-  // Envelope slides down to bottom of screen
+  // Envelope stays centered, then fades out
   const envelopeY = envelopeTranslateY.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, ENVELOPE_FINAL_Y],
+    outputRange: [0, 0], // No vertical movement, stays centered
   });
 
   return (
@@ -113,6 +118,7 @@ export default function EnvelopeLoading({ onComplete }: { onComplete: () => void
         style={[
           styles.letterContainer,
           {
+            opacity: letterOpacity,
             transform: [
               { translateY: letterY },
               { scale: letterScale },
@@ -127,29 +133,34 @@ export default function EnvelopeLoading({ onComplete }: { onComplete: () => void
         />
       </Animated.View>
 
-      {/* Envelope container - slides down */}
+      {/* Envelope container - stays centered */}
       <Animated.View 
         style={[
           styles.envelopeWrapper,
           {
             transform: [{ translateY: envelopeY }],
+            top: ENVELOPE_Y_CENTER,
           },
         ]}
       >
         {/* The Back/Body of Envelope */}
-        <View style={styles.envelopeBack}>
+        <Animated.View style={[styles.envelopeBack, { opacity: envelopeBackOpacity }]}>
           <Image 
             source={require('../../assets/images/envelope-back.png')} 
             style={styles.envelopeImage}
             resizeMode="cover" 
           />
-        </View>
+        </Animated.View>
 
         {/* The Top Flap - rotates open */}
         <Animated.View
           style={[
             styles.flapContainer,
             {
+              width: FLAP_WIDTH,
+              height: FLAP_HEIGHT,
+              left: -(FLAP_WIDTH - ENVELOPE_WIDTH) / 2, // Center the wider flap
+              top: -ENVELOPE_HEIGHT * 0.04, // Lower the flap to remove the gap
               transform: [
                 { perspective: 1000 },
                 { rotateX: flapRotateX },
@@ -160,7 +171,7 @@ export default function EnvelopeLoading({ onComplete }: { onComplete: () => void
         >
           <Image 
             source={require('../../assets/images/envelope-flap.png')} 
-            style={styles.flapImage}
+            style={[styles.flapImage, { width: FLAP_WIDTH, height: FLAP_HEIGHT }]}
             resizeMode="cover" 
           />
         </Animated.View>
@@ -183,6 +194,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 5,
+    left: (SCREEN_WIDTH - ENVELOPE_WIDTH * 0.85) / 2,
+    top: (SCREEN_HEIGHT - ENVELOPE_HEIGHT * 1.5) / 2,
   },
   letter: {
     width: '100%',
@@ -195,6 +208,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'absolute',
     zIndex: 10,
+    left: (SCREEN_WIDTH - ENVELOPE_WIDTH) / 2,
   },
   envelopeBack: {
     position: 'absolute',
@@ -207,11 +221,9 @@ const styles = StyleSheet.create({
   },
   flapContainer: {
     position: 'absolute',
-    width: ENVELOPE_WIDTH,
-    height: FLAP_HEIGHT,
-    top: 0,
+    // width and left are set inline for centering
+    // height is set inline
     zIndex: 30,
-    // transformOrigin is not supported in React Native styles; removed to avoid warnings
   },
   flapImage: {
     width: '100%',
