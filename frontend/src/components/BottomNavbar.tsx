@@ -20,10 +20,10 @@ export default function BottomNavbar() {
         <Ionicons name="add" size={44} color={'#fff'} />
       </TouchableOpacity>
     </View>
-    <TouchableOpacity style={styles.navButton} onPress={() => router.push('/folders' as any)}>
+    <TouchableOpacity style={styles.navButton} onPress={() => router.push('/view-folder' as any)}>
       <Ionicons name="folder-outline" size={28} color="#7a2a2a" style={styles.icon} />
       <Text style={styles.navText}>Folders</Text>
-    </TouchableOpacity>
+   </TouchableOpacity>
     <TouchableOpacity style={styles.navButton} onPress={() => router.push('/profile' as any)}>
       <Ionicons name="person-outline" size={28} color="#7a2a2a" style={styles.icon} />
       <Text style={styles.navText}>Profile</Text>
