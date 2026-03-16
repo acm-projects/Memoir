@@ -47,8 +47,8 @@ export default function ProfilePage({ name = "Tejasvi Annamaraju", entriesCount 
             <Text style={styles.buttonText}>About</Text>
           </TouchableOpacity>
         </View>
-        <BottomNavbar/>
       </View>
+      <BottomNavbar />
     </SafeAreaView>
     
   );
