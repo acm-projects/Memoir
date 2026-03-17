@@ -1,4 +1,4 @@
-#!/Users/tejasvi/Projects/Memoir/flask-server/venv/bin/python3
+#!/Users/tejasvi/Projects/Memoir/backend/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
