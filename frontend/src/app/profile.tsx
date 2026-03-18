@@ -1,7 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
 import BottomNavbar from '../components/BottomNavbar';
+import { useRouter } from 'expo-router';
+
+const { width } = Dimensions.get('window');
+
 export default function ProfilePage({ name = "Tejasvi Annamaraju", entriesCount = 67, friendsCount = 45 }) {
+  const router = useRouter();
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.mainContent}>
@@ -25,6 +30,7 @@ export default function ProfilePage({ name = "Tejasvi Annamaraju", entriesCount 
             </View>
           </View>
         </View>
+
         {/* Decorative Divider */}
         <View style={styles.dividerRow}>
           <Text style={styles.dividerFlourish}>❧</Text>
@@ -37,42 +43,43 @@ export default function ProfilePage({ name = "Tejasvi Annamaraju", entriesCount 
 
         {/* Buttons */}
         <View style={styles.buttonStack}>
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/edit-profile')}>
             <Text style={styles.buttonText}>Edit profile</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/entries')}>
             <Text style={styles.buttonText}>View entries</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/about')}>
             <Text style={styles.buttonText}>About</Text>
           </TouchableOpacity>
         </View>
-        <BottomNavbar/>
+      </View>
+
+      {/* Navbar pinned to bottom */}
+      <View style={styles.navbarContainer}>
+        <BottomNavbar />
       </View>
     </SafeAreaView>
-    
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#7B1D1D', // updated to match button color
-    justifyContent: 'center',
-    position: 'relative', // Needed for absolute ellipse
+    backgroundColor: '#7B1D1D',
   },
   mainContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: 100,
-    paddingTop: 40,
-  },
+  flex: 1,
+  alignItems: 'center',
+  paddingTop: 145
+  , // increased from 40 to 120
+  paddingBottom: 80, // space for navbar
+},
   outerCard: {
     backgroundColor: '#4F7C6E',
     borderRadius: 24,
-    padding: 24,
-    marginBottom: 24,
+    padding: 16,
+    width: width * 0.88, // wider — 88% of screen width
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -82,9 +89,10 @@ const styles = StyleSheet.create({
   innerCard: {
     backgroundColor: '#EDE8D9',
     borderRadius: 18,
-    padding: 24,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
     alignItems: 'center',
-    width: 280,
+    width: '100%', // fills outer card
     shadowColor: '#000',
     shadowOpacity: 0.12,
     shadowRadius: 6,
@@ -141,7 +149,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 28,
     marginBottom: 18,
-    width: 260,
+    width: width * 0.88,
     alignSelf: 'center',
     zIndex: 2,
   },
@@ -157,18 +165,16 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   ellipsePanel: {
-  position: 'absolute',
-  left: 0,
-  right: 0,
-  bottom: 0,
-  height: 600,
-  backgroundColor: '#EDE8D9',
-  borderTopLeftRadius: 1000,
-  borderTopRightRadius: 1100,
-  zIndex: 0,
-  marginTop: 0, // removed negative margin to avoid bottom gap
-  paddingBottom: 60, // ensures it fills to the bottom on tall screens
-},
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 520,
+    backgroundColor: '#EDE8D9',
+    borderTopLeftRadius: 1200,
+    borderTopRightRadius: 1200,
+    zIndex: 0,
+  },
   buttonStack: {
     marginTop: 8,
     gap: 16,
@@ -176,23 +182,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1,
   },
-  bottomNavbar: {
-  position: 'absolute',
-  left: 0,
-  right: 0,
-  bottom: 0,
-  zIndex: 10,
-  },
   button: {
-    width: 220,
-    paddingVertical: 12,
+    width: width * 0.72, // wider buttons too
+    paddingVertical: 14,
     borderRadius: 999,
     backgroundColor: '#7B1D1D',
     shadowColor: '#000',
     shadowOpacity: 0.10,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
-    marginBottom: 8,
   },
   buttonText: {
     color: '#FFF9F2',
@@ -200,5 +198,12 @@ const styles = StyleSheet.create({
     fontFamily: 'serif',
     textAlign: 'center',
     fontWeight: '600',
+  },
+  navbarContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10,
   },
 });
