@@ -11,7 +11,7 @@ export default function Login() {
    
      <ImageBackground
      
-       source = {require('../../assets/images/vintage-paper-background.png')}
+       source = {require('../../assets/images/layered-vintage-paper.png')}
        style = {styles.paperBackground}
        imageStyle = {{ width:'100%', height:'100%' }}
      >
