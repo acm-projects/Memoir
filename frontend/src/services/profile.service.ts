@@ -10,6 +10,18 @@ export async function getProfile(userId: string) {
   return { data, error }
 }
 
+// READ - search for users by email or username
+export async function searchUsers(query: string, currentUserId: string) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, username, full_name, avatar_url, email')
+    .or(`email.ilike.%${query}%,username.ilike.%${query}%`)
+    .neq('id', currentUserId)  // exclude yourself from results
+    .limit(10)
+
+  return { data, error }
+}
+
 // UPDATE - update a user's profile
 export async function updateProfile(userId: string, updates: {
   username?: string
