@@ -123,7 +123,7 @@ export default function Timeline() {
       <ImageBackground
         style={styles.redSwirlContainer}
         imageStyle={styles.redSwirl}
-        source={require('../../assets/images/red-swirl.jpg')}
+        source={require('../../assets/images/RED swirl subtle.png')}
       >
         <Text style={styles.welcomeBackHeader}>
           Welcome Back, Name
