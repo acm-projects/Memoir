@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { useFonts, Montaga_400Regular } from '@expo-google-fonts/montaga';
 import { Inter_400Regular } from '@expo-google-fonts/inter';
 import { Calistoga_400Regular } from '@expo-google-fonts/calistoga';
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "./global.css";
 
 export default function RootLayout() {
@@ -12,6 +13,10 @@ export default function RootLayout() {
   });
 
   if (!loaded) return null;
+  
 
-  return <Stack screenOptions={{ headerShown: false }} />;
-}
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+  <Stack screenOptions={{ headerShown: false }} />
+  </GestureHandlerRootView>
+);}

@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
      width:'95%',
      height:'96%',
      borderWidth: 2,           
-     borderColor: '#590502',   
+     borderColor: '#6D1B12',   
      borderStyle: 'dashed',
    },
 
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
 
 
  loginButton:{
-   backgroundColor:'#590502',
+   backgroundColor:'#6D1B12',
    borderRadius: 20,
    width: '60%',
    height:40,

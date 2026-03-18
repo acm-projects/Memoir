@@ -1,6 +1,7 @@
 import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground, Image, TouchableOpacity, } from "react-native"; 
 
 import { router } from "expo-router"; 
+import BottomNavbar from '../components/BottomNavbar';
 
  
 
@@ -31,6 +32,7 @@ imageStyle={styles.redSwirl}>
  
 
 </ImageBackground> 
+<BottomNavbar />
 
 </View> 
 

@@ -91,7 +91,7 @@ router.push({
 
 pathname: '/bulletin-board', 
 
-params: { id: item.id, title: item.title } 
+params: { id: item.id, title: item.title,  } 
 
 }); 
 

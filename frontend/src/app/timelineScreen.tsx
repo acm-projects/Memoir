@@ -224,7 +224,7 @@ export default function Timeline() {
                             </Text>
                             <Pressable
                               style={styles.openButton}
-                              onPress={() => { router.replace('/view-folder') }}
+                              onPress={() => { router.replace('/view-folder copy') }}
                             >
                               <Text style={styles.openButtonText}>
                                 Open Folder
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 0,
     alignItems: 'center',
-    backgroundColor: '#9D4D48',
+    backgroundColor: '#6D1B12',
     height: 120,
     width: 100,
     borderRadius: 10,
