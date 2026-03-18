@@ -36,7 +36,11 @@ export default function SignUpScreen() {
         }
 
         if (data.user) {
-          await createDefaultFolder(data.user.id) // Automatically create the default "All Memories" folder for the new user. This ensures that every user starts with a folder to store their memories, improving the initial user experience.
+          const { error: folderError } = await createDefaultFolder(data.user.id) // Automatically create the default "All Memories" folder for the new user. This ensures that every user starts with a folder to store their memories, improving the initial user experience.
+          if (folderError) {
+            console.error('Failed to create default folder:', folderError)
+            // optionally alert the user or retry
+          }
         }
 
         //Success - go to avatar selection screen
