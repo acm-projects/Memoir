@@ -30,7 +30,12 @@ export default function viewFolder() {
 
           {/* Back + Title row */}
           <View style={styles.headerRow}>
-            <Ionicons name="arrow-back" size={24} color="#5A390E" />
+            <Ionicons
+              name="arrow-back"
+              size={24}
+              color="#5A390E"
+              onPress={() => router.push('/timelineScreen' as any)}
+            />
             <Text style={styles.headerText}>Name's Memories</Text>
           </View>
           </View>
