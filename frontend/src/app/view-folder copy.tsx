@@ -19,7 +19,7 @@ export default function viewFolder() {
       {/* Full green swirl background */}
       <View style={{ flex: 1 }}>
       <ImageBackground
-        source={require('../../assets/images/swirly subtle.png')}
+        source={require('../../assets/images/swirly-subtle.png')}
         style={styles.fullBackground}
         imageStyle={{ width: '100%', height: '100%' }}
       >

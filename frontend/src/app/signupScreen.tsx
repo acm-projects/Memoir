@@ -47,7 +47,7 @@ export default function Signup() {
    
      <ImageBackground
      
-       source = {require('../../assets/images/vintage-paper-background.png')} //paper background
+       source = {require('../../assets/images/layered-vintage-paper.png')} //paper background
        style = {styles.paperBackground}
        imageStyle = {{ width:'100%', height:'100%' }}
      >
