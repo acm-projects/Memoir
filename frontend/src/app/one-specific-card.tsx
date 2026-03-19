@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   ImageBackground,
   Image,
   ScrollView,
+  TextInput,
+  TouchableOpacity,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import BottomNavbar from '../components/BottomNavbar';
@@ -27,7 +29,10 @@ export default function OneSpecificCard() {
 
   const imageKey = params.image || 'card1';
   const title = params.title || 'Memory Card';
-  const caption = params.caption || '';
+  const initialCaption = params.caption || '';
+
+  const [caption, setCaption] = useState(initialCaption);
+  const [ocrText, setOcrText] = useState('');
 
   const cardImage = imageMap[imageKey] || imageMap['card1'];
 
@@ -37,9 +42,9 @@ export default function OneSpecificCard() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Top red banner */}
           <ImageBackground source={redSwirl} style={styles.topBanner} imageStyle={{ resizeMode: 'cover' }}>
-            <Text style={styles.backArrow} onPress={() => router.back()}>
-              
-            </Text>
+            <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Text style={styles.backArrow}>{'←'}</Text>
+            </TouchableOpacity>
             <Text style={styles.bannerTitle} numberOfLines={1}>
               {title}
             </Text>
@@ -51,32 +56,45 @@ export default function OneSpecificCard() {
           {/* Title */}
           <Text style={styles.title}>{title}</Text>
 
-          {/* Single swirly image container with tape corners */}
-          <ImageBackground
-            source={swirlySubtle}
-            style={styles.imageWrapper}
-            imageStyle={styles.imageWrapperImage}
-          >
+          {/* Green image container with tape corners (no texture background) */}
+          <View style={styles.imageWrapper}>
             <View style={[styles.tape, styles.tapeTopLeft]} />
             <View style={[styles.tape, styles.tapeTopRight]} />
             <View style={[styles.tape, styles.tapeBottomLeft]} />
             <View style={[styles.tape, styles.tapeBottomRight]} />
 
             <Image source={cardImage} style={styles.cardImage} />
-          </ImageBackground>
-
-          {/* Caption box */}
-          <View style={styles.captionBox}>
-            <Text style={styles.captionText}>
-              {caption || 'Tap to add a caption...'}
-            </Text>
           </View>
 
-          {/* OCR Description box */}
+          {/* Caption box - editable */}
+          <View style={styles.captionBox}>
+            <TextInput
+              style={styles.captionText}
+              placeholder="Tap to add a caption..."
+              placeholderTextColor="#C2A56F"
+              value={caption}
+              onChangeText={setCaption}
+              multiline
+            />
+          </View>
+
+          {/* OCR Description box - editable */}
           <View style={styles.captionBox}>
             <Text style={styles.ocrTitle}>OCR Description:</Text>
-            <Text style={styles.ocrBody}>No OCR text available</Text>
+            <TextInput
+              style={styles.ocrBody}
+              placeholder="No OCR text available"
+              placeholderTextColor="#C2A56F"
+              value={ocrText}
+              onChangeText={setOcrText}
+              multiline
+            />
           </View>
+
+          {/* Save button */}
+          <TouchableOpacity style={styles.saveButton}>
+            <Text style={styles.saveButtonText}>Save</Text>
+          </TouchableOpacity>
         </ScrollView>
       </ImageBackground>
 
@@ -103,7 +121,7 @@ const styles = StyleSheet.create({
   topBanner: {
     height: 100,
     width: '100%',
-    paddingHorizontal: 16,
+    paddingHorizontal: 0, // remove side padding so the red bar touches the edges
     paddingTop: 40,
     flexDirection: 'row',
     alignItems: 'center',
@@ -112,7 +130,7 @@ const styles = StyleSheet.create({
   backArrow: {
     fontSize: 24,
     color: '#F6E5CD',
-    paddingRight: 12,
+    paddingHorizontal: 16,
   },
   bannerTitle: {
     flex: 1,
@@ -134,23 +152,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#6D1B12',
     marginTop: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24, // slightly increase to keep text away from edges
   },
   imageWrapper: {
     backgroundColor: '#4A7568',
-    borderRadius: 16,
-    padding: 12,
-    marginHorizontal: 10,
-    marginTop: 12,
+    width: '90%', // updated from '80%'
+    alignSelf: 'center', // updated from 'stretch'
+    marginHorizontal: 0,
+    marginTop: 32, // move the wrapper lower
+    borderRadius: 10,
+    overflow: 'visible',
+    height: 240,
+    padding: 16,
     position: 'relative',
-    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%', // adjust wrapper width here
-    height: 260,   // adjust wrapper height here
-  },
-  imageWrapperImage: {
-    resizeMode: 'cover',
   },
   cardImage: {
     width: '50%',
@@ -167,23 +183,23 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   tapeTopLeft: {
-    top: 6,
-    left: 6,
+    top: 8,
+    left: 8,
     transform: [{ rotate: '-10deg' }],
   },
   tapeTopRight: {
-    top: 6,
-    right: 6,
+    top: 8,
+    right: 8,
     transform: [{ rotate: '10deg' }],
   },
   tapeBottomLeft: {
-    bottom: 6,
-    left: 6,
+    bottom: 8,
+    left: 8,
     transform: [{ rotate: '8deg' }],
   },
   tapeBottomRight: {
-    bottom: 6,
-    right: 6,
+    bottom: 8,
+    right: 8,
     transform: [{ rotate: '-8deg' }],
   },
   captionBox: {
@@ -207,6 +223,20 @@ const styles = StyleSheet.create({
   ocrBody: {
     fontSize: 14,
     color: '#6D1B12',
+  },
+  saveButton: {
+    backgroundColor: '#6D1B12',
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    alignSelf: 'center',
+    marginTop: 20,
+    marginBottom: 40,
+  },
+  saveButtonText: {
+    color: '#F6E5CD',
+    fontSize: 16,
+    fontWeight: '600',
   },
   navbarWrapper: {
     position: 'absolute',
