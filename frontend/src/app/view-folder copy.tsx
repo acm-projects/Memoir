@@ -28,16 +28,7 @@ export default function viewFolder() {
          
         
 
-          {/* Back + Title row */}
-          <View style={styles.headerRow}>
-            <Ionicons
-              name="arrow-back"
-              size={24}
-              color="#5A390E"
-              onPress={() => router.push('/timelineScreen' as any)}
-            />
-            <Text style={styles.headerText}>Name's Memories</Text>
-          </View>
+        
           </View>
 
           {/* Search bar */}
@@ -68,7 +59,7 @@ export default function viewFolder() {
                 style={styles.folderWrapper}
                 onPress={() => {
                   if (item.isAdd) {
-                    router.push('/create-folder');
+                    router.push('/create-folder(1)');
                   } else {
                     router.push({
                       pathname: '/bulletin-board',
