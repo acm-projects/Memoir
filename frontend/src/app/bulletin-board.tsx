@@ -6,6 +6,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import BackButton from "../components/back-Button";
 
 
+
 type Item = {
   id: string;
   type: "note" | "sticker" | "card";
