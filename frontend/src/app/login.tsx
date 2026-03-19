@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase' // Importing the Supabase client insta
 import { useState } from 'react' // Importing the useState hook from React to manage local state within the component.
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native' // Importing various components from React Native to build the user interface of the login screen.
 import { Link, router } from 'expo-router' // Importing the Link component from Expo Router to enable navigation between different screens in the app.
+import { getProfile } from '@/services/profile.service'
 
 export default function LoginScreen() {
     //state memory to hold what user types
@@ -16,13 +17,26 @@ export default function LoginScreen() {
       return
     }
     setIsLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
     if (error) {
       Alert.alert('Login Error', error.message)
+      setIsLoading(false)
+      return
     }
+
+    // Check if user has an avatar set
+    if (data.user) {
+      const { data: profile } = await getProfile(data.user.id)
+      if (!profile?.avatar_url) {
+        router.replace('/avatar-selection')  // first time user
+      } else {
+        // router.replace('/(tabs)')            // returning user — go to main app
+      }
+    }
+
     setIsLoading(false)
   }
   //visuals (what the user sees) of the login screen -----FRONTEND CHANGES START HERE-----

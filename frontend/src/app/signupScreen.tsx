@@ -43,9 +43,11 @@ export default function SignUpScreen() {
           }
         }
 
-        //Success - go to avatar selection screen
-        router.replace('/avatar-selection')
-        setIsLoading(false)
+        Alert.alert(
+          'Check your email!',
+          'We sent you a confirmation link. Please verify your email before logging in.',
+          [{ text: 'OK', onPress: () => router.replace('/login') }]
+        )
 }
 return (
     <View style={styles.container}>
