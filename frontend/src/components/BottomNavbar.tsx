@@ -20,7 +20,7 @@ export default function BottomNavbar() {
       <TouchableOpacity style={styles.centerButtonWrap} onPress={() => router.push('/upload-card' as any)}>
         <Image source={plusSeal} style={styles.plusSealIcon} resizeMode="contain" />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/view-folder' as any)}>
+      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/view-folder copy' as any)}>
         <Ionicons name="folder-outline" size={28} color="#7a2a2a" style={styles.icon} />
         <Text style={styles.navText}>Folders</Text>
       </TouchableOpacity>
