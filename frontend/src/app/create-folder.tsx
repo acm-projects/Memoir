@@ -15,7 +15,7 @@ return(
 
 <ImageBackground 
 
-source = {require('../../assets/images/vintage-paper-background.png')} 
+source = {require('../../assets/images/layered-vintage-paper.png')} 
 
 style={styles.paperBackground}> 
 

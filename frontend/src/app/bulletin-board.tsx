@@ -97,7 +97,7 @@ export default function BulletinBoard() {
     <View style={styles.container}>
       <ImageBackground 
 
-        source = {require('../../assets/images/vintage-paper-background.png')} 
+        source = {require('../../assets/images/layered-vintage-paper.png')} 
 
 style={styles.paperBackground}> 
 
