@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity,Keyboard } from "react-native";
 import { useRouter } from "expo-router";
 
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -89,8 +89,10 @@ export default function DraggableItem({ item, deleteItem, isEditing}: any){
         <TextInput
         defaultValue={item.content}
         multiline
+        returnKeyType="done"
+        onSubmitEditing={Keyboard.dismiss} 
         style={[
-        styles.note,
+          styles.note,
       { backgroundColor: item.color || "#FFF6A3" }
   ]}
 />
@@ -138,6 +140,28 @@ export default function DraggableItem({ item, deleteItem, isEditing}: any){
         );
       }
     }
+    if (item.type === "sticker") {
+  const isPhoto = 
+    item.sticker?.startsWith("file")
+
+  if (isPhoto) {
+    return (
+      <Image
+        source={{ uri: item.sticker }}
+        style={{ width: 120, height: 120, borderRadius: 8 }}
+        resizeMode="cover"
+      />
+    );
+  }
+
+  return (
+    <Image
+      source={STICKERS[item.sticker]}
+      style={{ width: 80, height: 80 }}
+      resizeMode="contain"
+    />
+  );
+}
   }
 
   return (
