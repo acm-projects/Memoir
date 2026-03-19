@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, TextInput, Image } from "react-native";
+import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
 
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -9,6 +10,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 export default function DraggableItem({ item, deleteItem, isEditing}: any){
+  const router = useRouter();
 
   const x = useSharedValue(item.x);
   const y = useSharedValue(item.y);
@@ -106,11 +108,35 @@ export default function DraggableItem({ item, deleteItem, isEditing}: any){
     }
 
     if (item.type === "card") {
-      return (
-        <View style={styles.card}>
-          <Text>{item.content}</Text>
-        </View>
-      );
+      if (item.image) {
+        return (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => {
+              router.push({
+                pathname: "/one-specific-card" as any,
+                params: {
+                  image: item.content, // 'card1', 'card2', 'card3'
+                  title: item.content,
+                  caption: "",
+                },
+              });
+            }}
+          >
+            <Image
+              source={item.image}
+              style={{ width: 120, height: 160, borderRadius: 8 }}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
+        );
+      } else {
+        return (
+          <View style={styles.card}>
+            <Text>{item.content}</Text>
+          </View>
+        );
+      }
     }
   }
 

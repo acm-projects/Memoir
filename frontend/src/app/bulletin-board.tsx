@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Pressable, ImageBackground,Image } from "react-native";
+import { View, Text, StyleSheet, Pressable, ImageBackground, Image, TouchableOpacity } from "react-native";
 import DraggableItem from "../components/draggableItem";
 import BottomNavbar from '../components/BottomNavbar';
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import BackButton from "../components/back-Button";
 
 
@@ -14,6 +14,7 @@ type Item = {
   y: number;
   color?: string;
   sticker?: string;
+  image?: any;
 };
 
 export default function BulletinBoard() {
@@ -29,8 +30,33 @@ export default function BulletinBoard() {
       x: 120,
       y: 120,
     },
+    {
+      id: '2',
+      type: 'card',
+      content: 'card1',
+      x: 30,
+      y: 260,
+      image: require('../../assets/images/cards.jpg'),
+    },
+    {
+      id: '3',
+      type: 'card',
+      content: 'card2',
+      x: 200,
+      y: 400,
+      image: require('../../assets/images/card2.jpg'),
+    },
+    {
+      id: '4',
+      type: 'card',
+      content: 'card3',
+      x: 60,
+      y: 550,
+      image: require('../../assets/images/card3.jpg'),
+    },
   ]);
 
+  const router = useRouter();
   const NOTE_COLORS = [
     "#FFF6A3",
     "#FFD6D6",
@@ -41,9 +67,9 @@ export default function BulletinBoard() {
 
   const STICKERS = [
     { key: "star", source: require("../../assets/images/star-stamp.png") },
-  { key: "heart", source: require("../../assets/images/costa-rica-stamp.png"), },
-  { key: "flower", source: require("../../assets/images/Australia-Stamp.png") },
-    ];
+    { key: "heart", source: require("../../assets/images/costa-rica-stamp.png") },
+    { key: "flower", source: require("../../assets/images/Australia-Stamp.png") },
+  ];
 
   function addNote(color: string) {
     setItems([
@@ -75,8 +101,6 @@ export default function BulletinBoard() {
     setShowStickerPicker(false);
   }
 
-  
-  
   function deleteItem(id: string) {
     setItems(items.filter((item) => item.id !== id));
   }
@@ -96,98 +120,94 @@ export default function BulletinBoard() {
   return (
     <View style={styles.container}>
       <ImageBackground 
-
-        source = {require('../../assets/images/layered-vintage-paper.png')} 
-
-style={styles.paperBackground}> 
-
-<ImageBackground 
-
-source = {require('../../assets/images/RED swirl subtle.png')} 
-
-imageStyle={styles.redSwirl}> 
-</ImageBackground> 
-    <BackButton />
-    <View style = {{ flexDirection: 'row' , padding:5, alignItems: "flex-end",marginTop:50, justifyContent: "space-between"}}>
-      <Text style = {styles.folderName}>{title}</Text>
-      <Image source = {require('../../assets/images/star-stamp.png')} 
-      style = {styles.folderImage}
-      />
-      
-
-
-      </View>
-      
-      {/* TOOLBAR */}
-      <View style={styles.toolbar}>
-      <Pressable style={styles.button} onPress={() => setIsEditing(!isEditing)}>
-        <Text style={styles.buttonText}>{isEditing ? "Done" : "Edit"}</Text>
-      </Pressable>
-      <Pressable style={styles.plusButton} onPress={() => setShowMenu(!showMenu)}>
-        <Text style={styles.plusText}>+</Text>
-        </Pressable>
-      </View>
-
-
-
-      {showMenu && (
-        <View style={styles.addMenu}>
-          <Pressable style={styles.menuItem} onPress={() => { setShowColorPicker(true); setShowMenu(false); }}>
-            <Text style={styles.menuText}>Add Note</Text>
-          </Pressable>
-          <Pressable style={styles.menuItem} onPress={() => { setShowStickerPicker(true); setShowMenu(false); }}>
-            <Text style={styles.menuText}>Add Sticker</Text>
-          </Pressable>
-          {/*<Pressable style={styles.menuItem} onPress={() => { pickImage(); setShowMenu(false); }}>
-            <Text style={styles.menuText}>Upload Photo</Text>
-          </Pressable>*/}
+        source={require('../../assets/images/layered-vintage-paper.png')} 
+        style={styles.paperBackground}
+      > 
+        <ImageBackground 
+          source={require('../../assets/images/RED swirl subtle.png')} 
+          imageStyle={styles.redSwirl}
+        >
+        </ImageBackground> 
+        <BackButton />
+        <View style = {{ flexDirection: 'row' , padding:5, alignItems: "flex-end",marginTop:50, justifyContent: "space-between"}}>
+          <Text style = {styles.folderName}>{title}</Text>
+          <Image source = {require('../../assets/images/star-stamp.png')} 
+          style = {styles.folderImage}
+          />
         </View>
-      )}
-
-      
-
-      {/* BOARD */}
-      <View style={styles.board}>
-        {items.map((item) => (
-          <DraggableItem key={item.id} item={item}  deleteItem={deleteItem} isEditing={isEditing} />
-        ))}
-
-      </View>
-
-          {isEditing && (
-            <View style={styles.trashZone}>
-              <Text style={styles.trashText}>🗑 Drop to delete</Text>
-            </View>
-          )}
-
-          {/* FLOATING COLOR PICKER */}
-          {showColorPicker && (
-        <View style={styles.floatingPicker}>
-          {NOTE_COLORS.map((color) => (
-            <Pressable
-              key={color}
-              style={[styles.colorCircle, { backgroundColor: color }]}
-              onPress={() => addNote(color)}
-      />
-    ))}
-  </View>
-)}
-          {showStickerPicker && (
-            <View style={styles.StickerPicker}>
-              {STICKERS.map((sticker) => (
-                <Pressable
-                  key={sticker.key}
-                  onPress={() => addSticker(sticker.key)}
-                >
-                  <Image source={sticker.source} style={{ width: 50, height: 50 }} />
-                </Pressable>
-              ))}
-            </View>
-          )}
-      
+        
+        {/* TOOLBAR */}
+        <View style={styles.toolbar}>
+        <Pressable style={styles.button} onPress={() => setIsEditing(!isEditing)}>
+          <Text style={styles.buttonText}>{isEditing ? "Done" : "Edit"}</Text>
+        </Pressable>
+        <Pressable style={styles.plusButton} onPress={() => setShowMenu(!showMenu)}>
+          <Text style={styles.plusText}>+</Text>
+          </Pressable>
+        </View>
 
 
-      
+
+        {showMenu && (
+          <View style={styles.addMenu}>
+            <Pressable style={styles.menuItem} onPress={() => { setShowColorPicker(true); setShowMenu(false); }}>
+              <Text style={styles.menuText}>Add Note</Text>
+            </Pressable>
+            <Pressable style={styles.menuItem} onPress={() => { setShowStickerPicker(true); setShowMenu(false); }}>
+              <Text style={styles.menuText}>Add Sticker</Text>
+            </Pressable>
+            {/*<Pressable style={styles.menuItem} onPress={() => { pickImage(); setShowMenu(false); }}>
+              <Text style={styles.menuText}>Upload Photo</Text>
+            </Pressable>*/}
+          </View>
+        )}
+
+        
+
+        {/* BOARD */}
+        <View style={styles.board}>
+          {items.map((item) => (
+            <DraggableItem
+              key={item.id}
+              item={item}
+              deleteItem={deleteItem}
+              isEditing={isEditing}
+            />
+          ))}
+        </View>
+
+        {isEditing && (
+          <View style={styles.trashZone}>
+            <Text style={styles.trashText}>🗑 Drop to delete</Text>
+          </View>
+        )}
+
+        {/* FLOATING COLOR PICKER */}
+        {showColorPicker && (
+          <View style={styles.floatingPicker}>
+            {NOTE_COLORS.map((color) => (
+              <Pressable
+                key={color}
+                style={[styles.colorCircle, { backgroundColor: color }]}
+                onPress={() => addNote(color)}
+              />
+            ))}
+          </View>
+        )}
+        {showStickerPicker && (
+              <View style={styles.StickerPicker}>
+                {STICKERS.map((sticker: { key: string; source: any }) => (
+                  <Pressable
+                    key={sticker.key}
+                    onPress={() => addSticker(sticker.key)}
+                  >
+                    <Image source={sticker.source} style={{ width: 50, height: 50 }} />
+                  </Pressable>
+                ))}
+              </View>
+            )}
+        
+
 
  
 
@@ -360,4 +380,3 @@ const styles = StyleSheet.create({
 });
 
 
- 
