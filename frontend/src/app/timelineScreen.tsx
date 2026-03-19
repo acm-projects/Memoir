@@ -224,7 +224,12 @@ export default function Timeline() {
                             </Text>
                             <Pressable
                               style={styles.openButton}
-                              onPress={() => { router.replace('/view-folder copy') }}
+                              onPress={() => {
+                                router.push({
+                                  pathname: '/bulletin-board',
+                                  params: { id: item.id, title: item.title },
+                                });
+                              }}
                             >
                               <Text style={styles.openButtonText}>
                                 Open Folder
