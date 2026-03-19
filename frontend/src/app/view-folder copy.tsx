@@ -59,7 +59,7 @@ export default function viewFolder() {
                 style={styles.folderWrapper}
                 onPress={() => {
                   if (item.isAdd) {
-                    router.push('/create-folder(1)');
+                    router.push('/create-folder');
                   } else {
                     router.push({
                       pathname: '/bulletin-board',
