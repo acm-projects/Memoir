@@ -12,19 +12,21 @@ export default function ChatRoomHeader({ user, router }) {
         title: '',
         headerShadowVisible: false,
         headerStyle: {
-        backgroundColor: '#9D4D48',
+        backgroundColor: '#590502',
+        headerLeftContainerStyle: {
+        backgroundColor: 'transparent',},
         },
         headerLeft: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'transparent', paddingLeft: 10}}>
                 <TouchableOpacity onPress={() => router.back()}>
-                <Entypo name="chevron-left" size={24} color="black" />
+                    <Entypo name="chevron-left" size={24} color="#F5EEE1" />
                 </TouchableOpacity>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 10}}>
                 <Image
                     source={require('../../assets/images/origami-gorilla.png')}
-                    style={{ height: hp(5), width: hp(5), borderRadius: 100 }}
+                    style={{ height: hp(5), width: hp(5)}}
                 />
-                <Text style={{ fontSize: 16, fontWeight: '500', alignItems: 'center'}}>Teju</Text>
+                <Text style={{ fontSize: 16, fontWeight: '500', alignItems: 'center', color: 'white'}}>Teju</Text>
                 </View>
             </View>
         )
