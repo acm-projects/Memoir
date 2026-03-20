@@ -11,7 +11,7 @@ const ios = Platform.OS === 'ios';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#9D4D48'
+    backgroundColor: '#590502'
   },
   title: {
     fontFamily: 'Calistoga',
@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4
   },
   userCard: {
-  backgroundColor: 'white',
+  backgroundColor: '#f5f0e8',
   borderRadius: 12,
   padding: 18, // thickness 
   marginBottom: 15,
@@ -63,7 +63,7 @@ columnWrapper: {
 });
 export default function Messages() {
   const {top} = useSafeAreaInsets();
-  const [users, setusers] = useState([
+  const [users, setusers] = useState([ // fetch from backend in future
     { id: 1, name: 'Teju', lastMessage: 'memoir the best project', avatar: require('../../assets/images/origami-gorilla.png') },
     { id: 2, name: 'Kasish', lastMessage: 'hi', avatar: require('../../assets/images/default-avatar.png') },
     { id: 3, name: 'Jiya', lastMessage: 'we will win first place!', avatar: require('../../assets/images/origami-fox.png') },
