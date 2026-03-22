@@ -1,7 +1,8 @@
-import { Stack } from "expo-router";
-import { useFonts, Montaga_400Regular } from '@expo-google-fonts/montaga';
-import { Inter_400Regular } from '@expo-google-fonts/inter';
 import { Calistoga_400Regular } from '@expo-google-fonts/calistoga';
+import { Inter_400Regular } from '@expo-google-fonts/inter';
+import { Montaga_400Regular, useFonts } from '@expo-google-fonts/montaga';
+import { Stack } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "./global.css";
 
 export default function RootLayout() {
@@ -12,10 +13,13 @@ export default function RootLayout() {
   });
 
   if (!loaded) return null;
+  
 
-  return( 
-  <Stack screenOptions={{ headerShown: false }}>
-  <Stack.Screen name="chatRoom" options={{ headerShown: true }} />
-</Stack>
-  )
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="chatRoom" options={{ headerShown: true }} />
+      </Stack>
+    </GestureHandlerRootView>
+  );
 }
