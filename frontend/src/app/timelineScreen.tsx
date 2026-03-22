@@ -1,51 +1,68 @@
-import { View, StyleSheet, FlatList, Text, Image, ActivityIndicator, Pressable } from 'react-native'
-import React, { useState, useEffect } from 'react'
-import { ImageBackground } from 'expo-image';
-import Svg, { Path, Circle } from 'react-native-svg';
-import { router } from "expo-router";
-import { Ionicons } from '@expo/vector-icons';
-import BottomNavbar from '../components/BottomNavbar';
+import { View, StyleSheet, FlatList, Text, Image, ActivityIndicator, Pressable } from 'react-native' // Importing necessary components from React Native
+import React, { useState, useEffect } from 'react' // Importing React and its hooks for managing state and side effects
+import { ImageBackground } from 'expo-image'; // Importing ImageBackground component from Expo for using background images in the timeline screen
+import Svg, { Path, Circle } from 'react-native-svg'; // Importing components from react-native-svg to create custom SVG graphics for the timeline paths and circles
+import { router } from "expo-router"; // Importing router from Expo Router to enable navigation between different screens in the app
+import { Ionicons } from '@expo/vector-icons'; // Importing Ionicons from Expo Vector Icons to use icons in the dropdown menus for month and year selection
+import BottomNavbar from '../components/BottomNavbar'; // Importing a custom BottomNavbar component, which is likely a navigation bar that appears at the bottom of the timeline screen for easy access to other parts of the app
+import { supabase } from '../lib/supabase'; // Importing the Supabase client for interacting with the database, which may be used to fetch timeline data and user information
 
-const MOCK_API = {
-  data: [
-    { id: '1', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '2', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/star-stamp.png') },
-    { id: '3', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/Australia-Stamp.png') },
-    { id: '4', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '5', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '6', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '7', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/star-stamp.png') },
-    { id: '8', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/Australia-Stamp.png') },
-    { id: '9', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '10', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '11', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '12', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/star-stamp.png') },
-    { id: '13', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/Australia-Stamp.png') },
-    { id: '14', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '15', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-  ],
-  metadata: {
-    currentPage: 1,
-    hasNextPage: true,
-    totalPages: 5
-  }
-};
+// const MOCK_API = {
+//   data: [
+//     { id: '1', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
+//     { id: '2', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/star-stamp.png') },
+//     { id: '3', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/Australia-Stamp.png') },
+//     { id: '4', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
+//     { id: '5', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
+//     { id: '6', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
+//     { id: '7', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/star-stamp.png') },
+//     { id: '8', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/Australia-Stamp.png') },
+//     { id: '9', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
+//     { id: '10', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
+//     { id: '11', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
+//     { id: '12', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/star-stamp.png') },
+//     { id: '13', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/Australia-Stamp.png') },
+//     { id: '14', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
+//     { id: '15', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
+//   ],
+//   metadata: {
+//     currentPage: 1,
+//     hasNextPage: true,
+//     totalPages: 5
+//   }
+// };
 
-interface Stamp {
+// interface Stamp {
+//   id: string;
+//   title: string;
+//   date: string;
+//   side: string;
+//   image: any;
+// }
+
+
+interface Folder { // Defining a TypeScript interface for a Folder object, which represents a memory folder in the timeline
   id: string;
-  title: string;
-  date: string;
-  side: string;
-  image: any;
+  name: string;
+  event_date: string | null;
+  cover_image_url: string | null;
+  created_at: string;
+  side?: string;
+}
+
+interface Profile { // Defining a TypeScript interface for a Profile object, which represents a user's profile information
+  full_name: string | null;
+  birthday: string | null;
 }
 
 export default function Timeline() {
-  const [items, setItems] = useState<Stamp[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [monthOpen, setMonthOpen] = useState(false);
-  const [yearOpen, setYearOpen] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState("March");
-  const [selectedYear, setSelectedYear] = useState("2026");
+  const [folders, setFolders] = useState<Folder[]>([]); // State to hold the list of memory folders fetched from the database
+  const [profile, setProfile] = useState<Profile | null>(null); // State to hold the user's profile information fetched from the database
+  const [loading, setLoading] = useState(false); // State to indicate whether the timeline data is still being loaded from the database
+  const [monthOpen, setMonthOpen] = useState(false); // State to manage the visibility of the month dropdown menu
+  const [yearOpen, setYearOpen] = useState(false); // State to manage the visibility of the year dropdown menu
+  const [selectedMonth, setSelectedMonth] = useState("March"); // State to hold the currently selected month for filtering the timeline
+  const [selectedYear, setSelectedYear] = useState("2026"); // State to hold the currently selected year for filtering the timeline
 
   const months = [
     "January", "February", "March", "April", "May", "June",
@@ -53,6 +70,60 @@ export default function Timeline() {
   ];
 
   const years = ["2023", "2024", "2025", "2026"];
+
+  useEffect(() => {
+    fetchData(selectedMonth, selectedYear);
+  }, [selectedMonth, selectedYear]);
+
+  async function fetchData(month: string, year: string) {
+    setLoading(true); // Set loading state to true while we fetch data from the database
+
+    const { data: { user } } = await supabase.auth.getUser(); // Get the currently authenticated user
+
+    if(!user) return;
+
+    //Fetch profile info
+    const { data: profileData } = await supabase.from('profiles').select('full_name, birthday').eq('id', user.id).single(); // Fetch the user's profile information from the 'profiles' table in the database
+
+    if(profileData) { setProfile(profileData); } // If profile data is successfully fetched, update the profile state with the fetched data
+
+    // Fetch folders
+    const monthIndex = months.indexOf(month) + 1;
+    const paddedMonth = monthIndex.toString().padStart(2, '0');
+    const startDate = `${year}-${paddedMonth}-01`;
+    const endDate = `${year}-${paddedMonth}-31`;
+
+    const { data: foldersData, error } = await supabase
+      .from('folders')
+      .select('id, name, event_date, cover_image_url, created_at')
+      .eq('user_id', user.id)
+      .eq('is_default', false)
+      .gte('event_date', startDate)
+      .lte('event_date', endDate)
+      .order('event_date', { ascending: true });
+
+    if (error) {
+      console.error('Failed to fetch folders:', error);
+    } else if (foldersData) {
+      setFolders(foldersData);
+    }
+
+    setLoading(false);
+    
+  }
+
+  const getBirthYear = () => {
+    if(!profile?.birthday) return "?";
+    return new Date(profile.birthday).getFullYear(); // Helper function to extract the birth year from the user's birthday, which is used in the timeline footer to display a message about making memories since the user's birth year
+  };
+
+  const getDisplayDate = (folder: Folder) => {
+    if(folder.event_date) {
+      return new Date(folder.event_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); // Helper function to format the event date of a memory folder into a more readable format for display in the timeline
+    }
+
+    return new Date(folder.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); // If there is no event date, use the creation date of the folder as a fallback for display in the timeline
+  };
 
   const CurvedTimelinePath = ({ isEven }: { isEven: boolean }) => {
     const circleX = isEven ? 72 : 27;
@@ -91,32 +162,16 @@ export default function Timeline() {
     );
   };
 
-  const [selectedStamp, setSelectedStamp] = useState<Stamp | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
 
-  useEffect(() => {
-    const firstBatch = MOCK_API.data.slice(0, 5);
-    setItems(firstBatch);
-  }, []);
-
-  const fetchNextPage = async () => {
-    if (loading || items.length >= MOCK_API.data.length) {
-      return;
-    }
-
-    setLoading(true);
-
-    setTimeout(() => {
-      const start = items.length;
-      const end = start + 5;
-      const nextBatch = MOCK_API.data.slice(start, end);
-
-      setItems((existingItems) => {
-        return [...existingItems, ...nextBatch];
-      });
-
-      setLoading(false);
-    }, 100);
-  };
+  // Show loading indicator while data is being fetched
+  if(loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color="#4A3728" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -126,8 +181,9 @@ export default function Timeline() {
         source={require('../../assets/images/RED swirl subtle.png')}
       >
         <Text style={styles.welcomeBackHeader}>
-          Welcome Back, Name
+          Welcome Back, {profile?.full_name ?? 'Friend'}! 
         </Text>
+
         <View style={styles.dropdownRow}>
           <View style={styles.dropdownContainer}>
             <Pressable
@@ -194,8 +250,8 @@ export default function Timeline() {
             style={styles.paperBackground}
           >
             <FlatList
-              data={items}
-              keyExtractor={(item, index) => item.id + index}
+              data={folders}
+              keyExtractor={(item) => item.id}
               renderItem={({ item, index }) => {
                 const isEven = index % 2 === 0;
 
@@ -210,24 +266,22 @@ export default function Timeline() {
                       }
                     ]}>
                       <View style={[styles.stampContainer,]}>
-                        <Pressable onPress={() => setSelectedStamp(item)}>
+                        <Pressable onPress={() => setSelectedFolder(item)}>
                           <Image
-                            source={item.image}
+                            source={item.cover_image_url ? { uri: item.cover_image_url } : require('../../assets/images/star-stamp.png')} // Display the cover image of the folder if it exists, otherwise display a default stamp image
                             style={styles.stampImage}
                           />
                         </Pressable>
-                        {selectedStamp?.id === item.id && (
+                        {selectedFolder?.id === item.id && (
                           <View style={styles.infoCard}>
-                            <Text style={styles.folderTitle}>{item.title}</Text>
-                            <Text style={styles.folderDate}>
-                              {item.date}
-                            </Text>
+                            <Text style={styles.folderTitle}>{item.name}</Text>
+                            <Text style={styles.folderDate}>{getDisplayDate(item)}</Text>
                             <Pressable
                               style={styles.openButton}
                               onPress={() => {
                                 router.push({
                                   pathname: '/bulletin-board',
-                                  params: { id: item.id, title: item.title },
+                                  params: { id: item.id, title: item.name },
                                 });
                               }}
                             >
@@ -242,18 +296,19 @@ export default function Timeline() {
                   </View>
                 );
               }}
-              onEndReached={fetchNextPage}
-              onEndReachedThreshold={0.5}
+
               showsVerticalScrollIndicator={false}
+              ListEmptyComponent={() => (
+                <View style={{ padding: 30, alignItems: 'center' }}>
+                  <Text style={{ color: '#4A3728' }}>No folders yet — create one!</Text>
+                </View>
+              )}
+
               ListFooterComponent={() => (
                 <View style={{ padding: 30 }}>
-                  {loading ? (
-                    <ActivityIndicator size="large" color="#4A3728" />
-                  ) : (
-                    <Text style={{ textAlign: 'center', color: '#4A3728' }}>
-                      {items.length >= MOCK_API.data.length ? "Making Memories since *Birth Year* " : "Scroll for more"}
-                    </Text>
-                  )}
+                  <Text style={{ textAlign: 'center', color: '#4A3728' }}>
+                    Making Memories since {getBirthYear()}
+                  </Text>
                 </View>
               )}
             />
