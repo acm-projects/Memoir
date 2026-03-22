@@ -1,33 +1,83 @@
-import React, { useState } from "react";
-import {View,Text,TextInput,StyleSheet,Pressable,ScrollView,Image,ImageBackground,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import {View,Text,TextInput,StyleSheet,Pressable,ScrollView,Image,ImageBackground} from "react-native";
 import { useRouter } from "expo-router";
 import BackButton from "../components/back-Button";
 import BottomNavbar from '../components/BottomNavbar';
+import { supabase } from '../lib/supabase';
+import { createFolder } from '@/services/folders.service';
 
 
-const STAMPS = [
-  { key: "star", source: require("../../assets/images/star-stamp.png"), label: "Star" },
-  { key: "costa-rica", source: require("../../assets/images/costa-rica-stamp.png"), label: "Costa Rica" },
-  { key: "australia", source: require("../../assets/images/Australia-Stamp.png"), label: "Australia" },
-  { key: "bird", source: require("../../assets/images/bird-stamp.png"), label: "bird" },
-  { key: "brazil", source: require("../../assets/images/brasil-stamp.png"), label: "brazil" },
-
-
-];
+interface Stamp {
+  id: string;
+  name: string;
+  image_url: string;
+}
 
 export default function CreateFolder() {
   const [title, setTitle] = useState("");
-  const [selectedStamp, setSelectedStamp] = useState<string | null>(null);
+  const [selectedStamp, setSelectedStamp] = useState<Stamp | null>(null);
+  const [stamps, setStamps] = useState<Stamp[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
   const router = useRouter();
 
-  function handleCreate() {
-    if (!title.trim() || !selectedStamp) return;
-    
-    router.back();
+  useEffect(() => {
+    fetchStamps();
+  }, []);
+
+  async function fetchStamps() {
+    setLoading(true);
+    const { data, error } = await supabase.storage.from('stamps').list();
+
+    if (error) {
+      console.error('Error fetching stamps:', error);
+      setLoading(false);
+      return;
+    }
+
+    if (data) {
+      const stampList = data.map((file) => ({
+        id: file.name,
+        name: file.name.replace('.png', '').replace('-stamp', '').replace('-', ' '),
+        image_url: `https://nlihdtztcytseukfelcc.supabase.co/storage/v1/object/public/stamps/${file.name}`,
+      }));
+      setStamps(stampList);
+    }
+    setLoading(false);
+
   }
 
-  const selected = STAMPS.find((s) => s.key === selectedStamp);
+  async function handleCreate() {
+    if (!title.trim() || !selectedStamp) return;
+    
+    setCreating(true);
+
+    const { data: { user }} = await supabase.auth.getUser();
+
+    if(!user) {
+      setCreating(false);
+      return;
+    }
+    
+    const { data: folder, error } = await createFolder(user.id, {
+      name: title.trim(),
+      cover_image_url: selectedStamp.image_url,
+      is_default: false,
+    });
+
+    if (error) {
+      console.error('Failed to create folder:', error);
+      setCreating(false);
+      return;
+    }
+
+    setCreating(false);
+    router.push({
+      pathname: '/bulletin-board',
+      params: { id: folder.id, title: folder.name },
+    });
+  }
+
   const canCreate = title.trim().length > 0 && selectedStamp !== null;
 
   return (
@@ -63,15 +113,15 @@ export default function CreateFolder() {
             contentContainerStyle={styles.stampsRow}
             >
        
-          {STAMPS.map((stamp) => {
-            const isSelected = selectedStamp === stamp.key;
+          {stamps.map((stamp) => {
+            const isSelected = selectedStamp?.id === stamp.id;
             return (
               <Pressable
-                key={stamp.key}
+                key={stamp.id}
                 style={[styles.stampBtn, isSelected && styles.stampBtnSelected]}
-                onPress={() => setSelectedStamp(stamp.key)}
+                onPress={() => setSelectedStamp(stamp)}
               >
-                <Image source={stamp.source} style={styles.stampImage} />
+                <Image source={{ uri: stamp.image_url }} style={styles.stampImage} />
               </Pressable>
             );
           })}
@@ -80,33 +130,15 @@ export default function CreateFolder() {
 
           {/* Divider */}
           <View style={styles.divider} />
-
-          
-
           {/* Create button */}
           <Pressable
             style={[styles.createBtn, !canCreate && styles.createBtnDisabled]}
-            disabled={!canCreate}
-            onPress={() => {
-                             
-                        router.push({
-                        pathname: "/bulletin-board",
-                        params: {
-                            id: Date.now().toString(),
-                            title: title.trim(),
-                            stamp: selectedStamp,
-          },
-        });
-                              }}
-                            
+            disabled={!canCreate || creating}
+            onPress={handleCreate}
           >
-            <Text style={styles.createBtnText}>Create folder</Text>
+            <Text style={styles.createBtnText}>{creating ? 'Creating...' : 'Create folder'}</Text>
           </Pressable>
-
-
-
         </View>
-       
         </ImageBackground>
       </ScrollView>
       <BottomNavbar />
