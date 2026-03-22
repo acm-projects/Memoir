@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import BottomNavbar from '../components/BottomNavbar';
 import { Bell, Lock, ShieldCheck, LogOut, ChevronLeft, Settings } from 'lucide-react-native';
@@ -14,22 +14,24 @@ export default function SettingsPage() {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={styles.root}>
+    <View style={styles.root}>
+      {/* Top-left back button to mirror profile layout */}
+      <TouchableOpacity style={styles.backButtonFloating} onPress={() => router.back()}>
+        <View style={styles.backCircle}>
+          <ChevronLeft {...({ size: 22, color: '#7B1D1D' } as IconProps)} />
+        </View>
+      </TouchableOpacity>
+
       <View style={styles.mainContent}>
-        {/* Top settings card */}
-        <View style={styles.topCard}>
-          {/* Back button */}
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ChevronLeft {...({ size: 24, color: '#7B1D1D' } as IconProps)} />
-          </TouchableOpacity>
-
-          {/* Centered settings icon and title */}
-          <View style={styles.topCardContent}>
+        {/* Settings Card: green outer, beige inner, similar to profile */}
+        <View style={styles.outerCard}>
+          <View style={styles.innerCard}>
+            {/* Icon circle */}
             <View style={styles.settingsIconCircle}>
-              <Settings {...({ size: 52, color: '#7B1D1D' } as IconProps)} />
+              <Settings {...({ size: 40, color: '#7B1D1D' } as IconProps)} />
             </View>
+            {/* Title */}
             <Text style={styles.settingsTitle}>Settings</Text>
-
             {/* Ornamental divider */}
             <View style={styles.dividerRow}>
               <Text style={styles.dividerFlourish}>❧</Text>
@@ -88,7 +90,7 @@ export default function SettingsPage() {
       <View style={styles.navbarContainer}>
         <BottomNavbar />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -100,39 +102,64 @@ const styles = StyleSheet.create({
   mainContent: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 120,
+    paddingTop: 180,
     paddingBottom: 80,
   },
-  topCard: {
+  // Floating back button similar positioning to profile's settings button
+  backButtonFloating: {
+    position: 'absolute',
+    top: 56,
+    left: 20,
+    zIndex: 10,
+  },
+  backCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#EDE8D9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Green outer and beige inner, mirroring profile card
+  outerCard: {
+    backgroundColor: '#4F7C6E',
     borderRadius: 24,
+    padding: 16,
     width: width * 0.88,
-    paddingVertical: 20,
-    paddingHorizontal: 18,
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     zIndex: 2,
   },
-  backButton: {
-    position: 'absolute',
-    top: 16,
-    left: 18,
-    zIndex: 3,
-  },
-  topCardContent: {
+  innerCard: {
+    backgroundColor: '#EDE8D9',
+    borderRadius: 18,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    paddingTop: 60, // moved icon + title further down
     alignItems: 'center',
+    width: '100%',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
   },
   settingsIconCircle: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: 'rgba(123,29,29,0.1)',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 4,
+    borderColor: '#7B1D1D',
+    backgroundColor: '#EDE8D9',
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'center',
-    marginTop: 10,
+    marginTop: -40,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
   settingsTitle: {
     marginTop: 8,
