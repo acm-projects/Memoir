@@ -8,8 +8,8 @@ import BottomNavbar from '../components/BottomNavbar';
 const paperTexture = require('../../assets/images/layered-vintage-paper.png');
 const swirlyBg = require('../../assets/images/swirly-subtle.png');
 
-// simple helper to create a temporary id without crypto
-const createTempId = () => `card-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+// // simple helper to create a temporary id without crypto
+// const createTempId = () => `card-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
 
 export default function UploadCard() {
   const router = useRouter();
@@ -19,7 +19,6 @@ export default function UploadCard() {
   const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedFolder, setSelectedFolder] = useState<number | string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const safeUploadedImages = Array.isArray(uploadedImages) ? uploadedImages : [];
@@ -85,16 +84,26 @@ export default function UploadCard() {
   };
 
   const onNext = () => {
-    const card = {
-      id: createTempId(),
-      image: safeUploadedImages,
-      title,
-      caption,
-      date: selectedDate ? selectedDate.toISOString() : null,
-      folderId: selectedFolder,
-    };
-    console.log('Next (saved to temp)', card);
-    router.push('/selectMemory' as any);
+    if (!title.trim()) {
+      alert('Please add a title');
+      return;
+    }
+    
+    if(safeUploadedImages.length === 0) {
+      alert('Please upload at least one image');
+      return;
+    }
+    
+    //Pass daya to selectMemory via params
+    router.push({
+      pathname: '/selectMemory',
+      params: {
+        images: JSON.stringify(safeUploadedImages),
+        title: title.trim(),
+        caption: caption.trim(),
+        date: selectedDate ? selectedDate.toISOString() : '',
+      },
+    });
   };
 
   return (
