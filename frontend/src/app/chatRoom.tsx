@@ -9,6 +9,8 @@ import { heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { TouchableOpacity } from "react-native";
 import { Feather } from '@expo/vector-icons';
 import { ScrollView } from "react-native";
+import { MenuView, MenuComponentRef } from '@react-native-menu/menu';
+
 
 
 const MOCK_MESSAGES = [

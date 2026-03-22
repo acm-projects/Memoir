@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Calistoga',
-    fontSize: 40,
+    fontSize: 35,
     color: '#f5f0e8',
     textAlign: 'center',
     marginTop: 20,
@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
   },
   userCard: {
   backgroundColor: '#f5f0e8',
-  borderRadius: 12,
+  borderRadius: 8,
   padding: 18, // thickness 
   marginBottom: 15,
   marginHorizontal: 16,
@@ -60,9 +60,25 @@ columnWrapper: {
   marginBottom: 40, // Space between rows
   gap: 20,
 },
+
+searchBox: {
+  backgroundColor: '#f5f0e8',
+  borderRadius: 12,
+  paddingHorizontal: 20,
+  paddingVertical: 10,
+  borderWidth: 1,
+
+}
+
 });
 export default function Messages() {
   const {top} = useSafeAreaInsets();
+  const [searchQuery, setSearchQuery] = useState(''); // sets search query for search bar, implement search logic in handleSearch function
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    // Implement search logic here, e.g., filter users based on the query
+  }
+  
   const [users, setusers] = useState([ // fetch from backend in future
     { id: 1, name: 'Teju', lastMessage: 'memoir the best project', avatar: require('../../assets/images/origami-gorilla.png') },
     { id: 2, name: 'Kasish', lastMessage: 'hi', avatar: require('../../assets/images/default-avatar.png') },
@@ -76,6 +92,7 @@ export default function Messages() {
         {id:'3', image: require('../../assets/images/origami-fox.png')},
 
    ];
+   const filteredUsers = users.filter(user => user.name.toLowerCase().includes(searchQuery.toLowerCase()));
    const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
    const openChatRoom = (user: any) => {
     // Placeholder for navigation to chat room
@@ -83,6 +100,8 @@ export default function Messages() {
   }
   return(
     <View style={[styles.container, {paddingTop: ios ? top : top+10}]}>
+      <TextInput placeholder="Search" clearButtonMode="always" style={styles.searchBox}
+      value={searchQuery} onChangeText={(query) => handleSearch(query)} />
       <Text style={styles.title}>Messages</Text>
       <FlatList
                 data={AVATAR_DATA}
@@ -103,7 +122,7 @@ export default function Messages() {
       {
         users.length > 0 ? (
           <ScrollView style={styles.scrollView}>
-            {users.map(user => (
+            {filteredUsers.map(user => (
               <TouchableOpacity onPress={openChatRoom} key={user.id} style={styles.userCard}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Image source={user.avatar} style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12, borderWidth: 2, borderColor: 'black'}}/>
