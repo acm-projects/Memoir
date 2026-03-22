@@ -2,13 +2,28 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
 import BottomNavbar from '../components/BottomNavbar';
 import { useRouter } from 'expo-router';
+import { Settings } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 
+type SettingsIconProps = React.ComponentProps<typeof Settings>;
+
 export default function ProfilePage({ name = "Tejasvi Annamaraju", entriesCount = 67, friendsCount = 45 }) {
   const router = useRouter();
+  const iconColor = '#7B1D1D';
+
   return (
     <SafeAreaView style={styles.root}>
+      {/* Top-left settings button */}
+      <TouchableOpacity
+        style={styles.settingsButton}
+        onPress={() => router.push('/settings' as any)}
+      >
+        <View style={styles.settingsCircle}>
+          <Settings {...({ size: 22, color: iconColor } as SettingsIconProps)} />
+        </View>
+      </TouchableOpacity>
+
       <View style={styles.mainContent}>
         {/* Profile Card */}
         <View style={styles.outerCard}>
@@ -69,12 +84,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#7B1D1D',
   },
   mainContent: {
-  flex: 1,
-  alignItems: 'center',
-  paddingTop: 145
-  , // increased from 40 to 120
-  paddingBottom: 80, // space for navbar
-},
+    flex: 1,
+    alignItems: 'center',
+    paddingTop: 145,
+    paddingBottom: 80, // space for navbar
+  },
+  settingsButton: {
+    position: 'absolute',
+    top: 56,
+    left: 20,
+    zIndex: 10,
+  },
+  settingsCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#EDE8D9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   outerCard: {
     backgroundColor: '#4F7C6E',
     borderRadius: 24,
