@@ -1,32 +1,32 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { House, Mail, FolderOpen, User } from 'lucide-react-native';
 
 const plusSeal = require('../../assets/images/plus-seal.png');
 
+type AnyIconProps = React.ComponentProps<typeof House>;
+
 export default function BottomNavbar() {
   const router = useRouter();
+  const iconColor = '#7a2a2a';
+
   return (
     <View style={styles.bottomNavbar}>
       <TouchableOpacity style={styles.navButton} onPress={() => router.push('/timelineScreen' as any)}>
-        <Ionicons name="home-outline" size={28} color="#7a2a2a" style={styles.icon} />
-        <Text style={styles.navText}>Home</Text>
+        <House {...({ size: 30, color: iconColor } as AnyIconProps)} />
       </TouchableOpacity>
       <TouchableOpacity style={styles.navButton} onPress={() => router.push('/messages' as any)}>
-        <Ionicons name="mail-outline" size={28} color="#7a2a2a" style={styles.icon} />
-        <Text style={styles.navText}>Messages</Text>
+        <Mail {...({ size: 30, color: iconColor } as AnyIconProps)} />
       </TouchableOpacity>
       <TouchableOpacity style={styles.centerButtonWrap} onPress={() => router.push('/upload-card' as any)}>
         <Image source={plusSeal} style={styles.plusSealIcon} resizeMode="contain" />
       </TouchableOpacity>
       <TouchableOpacity style={styles.navButton} onPress={() => router.push('/view-folder copy' as any)}>
-        <Ionicons name="folder-outline" size={28} color="#7a2a2a" style={styles.icon} />
-        <Text style={styles.navText}>Folders</Text>
+        <FolderOpen {...({ size: 30, color: iconColor } as AnyIconProps)} />
       </TouchableOpacity>
       <TouchableOpacity style={styles.navButton} onPress={() => router.push('/profile' as any)}>
-        <Ionicons name="person-outline" size={28} color="#7a2a2a" style={styles.icon} />
-        <Text style={styles.navText}>Profile</Text>
+        <User {...({ size: 30, color: iconColor } as AnyIconProps)} />
       </TouchableOpacity>
     </View>
   );
@@ -44,9 +44,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-evenly',
   },
-  navButton: { alignItems: 'center', justifyContent: 'center' },
-  navText: { marginTop: 4, fontSize: 12, color: '#5A390E' },
-  icon: { width: 28, height: 28, marginBottom: 2 },
+  navButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   centerButtonWrap: {
     alignItems: 'center',
     justifyContent: 'center',
