@@ -7,40 +7,6 @@ import { Ionicons } from '@expo/vector-icons'; // Importing Ionicons from Expo V
 import BottomNavbar from '../components/BottomNavbar'; // Importing a custom BottomNavbar component, which is likely a navigation bar that appears at the bottom of the timeline screen for easy access to other parts of the app
 import { supabase } from '../lib/supabase'; // Importing the Supabase client for interacting with the database, which may be used to fetch timeline data and user information
 
-// const MOCK_API = {
-//   data: [
-//     { id: '1', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-//     { id: '2', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/star-stamp.png') },
-//     { id: '3', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/Australia-Stamp.png') },
-//     { id: '4', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-//     { id: '5', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-//     { id: '6', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-//     { id: '7', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/star-stamp.png') },
-//     { id: '8', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/Australia-Stamp.png') },
-//     { id: '9', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-//     { id: '10', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-//     { id: '11', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-//     { id: '12', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/star-stamp.png') },
-//     { id: '13', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/Australia-Stamp.png') },
-//     { id: '14', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-//     { id: '15', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-//   ],
-//   metadata: {
-//     currentPage: 1,
-//     hasNextPage: true,
-//     totalPages: 5
-//   }
-// };
-
-// interface Stamp {
-//   id: string;
-//   title: string;
-//   date: string;
-//   side: string;
-//   image: any;
-// }
-
-
 interface Folder { // Defining a TypeScript interface for a Folder object, which represents a memory folder in the timeline
   id: string;
   name: string;
@@ -61,8 +27,8 @@ export default function Timeline() {
   const [loading, setLoading] = useState(false); // State to indicate whether the timeline data is still being loaded from the database
   const [monthOpen, setMonthOpen] = useState(false); // State to manage the visibility of the month dropdown menu
   const [yearOpen, setYearOpen] = useState(false); // State to manage the visibility of the year dropdown menu
-  const [selectedMonth, setSelectedMonth] = useState("March"); // State to hold the currently selected month for filtering the timeline
-  const [selectedYear, setSelectedYear] = useState("2026"); // State to hold the currently selected year for filtering the timeline
+  const [selectedMonth, setSelectedMonth] = useState(""); // State to hold the currently selected month for filtering the timeline
+  const [selectedYear, setSelectedYear] = useState(""); // State to hold the currently selected year for filtering the timeline
 
   const months = [
     "January", "February", "March", "April", "May", "June",
@@ -87,20 +53,25 @@ export default function Timeline() {
 
     if(profileData) { setProfile(profileData); } // If profile data is successfully fetched, update the profile state with the fetched data
 
-    // Fetch folders
-    const monthIndex = months.indexOf(month) + 1;
-    const paddedMonth = monthIndex.toString().padStart(2, '0');
-    const startDate = `${year}-${paddedMonth}-01`;
-    const endDate = `${year}-${paddedMonth}-31`;
-
-    const { data: foldersData, error } = await supabase
+    // Build base query for folders
+    let query = supabase
       .from('folders')
       .select('id, name, event_date, cover_image_url, created_at')
       .eq('user_id', user.id)
       .eq('is_default', false)
-      .gte('event_date', startDate)
-      .lte('event_date', endDate)
       .order('event_date', { ascending: true });
+
+
+    // Fetch folders
+    if (month && year) {
+      const monthIndex = months.indexOf(month) + 1;
+      const paddedMonth = monthIndex.toString().padStart(2, '0');
+      const startDate = `${year}-${paddedMonth}-01`;
+      const endDate = `${year}-${paddedMonth}-31`;
+      query = query.gte('event_date', startDate).lte('event_date', endDate);
+    }
+
+    const { data: foldersData, error } = await query;
 
     if (error) {
       console.error('Failed to fetch folders:', error);
@@ -191,7 +162,7 @@ export default function Timeline() {
               onPress={() => setMonthOpen(!monthOpen)}
             >
               <View style={styles.dropdown}>
-                <Text style={styles.dropdownText}>{selectedMonth} </Text>
+                <Text style={styles.dropdownText}>{selectedMonth || 'Month'} </Text>
                 <Ionicons name="chevron-down" size={16} color="#5A390E" />
               </View>
             </Pressable>
@@ -220,7 +191,7 @@ export default function Timeline() {
               onPress={() => setYearOpen(!yearOpen)}
             >
               <View style={styles.dropdown}>
-                <Text style={styles.dropdownText}>{selectedYear} </Text>
+                <Text style={styles.dropdownText}>{selectedYear || 'Year'} </Text>
                 <Ionicons name="chevron-down" size={16} color="#5A390E" />
               </View>
             </Pressable>
