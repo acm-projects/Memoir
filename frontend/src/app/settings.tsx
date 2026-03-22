@@ -44,27 +44,37 @@ export default function SettingsPage() {
 
         {/* Settings buttons */}
         <View style={styles.buttonStack}>
-          <TouchableOpacity style={styles.button}>
+          {/* Notifications -> /notifications */}
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push('/notifications' as any)}
+          >
             <View style={styles.buttonInnerRow}>
               <Bell {...({ size: 18, color: '#FFF9F2' } as SmallIconProps)} />
               <Text style={styles.buttonText}>Notifications</Text>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button}>
+          {/* Edit Profile -> /edit-profile */}
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push('/edit-profile' as any)}
+          >
             <View style={styles.buttonInnerRow}>
               <Lock {...({ size: 18, color: '#FFF9F2' } as SmallIconProps)} />
-              <Text style={styles.buttonText}>Change Password</Text>
+              <Text style={styles.buttonText}>Edit Profile</Text>
             </View>
           </TouchableOpacity>
 
+          {/* About */}
           <TouchableOpacity style={styles.button}>
             <View style={styles.buttonInnerRow}>
               <ShieldCheck {...({ size: 18, color: '#FFF9F2' } as SmallIconProps)} />
-              <Text style={styles.buttonText}>Privacy</Text>
+              <Text style={styles.buttonText}>About</Text>
             </View>
           </TouchableOpacity>
 
+          {/* Log Out */}
           <TouchableOpacity style={[styles.button, styles.logoutButton]}>
             <View style={styles.buttonInnerRow}>
               <LogOut {...({ size: 18, color: '#FFF9F2' } as SmallIconProps)} />

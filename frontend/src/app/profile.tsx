@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import BottomNavbar from '../components/BottomNavbar';
 import { useRouter } from 'expo-router';
 import { Settings } from 'lucide-react-native';
@@ -8,12 +8,12 @@ const { width } = Dimensions.get('window');
 
 type SettingsIconProps = React.ComponentProps<typeof Settings>;
 
-export default function ProfilePage({ name = "Tejasvi Annamaraju", entriesCount = 67, friendsCount = 45 }) {
+export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount = 67, friendsCount = 45 }) {
   const router = useRouter();
   const iconColor = '#7B1D1D';
 
   return (
-    <SafeAreaView style={styles.root}>
+    <View style={styles.root}>
       {/* Top-left settings button */}
       <TouchableOpacity
         style={styles.settingsButton}
@@ -74,7 +74,7 @@ export default function ProfilePage({ name = "Tejasvi Annamaraju", entriesCount 
       <View style={styles.navbarContainer}>
         <BottomNavbar />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   mainContent: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 145,
+    paddingTop: 180,
     paddingBottom: 80, // space for navbar
   },
   settingsButton: {
