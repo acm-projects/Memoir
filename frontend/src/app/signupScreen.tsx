@@ -1,44 +1,71 @@
-import React,{useState} from 'react';
-import { Button, View, Text, TextInput , StyleSheet, ImageBackground,  Image, TouchableOpacity, Platform,Pressable } from "react-native";
-import { useRouter } from 'expo-router';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { RedButton } from '../components/redButton';
-
+import { supabase } from '@/lib/supabase' // Importing the Supabase client instance to interact with the authentication and database services provided by Supabase.
+import { useState } from 'react' // Importing the useState hook from React to manage local state within the component.
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Image, Platform, Pressable, Alert } from 'react-native' // Importing various components from React Native to build the user interface of the login screen.
+import { useRouter } from 'expo-router'; // Importing the useRouter hook from Expo Router to programmatically navigate between screens in the app.
+import DateTimePicker from '@react-native-community/datetimepicker'; // Importing the DateTimePicker component from the @react-native-community/datetimepicker package to allow users to select their date of birth during the signup process.
+import { RedButton } from '../components/redButton'; // Importing a custom RedButton component, which is likely a styled button component used in the signup screen for user interactions such as submitting the signup form.
 
 export default function Signup() {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setemail] = useState("");
-  const [dateofBirth, setdateofBirth] = useState("");
-  const [date, setDate] = useState(new Date());
-  const [show, setShow] = useState(false); 
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState(""); // State variable to hold the user's name input.
+  const [email, setEmail] = useState(""); // State variable to hold the user's email input.
+  const [date, setDate] = useState(new Date()); // State variable to hold the selected date from the DateTimePicker. It is initialized to the current date, but will be updated when the user selects their date of birth.
+  const [show, setShow] = useState(false);  // State variable to control the visibility of the DateTimePicker. It is initially set to false, meaning the picker is hidden, and will be toggled when the user wants to select their date of birth.
+  const [password, setPassword] = useState(""); // State variable to hold the user's password input. This will be used in the signup form and will be sent to Supabase when creating a new user account.
+  const [confirmPassword, setConfirmPassword] = useState(""); // State variable to hold the user's confirm password input. This will be used to ensure that the user has entered their desired password correctly by comparing it with the password state variable before allowing them to submit the signup form.
+  const [isLoading, setIsLoading] = useState(false); // State variable to indicate whether a signup request is in progress. This can be used to disable the signup button and show a loading indicator while the request is being processed.
 
+  const toggleDatePicker = () => { setShow(!show); } // Function to toggle the visibility of the DateTimePicker. When called, it will set the show state variable to its opposite value, allowing the user to open or close the date picker when selecting their date of birth.;
 
-  const toggleDatePicker = () => {
-    setShow(!show);
-  };
-
-  const onChange = (event: any, selectedDate?: Date) => {
+  const onChange = (event: any, selectedDate?: Date) => { 
     const currentDate = selectedDate || date;
     setShow(Platform.OS === 'ios'); 
     setShow(false);
     setDate(currentDate);
+    if (selectedDate) setDate(selectedDate);
   };
 
-  const handleSignup = () => {
-    if (!name || !email) {
-      alert("Please fill in all fields");
+  async function handleSignup() {
+    if(!name || !email || !password || !confirmPassword) {
+      Alert.alert('Error', 'Please fill in all fields.') // Show an alert if any of the required fields (name, email, password, confirm password) are empty.
       return;
     }
-    const userData = {
-      fullName: name,
-      email: email,
-      birthday: date.toISOString(), 
-    };
-    router.push('/avatar-selection');
-  };
+
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters long.') // Show an alert if the password is less than 6 characters long, enforcing a minimum password length for security reasons.
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match.') // Show an alert if the password and confirm password fields do not match, ensuring that the user has correctly confirmed their desired password before allowing them to submit the signup form.
+      return;
+    }
+  
+    setIsLoading(true); // Set loading state to true to indicate that a signup request is in progress.
+
+  
+    // Call the signUp method from the Supabase client to attempt to create a new user account with the provided email and password.
+    const { data, error } = await supabase.auth.signUp({ 
+      email, 
+      password,
+      options: {
+        data: {
+          full_name: name, // Pass the user's full name as additional user metadata to be stored in the Supabase authentication system. This allows you to associate the user's name with their account and access it later when needed.
+          birthday: date.toISOString().split('T')[0], // Pass the user's birthday as additional user metadata in the same way as the full name. The birthday is formatted as a string in the format 'YYYY-MM-DD' by splitting the ISO string representation of the date and taking the date portion. This allows you to store and access the user's birthday information in their account metadata.
+        }
+      }
+    }); 
+
+    setIsLoading(false);
+  
+    if (error) {
+      Alert.alert('Signup Error', error.message) // If there is an error during signup, show an alert with the error message.
+      return;
+    }
+
+    Alert.alert('Check your email!', 'Please confirm your email before logging in.');
+    router.replace('/loginScreen');
+  }
 
   return (
     <View style={styles.container}>
@@ -108,7 +135,7 @@ export default function Signup() {
         <TextInput
         style={styles.input}
         value={email}
-        onChangeText={(text) => setemail(text)}
+        onChangeText={(text) => setEmail(text)}
         keyboardType="email-address"
         />
 
