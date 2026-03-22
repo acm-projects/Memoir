@@ -1,15 +1,10 @@
-import { View, Text, TextInput, ImageBackground } from "react-native";
-import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
-import ChatRoomHeader from "../components/ChatRoomHeader";
-import { StatusBar } from "react-native";
-import { useLocalSearchParams} from "expo-router";
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { heightPercentageToDP as hp } from 'react-native-responsive-screen';
-import { TouchableOpacity } from "react-native";
 import { Feather } from '@expo/vector-icons';
-import { ScrollView } from "react-native";
-import { MenuView, MenuComponentRef } from '@react-native-menu/menu';
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useRef, useState } from "react";
+import { ImageBackground, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ChatRoomHeader from "../components/ChatRoomHeader";
 
 
 
@@ -41,7 +36,7 @@ export default function ChatRoom() {
         <SafeAreaView style={{ flex: 1, backgroundColor: '#590502'}} edges={['top']}>
             <ChatRoomHeader user={item} router={router}/> 
   <ImageBackground
-    source={require('../../assets/images/vintage-paper-background.png')}
+    source={require('../../assets/images/layered-vintage-paper.png')}
     style={{ flex: 1 }}
   >
       <StatusBar barStyle="light-content"/>
