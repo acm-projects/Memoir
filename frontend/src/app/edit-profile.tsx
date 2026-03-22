@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, SafeAreaView, ScrollView, ImageBackground, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ScrollView, ImageBackground, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import BottomNavbar from '../components/BottomNavbar';
 
@@ -35,7 +35,7 @@ export default function EditProfilePage({
   );
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <ImageBackground
         source={bgImage}
         style={styles.bg}
@@ -111,7 +111,7 @@ export default function EditProfilePage({
 
               {/* Buttons */}
               <TouchableOpacity style={styles.changePasswordBtn} onPress={onChangePassword}>
-                <Text style={styles.changePasswordText}>Change password</Text>
+                <Text style={styles.changePasswordText}>Edit Profile</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.saveBtn}
@@ -126,14 +126,14 @@ export default function EditProfilePage({
 
           {/* Navbar pinned to bottom */}
           <View style={styles.navbarContainer}>
-        
+            {/* intentionally left empty inside KeyboardAvoidingView */}
           </View>
         </KeyboardAvoidingView>
       </ImageBackground>
       <View style={styles.navbarContainer}>
-              <BottomNavbar />
-            </View>
-    </SafeAreaView>
+        <BottomNavbar />
+      </View>
+    </View>
   );
 }
 
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 12,
+    top: 40,
     left: 16,
     zIndex: 10,
     backgroundColor: 'rgba(255,255,255,0.8)',
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   card: {
-    width: width * 0.90, // wider — 90% of screen
+    width: width * 0.9, // wider — 90% of screen
     backgroundColor: '#EDE8D9',
     borderRadius: 32,
     paddingVertical: 24,

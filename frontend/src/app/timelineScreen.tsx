@@ -123,7 +123,7 @@ export default function Timeline() {
       <ImageBackground
         style={styles.redSwirlContainer}
         imageStyle={styles.redSwirl}
-        source={require('../../assets/images/red-swirl.jpg')}
+        source={require('../../assets/images/RED swirl subtle.png')}
       >
         <Text style={styles.welcomeBackHeader}>
           Welcome Back, Name
@@ -190,7 +190,7 @@ export default function Timeline() {
 
         <View style={styles.paperBackgroundContainer}>
           <ImageBackground
-            source={require('../../assets/images/vintage-paper-background.png')}
+            source={require('../../assets/images/layered-vintage-paper.png')}
             style={styles.paperBackground}
           >
             <FlatList
@@ -224,7 +224,12 @@ export default function Timeline() {
                             </Text>
                             <Pressable
                               style={styles.openButton}
-                              onPress={() => { router.replace('/view-folder') }}
+                              onPress={() => {
+                                router.push({
+                                  pathname: '/bulletin-board',
+                                  params: { id: item.id, title: item.title },
+                                });
+                              }}
                             >
                               <Text style={styles.openButtonText}>
                                 Open Folder
@@ -309,7 +314,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 0,
     alignItems: 'center',
-    backgroundColor: '#9D4D48',
+    backgroundColor: '#6D1B12',
     height: 120,
     width: 100,
     borderRadius: 10,

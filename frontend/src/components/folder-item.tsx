@@ -74,21 +74,14 @@ return (
 
 const styles = StyleSheet.create({ 
 
-cardContainer: { 
-
-width: '60%', 
-
-aspectRatio: 0.9, 
-
-marginBottom:6, 
-
-paddingTop: 45, 
-
-alignItems: 'center', 
-
-justifyContent: 'flex-end', 
-
-}, 
+    cardContainer: {
+        width: 110,        // fixed pixel width instead of % (works in any grid)
+        aspectRatio: .8,
+        marginBottom: 6,
+        paddingTop: 40,
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+      },
 
  
 
@@ -110,7 +103,7 @@ folderTop: {
 
 flex: 2, // 80% of the folder is red 
 
-backgroundColor: '#A34D41', 
+backgroundColor: '#6D1B12', 
 
 borderTopRightRadius:10, 
 
@@ -138,31 +131,20 @@ borderBottomLeftRadius:10,
 
 }, 
 
-stampInsideContainer: { 
+stampInsideContainer: {
+    position: 'absolute',
+    top: -40,          // adjusted to match smaller paddingTop
+    left: 10,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 10,
+  },
 
-position: 'absolute', 
-
-top: -50,  
-
-left: 20, 
-
-right: 0, 
-
-alignItems: 'center', 
-
-zIndex: 10, // Sits above red, but BELOW tan 
-
-}, 
-
-stampImage: { 
-
-width: 110, // Wider to make it look "bigger" 
-
-height: 150,  
-
-//resizeMode: 'contain', 
-
-}, 
+stampImage: {
+    width: 90,         // slightly smaller to fit the fixed container
+    height: 120,
+    resizeMode: 'contain',
+  },
 
 folderText: { 
 
@@ -180,9 +162,9 @@ position: 'absolute',
 
 top: '55%', 
 
-width: 50, 
+width: 40, 
 
-height: 50, 
+height: 40, 
 
 borderRadius: 8, 
 

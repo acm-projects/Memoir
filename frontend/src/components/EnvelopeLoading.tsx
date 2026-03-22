@@ -126,11 +126,13 @@ export default function EnvelopeLoading({ onComplete }: { onComplete: () => void
           },
         ]}
       >
-        <Image 
-          source={require('../../assets/images/letter.png')} 
-          style={styles.letter}
-          resizeMode="contain" 
-        />
+        <View style={styles.letterWrapper}>
+          <Image
+            source={require('../../assets/images/letter.png')}
+            style={styles.letter}
+            resizeMode="cover"
+          />
+        </View>
       </Animated.View>
 
       {/* Envelope container - stays centered */}
@@ -196,6 +198,12 @@ const styles = StyleSheet.create({
     zIndex: 5,
     left: (SCREEN_WIDTH - ENVELOPE_WIDTH * 0.85) / 2,
     top: (SCREEN_HEIGHT - ENVELOPE_HEIGHT * 1.5) / 2,
+  },
+  letterWrapper: {
+    width: '60%',
+    height: '100%',
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   letter: {
     width: '100%',
