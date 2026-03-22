@@ -117,8 +117,8 @@ export default function DraggableItem({ item, deleteItem, isEditing}: any){
             onPress={() => {
               router.push({
                 pathname: "/one-specific-card" as any,
-                params: {
-                  image: item.content, // 'card1', 'card2', 'card3'
+                params: { // **CHNAGED**
+                  id: item.cardId || item.id, // CHANGED: use real card id
                   title: item.content,
                   caption: "",
                 },
