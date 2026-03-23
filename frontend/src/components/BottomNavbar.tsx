@@ -26,7 +26,7 @@ export default function BottomNavbar() {
         <Mail {...({ size: 30, color: iconColor } as AnyIconProps)} />
       </TouchableOpacity>
       <TouchableOpacity
-        style={styles.centerButtonWrap}
+        style={[styles.navButton, styles.centerButtonWrap]}
         onPress={() => router.replace('/upload-card' as any)}
       >
         <Image source={plusSeal} style={styles.plusSealIcon} resizeMode="contain" />
@@ -57,18 +57,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#e9dccd',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
   },
   navButton: {
     alignItems: 'center',
     justifyContent: 'center',
+    width: 64,
   },
   centerButtonWrap: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   plusSealIcon: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
   },
 });
