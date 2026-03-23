@@ -296,7 +296,7 @@ export default function createCard() {
     width: "90%",
     borderRadius: 20,
     padding: 16,
-    marginBottom: 80, // Space between panel and toolbar
+    marginBottom: 10, // Space between panel and toolbar
     borderWidth: 1,
     borderColor: "#d7c3ac",
   },
