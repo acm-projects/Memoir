@@ -18,6 +18,7 @@ type Item = {
   color?: string;
   sticker?: string;
   image?: any;
+  noteBackground?: any;
 };
 
 export default function BulletinBoard() {
@@ -27,13 +28,6 @@ export default function BulletinBoard() {
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<any>(null);
   const [items, setItems] = useState<Item[]>([
-    {
-      id: "1",
-      type: "card",
-      content: "My Memory Card",
-      x: 120,
-      y: 120,
-    },
     {
       id: '2',
       type: 'card',
@@ -67,6 +61,10 @@ export default function BulletinBoard() {
     "#D6F5FF",
     "#E6D6FF",
     "#D6FFD6"
+  ];
+
+  const NOTE_BACKGROUNDS = [
+     { key: "GreenStickyNote", source: require("../../assets/images/sticker-greennote.png") },
   ];
 
   const STICKERS = [
@@ -185,13 +183,15 @@ function onPickFileWeb(e: any) {
           imageStyle={styles.redSwirl}
         >
         </ImageBackground> 
-        <BackButton />
-        <View style = {{ flexDirection: 'row' , padding:5, alignItems: "flex-end",marginTop:50, justifyContent: "space-between"}}>
+        
+        <View style = {{ flexDirection: 'row' , padding:5, alignItems: "flex-start",marginTop:50, justifyContent: "space-between"}}>
           <Text style = {styles.folderName}>{title}</Text>
           <Image source = {require('../../assets/images/star-stamp.png')} 
           style = {styles.folderImage}
           />
         </View>
+
+        <View style={styles.line} />
         
         {/* TOOLBAR */}
         <View style={styles.toolbar}>
@@ -205,25 +205,16 @@ function onPickFileWeb(e: any) {
 
 
 
-        {showMenu && (
-          <View style={styles.addMenu}>
-            <Pressable style={styles.menuItem} onPress={() => { setShowColorPicker(true); setShowMenu(false); }}>
-              <Text style={styles.menuText}>Add Note</Text>
-            </Pressable>
-            <Pressable style={styles.menuItem} onPress={() => { setShowStickerPicker(true); setShowMenu(false); }}>
-              <Text style={styles.menuText}>Add Sticker</Text>
-            </Pressable>
-            {/*<Pressable style={styles.menuItem} onPress={() => { pickImage(); setShowMenu(false); }}>
-              <Text style={styles.menuText}>Upload Photo</Text>
-            </Pressable>*/}
-          </View>
-        )}
+       
 
         
 
         {/* BOARD */}
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.board}>
+          <ScrollView
+          style={styles.board}
+          contentContainerStyle={styles.boardContent}
+          scrollEnabled={!isEditing}>
           {items.map((item) => (
             <DraggableItem
               key={item.id}
@@ -232,7 +223,8 @@ function onPickFileWeb(e: any) {
               isEditing={isEditing}
             />
           ))}
-        </View>
+        
+         </ScrollView>
         </TouchableWithoutFeedback>
 
         {isEditing && (
@@ -272,7 +264,7 @@ function onPickFileWeb(e: any) {
           <View style={styles.modalContainer}>
   <Pressable style={styles.overlay} onPress={() => setShowAddSheet(false)} />
   <View style={styles.sheet}>
-    <View style={styles.handle} />
+    
     
     {/* Tabs */}
     
@@ -290,17 +282,43 @@ function onPickFileWeb(e: any) {
     
 
     {/* Note tab */}
-    {activeTab === "note" && (
-      <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.hint}>Pick a color</Text>
-        <View style={styles.colorsRow}>
-          {NOTE_COLORS.map((color) => (
-            <Pressable key={color} style={[styles.colorDot, { backgroundColor: color }]}
-              onPress={() => { addNote(color); setShowAddSheet(false); }} />
-          ))}
-        </View>
-      </ScrollView>
-    )}
+  {activeTab === "note" && (
+  <ScrollView style={styles.tabContent}>
+    <Text style={styles.hint}>Pick a style</Text>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <View style={{ flexDirection: "row", gap: 10 }}>
+        {NOTE_BACKGROUNDS.map((bg) => (
+          <Pressable
+            key={bg.key}
+            onPress={() => {
+              setItems([...items, {
+                id: Date.now().toString(),
+                type: "note",
+                content: "",
+                x: 80,
+                y: 100,
+                noteBackground: bg.source,
+              }]);
+              setShowAddSheet(false);
+            }}
+          >
+            <Image source={bg.source} style={{ width: 70, height: 90, borderRadius: 8 }} />
+          </Pressable>
+        ))}
+      </View>
+    </ScrollView>
+       <Text style={styles.hint}>Or pick a color</Text>
+    <View style={styles.colorsRow}>
+      {NOTE_COLORS.map((color) => (
+        <Pressable
+          key={color}
+          style={[styles.colorDot, { backgroundColor: color }]}
+          onPress={() => { addNote(color); setShowAddSheet(false); }}
+        />
+      ))}
+    </View>
+  </ScrollView>
+)}
 
     {/* Sticker tab */}
     {activeTab === "sticker" && (
@@ -315,6 +333,8 @@ function onPickFileWeb(e: any) {
         </View>
        </ScrollView>
     )}
+
+      
 
     {activeTab === "photo" && (
   <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
@@ -361,12 +381,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 12,
     gap: 10,
-    
+    marginTop: -80,
+    paddingBottom: 49,
   },
 
   button: {
     backgroundColor: "#6D1B12",
-    padding: 10,
+    padding: 7,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#ccc",
@@ -379,12 +400,13 @@ const styles = StyleSheet.create({
 
   },
 
+
+
   board: {
     flex: 1,
   },
 
   redSwirl:{ 
-
     height: 60, 
     }, 
     
@@ -392,6 +414,7 @@ const styles = StyleSheet.create({
     flex: 1,  
     width: '100%', 
     height: '100%', 
+    borderRadius:10,
     }, 
 
     folderName:{
@@ -399,6 +422,7 @@ const styles = StyleSheet.create({
       fontSize:32,
       color:'#6D1B12',
       textAlign:'left',
+      paddingTop:20,
 
     },
 
@@ -538,7 +562,7 @@ sheet: {
   paddingBottom: 40,
   height: "70%",   // ← change this to make it taller
 },
-handle: { width: 36, height: 4, backgroundColor: "#d8cfc0", borderRadius: 2, alignSelf: "center", marginBottom: 12 },
+
 tabs: { flexDirection: "row", borderBottomWidth: 1, borderColor: "#e8e0d0", marginBottom: 16 },
 tab: { flex: 1, paddingVertical: 8, alignItems: "center" },
 tabText: { fontSize: 13, color: "#9a7a60", fontFamily: "Inter" },
@@ -566,6 +590,18 @@ uploadText: {
   fontFamily: "Inter",
   textAlign: "center",
 },
+
+boardContent: {
+  height: 1500,  // ← tall enough to scroll through, adjust as needed
+},
+
+line: {
+  height: 1,
+  backgroundColor: "#6D1B12",
+  width: "90%",
+  marginLeft:20,
+
+}
 
 });
 

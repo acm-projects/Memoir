@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
 import FolderItem from '../components/folder-item';
 import BottomNavbar from '../components/BottomNavbar';
+import BackButton from "../components/back-Button";
 
 const folders = [
   { id: '1', title: 'Create New Folder', date: '', isAdd: true, image: null },
@@ -25,7 +26,8 @@ export default function viewFolder() {
       >
         {/* Header card (cream/paper colored) */}
         <View style={styles.headerCard}>
-         
+        <BackButton color="#557263" />
+         <Text style = {styles.headerText}>Name's Memories</Text>
         
 
         
@@ -120,10 +122,12 @@ const styles = StyleSheet.create({
   },
 
   headerText: {
+    paddingTop:5,
     fontFamily: 'Calistoga',
     fontSize: 32,
     fontWeight: 'bold',
     color: '#5A390E',
+    textAlign:'center',
   },
 
   searchBar: {

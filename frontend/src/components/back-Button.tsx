@@ -4,14 +4,15 @@ import { useRouter } from "expo-router";
 
 type Props = {
   onPress?: () => void;
+  color?: string;
 };
 
-export default function BackButton({ onPress }: Props) {
+export default function BackButton({ onPress, color = "#f5e6c8" }: Props) {
   const router = useRouter();
 
   return (
     <Pressable style={styles.btn} onPress={onPress ?? (() => router.back())}>
-      <Text style={styles.arrow}>←</Text>
+      <Text style={[styles.arrow, { color }]}>{'←'}</Text>
     </Pressable>
   );
 }
@@ -21,7 +22,6 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   arrow: {
-    color: "#f5e6c8",
     fontSize: 22,
   },
 });
