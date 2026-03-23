@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import BottomNavbar from '../components/BottomNavbar';
-import { Bell, Lock, ShieldCheck, LogOut, ChevronLeft, Settings } from 'lucide-react-native';
+import { Bell, Lock, ShieldCheck, LogOut, ChevronLeft, Settings, Star, Shield } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -22,69 +22,97 @@ export default function SettingsPage() {
         </View>
       </TouchableOpacity>
 
-      <View style={styles.mainContent}>
-        {/* Settings Card: green outer, beige inner, similar to profile */}
-        <View style={styles.outerCard}>
-          <View style={styles.innerCard}>
-            {/* Icon circle */}
-            <View style={styles.settingsIconCircle}>
-              <Settings {...({ size: 40, color: '#7B1D1D' } as IconProps)} />
-            </View>
-            {/* Title */}
-            <Text style={styles.settingsTitle}>Settings</Text>
-            {/* Ornamental divider */}
-            <View style={styles.dividerRow}>
-              <Text style={styles.dividerFlourish}>❧</Text>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerFlourish}>❧</Text>
+      {/* Elliptical background panel behind content */}
+      <View style={styles.ellipsePanel} />
+
+      {/* Scrollable main content: green card + buttons together */}
+      <ScrollView
+        style={styles.mainScroll}
+        contentContainerStyle={styles.mainScrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.mainContent}>
+          {/* Settings Card: green outer, beige inner, similar to profile */}
+          <View style={styles.outerCard}>
+            <View style={styles.innerCard}>
+              {/* Icon circle */}
+              <View style={styles.settingsIconCircle}>
+                <Settings {...({ size: 40, color: '#7B1D1D' } as IconProps)} />
+              </View>
+              {/* Title */}
+              <Text style={styles.settingsTitle}>Settings</Text>
+
+              {/* Mini info grid */}
+              <View style={styles.infoGrid}>
+                {/* Tile 1: Version */}
+                <View style={styles.infoTile}>
+                  <Star {...({ size: 16, color: '#7B1D1D' } as SmallIconProps)} />
+                  <Text style={styles.infoLabel}>Version</Text>
+                  <Text style={styles.infoValueVersion}>1.0.0</Text>
+                </View>
+
+                {/* Tile 3: Privacy */}
+                <View style={styles.infoTile}>
+                  <Shield {...({ size: 16, color: '#4A7568' } as SmallIconProps)} />
+                  <Text style={styles.infoLabel}>Privacy</Text>
+                  <Text style={styles.infoValuePrivacy}>Protected</Text>
+                </View>
+              </View>
+
+              {/* Ornamental divider with green accent */}
+              <View style={styles.dividerRow}>
+                <Text style={styles.dividerFlourish}>❧</Text>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerFlourish}>❧</Text>
+              </View>
             </View>
           </View>
+
+          {/* Settings buttons now scroll with card and sit above ellipse */}
+          <View style={styles.buttonStack}>
+            {/* Notifications -> /notifications */}
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => router.push('/notifications' as any)}
+            >
+              <View style={styles.buttonInnerRow}>
+                <Bell {...({ size: 18, color: '#FFF9F2' } as SmallIconProps)} />
+                <Text style={styles.buttonText}>Notifications</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Edit Profile -> /edit-profile */}
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => router.push('/edit-profile' as any)}
+            >
+              <View style={styles.buttonInnerRow}>
+                <Lock {...({ size: 18, color: '#FFF9F2' } as SmallIconProps)} />
+                <Text style={styles.buttonText}>Edit Profile</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* About */}
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => router.push('/about' as any)}
+            >
+              <View style={styles.buttonInnerRow}>
+                <ShieldCheck {...({ size: 18, color: '#FFF9F2' } as SmallIconProps)} />
+                <Text style={styles.buttonText}>About</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Log Out */}
+            <TouchableOpacity style={[styles.button, styles.logoutButton]}>
+              <View style={styles.buttonInnerRow}>
+                <LogOut {...({ size: 18, color: '#FFF9F2' } as SmallIconProps)} />
+                <Text style={[styles.buttonText, styles.logoutText]}>Log Out</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        {/* Elliptical background panel for buttons */}
-        <View style={styles.ellipsePanel} />
-
-        {/* Settings buttons */}
-        <View style={styles.buttonStack}>
-          {/* Notifications -> /notifications */}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.push('/notifications' as any)}
-          >
-            <View style={styles.buttonInnerRow}>
-              <Bell {...({ size: 18, color: '#FFF9F2' } as SmallIconProps)} />
-              <Text style={styles.buttonText}>Notifications</Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Edit Profile -> /edit-profile */}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.push('/edit-profile' as any)}
-          >
-            <View style={styles.buttonInnerRow}>
-              <Lock {...({ size: 18, color: '#FFF9F2' } as SmallIconProps)} />
-              <Text style={styles.buttonText}>Edit Profile</Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* About */}
-          <TouchableOpacity style={styles.button}>
-            <View style={styles.buttonInnerRow}>
-              <ShieldCheck {...({ size: 18, color: '#FFF9F2' } as SmallIconProps)} />
-              <Text style={styles.buttonText}>About</Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Log Out */}
-          <TouchableOpacity style={[styles.button, styles.logoutButton]}>
-            <View style={styles.buttonInnerRow}>
-              <LogOut {...({ size: 18, color: '#FFF9F2' } as SmallIconProps)} />
-              <Text style={[styles.buttonText, styles.logoutText]}>Log Out</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </View>
+      </ScrollView>
 
       {/* Navbar pinned to bottom */}
       <View style={styles.navbarContainer}>
@@ -99,11 +127,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#7B1D1D',
   },
+  mainScroll: {
+    flex: 1,
+  },
+  mainScrollContent: {
+    flexGrow: 1,
+    paddingBottom: 120,
+  },
   mainContent: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 180,
-    paddingBottom: 80,
+    paddingTop: 140,
+    paddingBottom: 40,
   },
   // Floating back button similar positioning to profile's settings button
   backButtonFloating: {
@@ -168,21 +203,62 @@ const styles = StyleSheet.create({
     color: '#7B1D1D',
     textAlign: 'center',
   },
+  // New mini info grid styles inside inner card
+  infoGrid: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 12,
+    width: '100%',
+  },
+  infoTile: {
+    backgroundColor: 'rgba(123,29,29,0.07)',
+    borderRadius: 12,
+    padding: 8,
+    width: '38%',
+    alignItems: 'center',
+  },
+  infoLabel: {
+    fontSize: 10,
+    color: '#8B7355',
+    marginTop: 4,
+    textTransform: 'uppercase',
+  },
+  infoValueVersion: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#7B1D1D',
+  },
+  infoValueLove: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#7B1D1D',
+  },
+  infoValuePrivacy: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#4A7568',
+  },
+  infoValueTheme: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#8B6914',
+  },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 18,
+    marginTop: 16,
     width: '100%',
   },
   dividerFlourish: {
-    color: '#7B1D1D',
+    color: '#4A7568',
     fontSize: 20,
     marginHorizontal: 6,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#7B1D1D',
+    backgroundColor: '#4A7568',
     opacity: 0.6,
   },
   ellipsePanel: {
