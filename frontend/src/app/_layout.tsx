@@ -13,10 +13,10 @@ export default function RootLayout() {
   });
 
   if (!loaded) return null;
-  
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      {/* Back to default animation behavior */}
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="chatRoom" options={{ headerShown: true }} />
       </Stack>

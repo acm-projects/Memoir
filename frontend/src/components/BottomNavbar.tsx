@@ -13,19 +13,34 @@ export default function BottomNavbar() {
 
   return (
     <View style={styles.bottomNavbar}>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/timelineScreen' as any)}>
+      <TouchableOpacity
+        style={styles.navButton}
+        onPress={() => router.replace('/timelineScreen' as any)}
+      >
         <House {...({ size: 30, color: iconColor } as AnyIconProps)} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/messages' as any)}>
+      <TouchableOpacity
+        style={styles.navButton}
+        onPress={() => router.replace('/messages' as any)}
+      >
         <Mail {...({ size: 30, color: iconColor } as AnyIconProps)} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.centerButtonWrap} onPress={() => router.push('/upload-card' as any)}>
+      <TouchableOpacity
+        style={styles.centerButtonWrap}
+        onPress={() => router.replace('/upload-card' as any)}
+      >
         <Image source={plusSeal} style={styles.plusSealIcon} resizeMode="contain" />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/view-folder copy' as any)}>
+      <TouchableOpacity
+        style={styles.navButton}
+        onPress={() => router.replace('/view-folder copy' as any)}
+      >
         <FolderOpen {...({ size: 30, color: iconColor } as AnyIconProps)} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/profile' as any)}>
+      <TouchableOpacity
+        style={styles.navButton}
+        onPress={() => router.replace('/profile' as any)}
+      >
         <User {...({ size: 30, color: iconColor } as AnyIconProps)} />
       </TouchableOpacity>
     </View>
