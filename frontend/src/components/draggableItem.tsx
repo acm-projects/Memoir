@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity,Keyboard, ImageBackground } from "react-native";
+import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity,Keyboard, ImageBackground,Alert } from "react-native";
 import { useRouter } from "expo-router";
 
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -9,7 +9,18 @@ import Animated, {
   runOnJS
 } from "react-native-reanimated";
 
-export default function DraggableItem({ item, deleteItem, isEditing}: any){
+export default function DraggableItem({ item, deleteItem, isEditing,selectedId, setSelectedId, onColorChange}: any){
+
+  const confirmDelete = () => {
+  Alert.alert(
+    "Delete Item",
+    "Are you sure you want to delete this?",
+    [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => deleteItem(item.id) },
+    ]
+  );
+};
   const router = useRouter();
 
   const x = useSharedValue(item.x);
@@ -28,7 +39,14 @@ export default function DraggableItem({ item, deleteItem, isEditing}: any){
 
   };
 
-  const TRASH_ZONE_Y = 300;
+  const TEXT_COLORS = ["#5A390E", "#6D1B12", "#2C5F2E", "#1A1A2E", "#FF6B6B", "#000000"];
+  const isSelected = selectedId === item.id;
+
+  const tap = Gesture.Tap().onEnd(() => {
+    runOnJS(setSelectedId)(isSelected ? null : item.id);
+  });
+
+ 
   
 
   const pan = Gesture.Pan()
@@ -41,12 +59,6 @@ export default function DraggableItem({ item, deleteItem, isEditing}: any){
     x.value = startX.value + event.translationX;
     y.value = startY.value + event.translationY;
   })
-  .onEnd(() => {
-    if (y.value > TRASH_ZONE_Y) {
-      runOnJS(deleteItem)(item.id);
-    }
-  });
-
     
     const pinch = Gesture.Pinch()
     .onUpdate((e) => {
@@ -59,9 +71,10 @@ export default function DraggableItem({ item, deleteItem, isEditing}: any){
     });
 
     const longPress = Gesture.LongPress()
-    .onEnd(() => {
-      deleteItem(item.id);
-    });
+  .enabled(isEditing)
+  .onEnd(() => {
+    runOnJS(confirmDelete)();
+  });
 
     
 
@@ -70,6 +83,7 @@ export default function DraggableItem({ item, deleteItem, isEditing}: any){
       pinch,
       rotate,
       longPress,
+      tap
       
     );
 
@@ -161,7 +175,41 @@ export default function DraggableItem({ item, deleteItem, isEditing}: any){
     />
   );
 }
-  }
+
+ if (item.type === "text") {
+  return (
+    <View>
+      <View style={styles.textContainer}>
+        <TextInput
+          defaultValue={item.content}
+          multiline
+          style={[styles.draggableText, { color: item.color || "#5A390E" }]}
+          placeholder="Type here..."
+          onChangeText={(text) => { item.content = text; }}
+        />
+      </View>
+
+      {/* Color picker appears above the text box when selected */}
+      {isSelected && (
+        <View style={styles.colorPicker}>
+          {TEXT_COLORS.map((color) => (
+            <TouchableOpacity
+              key={color}
+              onPress={() => onColorChange(item.id, color)}
+              style={[
+                styles.colorDot,
+                { backgroundColor: color },
+                item.color === color && styles.activeColor
+              ]}
+            />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}}
+
+  
 
   return (
     <GestureDetector gesture={gesture}>
@@ -202,4 +250,46 @@ noteInput: {
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },
+
+  textContainer: {
+    padding: 10,
+    minWidth: 100,
+    maxWidth: 250, // Prevent it from going off-screen
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  draggableText: {
+    fontSize: 24,
+    fontFamily: "Calistoga", // Or your preferred font
+    textAlign: 'center',
+    minHeight: 40,
+    padding: 5,
+    // Add a slight border only when editing so the user knows where the box is
+    borderWidth: 1,
+    borderColor: 'rgba(90, 57, 14, 0.2)', 
+    borderStyle: 'dashed',
+    borderRadius: 5,
+  },
+  colorPicker: {
+  flexDirection: "row",
+  justifyContent: "center",
+  gap: 8,
+  backgroundColor: "#F8E5CF",
+  borderRadius: 20,
+  padding: 8,
+  marginTop: 6,
+  borderWidth: 1,
+  borderColor: "#d7c3ac",
+},
+colorDot: {
+  width: 24,
+  height: 24,
+  borderRadius: 12,
+  borderWidth: 2,
+  borderColor: "white",
+},
+activeColor: {
+  borderColor: "#5A390E",
+  transform: [{ scale: 1.2 }],
+},
 });

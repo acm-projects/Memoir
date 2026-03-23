@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { House, Mail, FolderOpen, User } from 'lucide-react-native';
 
 const plusSeal = require('../../assets/images/plus-seal.png');
 
 
 
 
+type AnyIconProps = React.ComponentProps<typeof House>;
 
 export default function BottomNavbar() {
   
@@ -31,27 +32,40 @@ export default function BottomNavbar() {
       ]
     );
   }
+  const iconColor = '#7a2a2a';
 
   return (
     <View style={styles.bottomNavbar}>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/timelineScreen' as any)}>
-        <Ionicons name="home-outline" size={28} color="#7a2a2a" style={styles.icon} />
-        <Text style={styles.navText}>Home</Text>
+      <TouchableOpacity
+        style={styles.navButton}
+        onPress={() => router.replace('/timelineScreen' as any)}
+      >
+        <House {...({ size: 30, color: iconColor } as AnyIconProps)} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/messages' as any)}>
-        <Ionicons name="mail-outline" size={28} color="#7a2a2a" style={styles.icon} />
-        <Text style={styles.navText}>Messages</Text>
+      <TouchableOpacity
+        style={styles.navButton}
+        onPress={() => router.replace('/messages' as any)}
+      >
+        <Mail {...({ size: 30, color: iconColor } as AnyIconProps)} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.centerButtonWrap} onPress={handlePlusPress}>
+     
+      <TouchableOpacity
+        style={[styles.navButton, styles.centerButtonWrap]}
+        onPress={handlePlusPress}
+      >
         <Image source={plusSeal} style={styles.plusSealIcon} resizeMode="contain" />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/view-folder copy' as any)}>
-        <Ionicons name="folder-outline" size={28} color="#7a2a2a" style={styles.icon} />
-        <Text style={styles.navText}>Folders</Text>
+      <TouchableOpacity
+        style={styles.navButton}
+        onPress={() => router.replace('/view-folder copy' as any)}
+      >
+        <FolderOpen {...({ size: 30, color: iconColor } as AnyIconProps)} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push('/profile' as any)}>
-        <Ionicons name="person-outline" size={28} color="#7a2a2a" style={styles.icon} />
-        <Text style={styles.navText}>Profile</Text>
+      <TouchableOpacity
+        style={styles.navButton}
+        onPress={() => router.replace('/profile' as any)}
+      >
+        <User {...({ size: 30, color: iconColor } as AnyIconProps)} />
       </TouchableOpacity>
     </View>
   );
@@ -67,17 +81,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#e9dccd',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
   },
-  navButton: { alignItems: 'center', justifyContent: 'center' },
-  navText: { marginTop: 4, fontSize: 12, color: '#5A390E' },
-  icon: { width: 28, height: 28, marginBottom: 2 },
+  navButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 64,
+  },
   centerButtonWrap: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   plusSealIcon: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
   },
 });
