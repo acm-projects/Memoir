@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity,Keyboard } from "react-native";
+import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity,Keyboard, ImageBackground } from "react-native";
 import { useRouter } from "expo-router";
 
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -84,30 +84,29 @@ export default function DraggableItem({ item, deleteItem, isEditing}: any){
   }));
 
   function renderContent() {
-    if (item.type === "note") {
-      return (
-        <TextInput
+     if (item.type === "note") {
+  return (
+    <ImageBackground
+      source={item.noteBackground || null}
+      style={[
+        styles.note,
+        { backgroundColor: item.noteBackground ? "transparent" : (item.color || "#FFF6A3") }
+      ]}
+      imageStyle={{ borderRadius: 10 }}
+    >
+      <TextInput
         defaultValue={item.content}
         multiline
         returnKeyType="done"
-        onSubmitEditing={Keyboard.dismiss} 
-        style={[
-          styles.note,
-      { backgroundColor: item.color || "#FFF6A3" }
-  ]}
-/>
-      );
-    }
+        onSubmitEditing={Keyboard.dismiss}
+        style={styles.noteInput}
+        placeholder="Write here..."
+        placeholderTextColor="rgba(0,0,0,0.3)"
+      />
+    </ImageBackground>
+  );
+}
 
-    if (item.type === "sticker") {
-      return (
-        <Image
-          source={STICKERS[item.sticker]}
-          style={{ width: 80, height: 80 }}
-          resizeMode="contain"
-        />
-      );
-    }
 
     if (item.type === "card") {
       if (item.image) {
@@ -174,13 +173,20 @@ export default function DraggableItem({ item, deleteItem, isEditing}: any){
 }
 
 const styles = StyleSheet.create({
-  note: {
-    width: 140,
-    minHeight: 100,
-    backgroundColor: "#FFF6A3",
-    padding: 10,
-    borderRadius: 10,
-  },
+note: {
+  width: 140,
+  minHeight: 100,
+  borderRadius: 10,
+  overflow: "hidden",
+},
+noteInput: {
+  flex: 1,
+  padding: 10,
+  fontSize: 13,
+  color: "#3a2010",
+  fontFamily: "Inter",
+  minHeight: 100,
+},
 
   sticker: {
     fontSize: 40,

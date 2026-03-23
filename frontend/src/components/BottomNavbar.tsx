@@ -1,12 +1,37 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 const plusSeal = require('../../assets/images/plus-seal.png');
 
+
+
+
+
 export default function BottomNavbar() {
+  
   const router = useRouter();
+
+  const handlePlusPress = () => {
+    Alert.alert(
+      'Add a Card',
+      'What would you like to do',
+      [
+        {text: 'Upload a Card',
+          onPress: () => router.push('/upload-card' as any),
+        },
+         {text: 'Create a Card',
+          onPress: () => router.push('/create-card' as any),
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ]
+    );
+  }
+
   return (
     <View style={styles.bottomNavbar}>
       <TouchableOpacity style={styles.navButton} onPress={() => router.push('/timelineScreen' as any)}>
@@ -17,7 +42,7 @@ export default function BottomNavbar() {
         <Ionicons name="mail-outline" size={28} color="#7a2a2a" style={styles.icon} />
         <Text style={styles.navText}>Messages</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.centerButtonWrap} onPress={() => router.push('/upload-card' as any)}>
+      <TouchableOpacity style={styles.centerButtonWrap} onPress={handlePlusPress}>
         <Image source={plusSeal} style={styles.plusSealIcon} resizeMode="contain" />
       </TouchableOpacity>
       <TouchableOpacity style={styles.navButton} onPress={() => router.push('/view-folder copy' as any)}>
