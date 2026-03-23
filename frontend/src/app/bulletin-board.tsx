@@ -198,9 +198,11 @@ function onPickFileWeb(e: any) {
         <Pressable style={styles.button} onPress={() => setIsEditing(!isEditing)}>
           <Text style={styles.buttonText}>{isEditing ? "Done" : "Edit"}</Text>
         </Pressable>
+       {isEditing && (  
         <Pressable style={styles.plusButton} onPress={() => setShowAddSheet(true)}>
-          <Text style={styles.plusText}>+</Text>
+      <Text style={styles.plusText}>+</Text>
         </Pressable>
+  )}
         </View>
 
 
@@ -227,11 +229,7 @@ function onPickFileWeb(e: any) {
          </ScrollView>
         </TouchableWithoutFeedback>
 
-        {isEditing && (
-          <View style={styles.trashZone}>
-            <Text style={styles.trashText}> Delete</Text>
-          </View>
-        )}
+        
 
         {/* FLOATING COLOR PICKER */}
         {showColorPicker && (
@@ -479,23 +477,7 @@ const styles = StyleSheet.create({
       elevation: 6,
     },
 
-    trashZone: {
-      position: "absolute",
-      bottom: 70,
-      width: "100%",
-      height: 70,
-      backgroundColor: "rgba(105, 103, 103, 0.3)",
-      borderRadius: 12,
-      alignItems: "center",
-      justifyContent: "center",
-      borderWidth: 2,
-      borderColor: "gray",
-      borderStyle: "dashed",
-    },
-    trashText: {
-      fontSize: 16,
-      color: "black",
-    },
+   
     plusButton: {
       backgroundColor: "#6D1B12",
       width: 30,
@@ -604,5 +586,4 @@ line: {
 }
 
 });
-
 

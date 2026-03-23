@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import FolderItem from '../components/folder-item';
 import BottomNavbar from '../components/BottomNavbar';
 import BackButton from "../components/back-Button";
+import React, { useMemo, useState } from 'react';
 
 const folders = [
   { id: '1', title: 'Create New Folder', date: '', isAdd: true, image: null },
@@ -15,6 +16,18 @@ const folders = [
 ];
 
 export default function viewFolder() {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredFolders = useMemo(
+    () =>
+      folders.filter((folder) => {
+        if (folder.isAdd) return true; // always show the "Create New Folder" tile
+        if (!searchQuery.trim()) return true;
+        return folder.title.toLowerCase().includes(searchQuery.toLowerCase());
+      }),
+    [searchQuery]
+  );
+
   return (
     <View style={styles.container}>
       {/* Full green swirl background */}
@@ -38,8 +51,11 @@ export default function viewFolder() {
             <Ionicons name="search" size={16} color="#999" style={{ marginRight: 6 }} />
             <TextInput
               style={styles.searchInput}
-              placeholder=""
+              placeholder="Search folders"
               placeholderTextColor="#aaa"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
             />
           </View>
         
@@ -50,7 +66,7 @@ export default function viewFolder() {
           style={styles.gridBackground}
         >
           <FlatList
-            data={folders}
+            data={filteredFolders}
             numColumns={3}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContainer}
