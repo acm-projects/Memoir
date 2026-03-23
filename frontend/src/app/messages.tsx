@@ -62,9 +62,11 @@ const styles = StyleSheet.create({
   searchBox: {
     backgroundColor: '#f5f0e8',
     borderRadius: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderWidth: 1,
+    marginHorizontal: 20,
+    marginTop: 10,
   },
   navbarContainer: {
     position: 'absolute',
