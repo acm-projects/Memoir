@@ -49,7 +49,7 @@ export default function EditProfilePage({
           {/* Back button */}
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.push('/profile')}
+            onPress={() => router.back()}
             accessibilityLabel="Back"
           >
             <Text style={{ fontSize: 28, color: '#7B1D1D' }}>{'‹'}</Text>
