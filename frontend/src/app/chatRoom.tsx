@@ -4,6 +4,10 @@ import React, { useRef, useState } from "react";
 import { ImageBackground, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import ChatRoomHeader from "../components/ChatRoomHeader";
+import { Modal } from 'react-native';
+import { useEffect } from 'react';
+import { Image } from 'react-native-svg';
+
 
 const MOCK_MESSAGES = [
   { id: '1', text: 'Hey! How are you?', sent: false },
@@ -11,16 +15,28 @@ const MOCK_MESSAGES = [
   { id: '3', text: 'Doing great, thanks!', sent: false },
 ];
 
+const MOCK_FOLDERS = [
+  { id: 'all', name: 'All memories', image: require('../../assets/images/Australia-Stamp.png') },
+  { id: 'prom', name: '16th Birthday', image: require('../../assets/images/star-stamp.png') },
+  { id: 'plain', name: 'Prom', image: require('../../assets/images/costa-rica-stamp.png') },
+  { id: 'spring', name: 'Spring Break +', image: require('../../assets/images/star-stamp.png') },
+];
+
 interface Message {
   id: string;
   text: string;
   sent: boolean;
+  type?: 'text' | 'folder';
+  folderName?: string;
+  folderImage?: any;
 }
 
 export default function ChatRoom() {
     const { item } = useLocalSearchParams();
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+    const [showPopInfo, setShowPopInfo] = useState(false);
+
     const [inputText, setInputText] = useState('');
     const scrollViewRef = useRef<ScrollView | null>(null);
     
@@ -55,6 +71,18 @@ export default function ChatRoom() {
                     marginBottom: 8,
                     maxWidth: '75%'
                   }}>
+                    {message.type == 'folder' && (
+                      <TouchableOpacity>
+                      <View style={{ backgroundColor: 'white', borderRadius: 12, overflow: 'hidden', width: 150 }}>
+                        <Image source={message.folderImage} style={{ width: 150, height: 100 }} />
+                        <View style={{ padding: 8 }}>
+                          <Text style={{ fontSize: 12, color: '#590502', fontFamily: 'Calistoga' }}>
+                            {message.folderName}
+                          </Text>
+                        </View>
+                      </View>
+                      </TouchableOpacity>
+                    )}
                     <View style={{
                       backgroundColor: message.sent ? '#590502' : 'white',
                       borderRadius: 12,
@@ -71,7 +99,7 @@ export default function ChatRoom() {
                   </View>
                 ))}
               </ScrollView>
-              <View style={{ flexDirection: 'row', marginHorizontal: 10, marginBottom: 20, backgroundColor: '#590502', borderRadius: 20, paddingHorizontal: 15, paddingVertical: 10 }}>
+              <View style={{ flexDirection: 'row', marginHorizontal: 10, marginBottom: 20, backgroundColor: '#590502', borderRadius: 20, paddingHorizontal: 15, paddingVertical: 10, gap: 10 }}>
                 <TextInput
                   placeholder="Type your message..."
                   value={inputText}
@@ -79,10 +107,40 @@ export default function ChatRoom() {
                   placeholderTextColor="white"
                   style={{ color: '#F5EEE1', fontSize: 16, flex: 1, marginRight: 2 }}
                 />
-                <TouchableOpacity onPress={sendMessage} style={{ backgroundColor: '#F5EEE1', borderRadius: 20, padding: 10 }}>
-                  <Feather name="send" size={20} color="#590502" />
+                <TouchableOpacity onPress={() => setShowPopInfo(true)} style={{ backgroundColor: '#F5EEE1', borderRadius: 20, padding: 10 }}>
+                  <Feather name="paperclip" size={20} gap={5} color="#590502" />
                 </TouchableOpacity>
+                  <TouchableOpacity onPress={sendMessage} style={{ backgroundColor: '#F5EEE1', borderRadius: 20, padding: 10 }}>
+                    <Feather name="send" size={20} color="#590502" />
+                  </TouchableOpacity>
               </View>
+
+              <Modal visible={showPopInfo} transparent animationType="slide">
+                <View style={{ flex: 1, justifyContent: 'flex-end', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                  <View style={{ backgroundColor: '#f5f0e8', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20}}>
+                    <Text style ={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>Attach a memory</Text>
+                    <ScrollView style={{ maxHeight: 300 }}>
+                      {MOCK_FOLDERS.map(folder => (
+                        <TouchableOpacity
+                        key = {folder.id}
+                        onPress={() => {
+                          setMessages(prev => [...prev, { id: Date.now().toString(), text: '', sent: true, type: 'folder', folderName: folder.name, folderImage: folder.image }]);
+                          setShowPopInfo(false);
+                        }}
+                        style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15 }}
+                      >
+                        <Image source={folder.image} style={{ width: 50, height: 50, borderRadius: 8, marginRight: 10 }} />
+                        <Text style={{ fontSize: 16 }}>{folder.name}</Text>
+                      </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                    <TouchableOpacity onPress={() => setShowPopInfo(false)} style={{ marginTop: 10, alignSelf: 'center', backgroundColor: '#590502', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 }}>
+                        <Text style={{ color: '#F5EEE1', fontSize: 16 }}>Cancel</Text>
+      </TouchableOpacity>
+                      
+                  </View>
+                </View>
+              </Modal>
             </ImageBackground>
         </View>
     );

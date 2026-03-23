@@ -29,13 +29,13 @@ const BOARD_TOTAL = boardContents.photos + boardContents.stickers + boardContent
 export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount = 67, friendsCount = 45, foldersCount = 12 }) {
   const router = useRouter();
   const iconColor = '#7B1D1D';
-  const tagColors = [
-    '#557263',
-    '#7B1D1D',
-    '#8B6A3E',
-    '#4A6741',
-    '#6B4F6B',
-  ];
+   const tagColors = [
+  '#557263', // teal/sage 
+  '#7B1D1D', // maroon
+  '#8B6A3E', // warm brown
+  '#4A6741', // deeper green
+  '#6B4F6B', // muted mauve/purple
+];
 
   const barAnimPhotos = useRef(new Animated.Value(0)).current;
   const barAnimStickers = useRef(new Animated.Value(0)).current;
