@@ -1,34 +1,135 @@
-import { View, StyleSheet, FlatList, Text, Image, ActivityIndicator, Pressable } from 'react-native'
-import React, { useState, useEffect } from 'react'
-import { ImageBackground } from 'expo-image';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  Text,
+  Image,
+  ActivityIndicator,
+  Pressable,
+  ImageBackground,
+  SafeAreaView,
+  Dimensions,
+} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { router } from 'expo-router';
 import Svg, { Path, Circle } from 'react-native-svg';
-import { router } from "expo-router";
-import { Ionicons } from '@expo/vector-icons';
 import BottomNavbar from '../components/BottomNavbar';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const MOCK_API = {
   data: [
-    { id: '1', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '2', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/star-stamp.png') },
-    { id: '3', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/Australia-Stamp.png') },
-    { id: '4', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '5', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '6', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '7', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/star-stamp.png') },
-    { id: '8', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/Australia-Stamp.png') },
-    { id: '9', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '10', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '11', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '12', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/star-stamp.png') },
-    { id: '13', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/Australia-Stamp.png') },
-    { id: '14', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
-    { id: '15', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/costa-rica-stamp.png') },
+    {
+      id: '1',
+      title: '19th Birthday',
+      date: 'March 18, 2026',
+      side: 'left',
+      image: require('../../assets/images/costa-rica-stamp.png'),
+    },
+    {
+      id: '2',
+      title: 'Trip to Prague',
+      date: 'March 24, 2026',
+      side: 'right',
+      image: require('../../assets/images/star-stamp.png'),
+    },
+    {
+      id: '3',
+      title: 'Garden Log',
+      date: 'April 2, 2026',
+      side: 'left',
+      image: require('../../assets/images/Australia-Stamp.png'),
+    },
+    {
+      id: '4',
+      title: 'Prom',
+      date: 'April 6, 2026',
+      side: 'left',
+      image: require('../../assets/images/costa-rica-stamp.png'),
+    },
+    {
+      id: '5',
+      title: "Mom's 50th",
+      date: 'April 6, 2026',
+      side: 'left',
+      image: require('../../assets/images/costa-rica-stamp.png'),
+    },
+    {
+      id: '6',
+      title: '19th Birthday',
+      date: 'March 18, 2026',
+      side: 'left',
+      image: require('../../assets/images/costa-rica-stamp.png'),
+    },
+    {
+      id: '7',
+      title: 'Trip to Prague',
+      date: 'March 24, 2026',
+      side: 'right',
+      image: require('../../assets/images/star-stamp.png'),
+    },
+    {
+      id: '8',
+      title: 'Garden Log',
+      date: 'April 2, 2026',
+      side: 'left',
+      image: require('../../assets/images/Australia-Stamp.png'),
+    },
+    {
+      id: '9',
+      title: 'Prom',
+      date: 'April 6, 2026',
+      side: 'left',
+      image: require('../../assets/images/costa-rica-stamp.png'),
+    },
+    {
+      id: '10',
+      title: "Mom's 50th",
+      date: 'April 6, 2026',
+      side: 'left',
+      image: require('../../assets/images/costa-rica-stamp.png'),
+    },
+    {
+      id: '11',
+      title: '19th Birthday',
+      date: 'March 18, 2026',
+      side: 'left',
+      image: require('../../assets/images/costa-rica-stamp.png'),
+    },
+    {
+      id: '12',
+      title: 'Trip to Prague',
+      date: 'March 24, 2026',
+      side: 'right',
+      image: require('../../assets/images/star-stamp.png'),
+    },
+    {
+      id: '13',
+      title: 'Garden Log',
+      date: 'April 2, 2026',
+      side: 'left',
+      image: require('../../assets/images/Australia-Stamp.png'),
+    },
+    {
+      id: '14',
+      title: 'Prom',
+      date: 'April 6, 2026',
+      side: 'left',
+      image: require('../../assets/images/costa-rica-stamp.png'),
+    },
+    {
+      id: '15',
+      title: "Mom's 50th",
+      date: 'April 6, 2026',
+      side: 'left',
+      image: require('../../assets/images/costa-rica-stamp.png'),
+    },
   ],
   metadata: {
     currentPage: 1,
     hasNextPage: true,
-    totalPages: 5
-  }
+    totalPages: 5,
+  },
 };
 
 interface Stamp {
@@ -39,59 +140,59 @@ interface Stamp {
   image: any;
 }
 
+const CurvedTimelinePath = ({ isEven }: { isEven: boolean }) => {
+  return (
+    <View style={styles.timeline}>
+      <Svg height="200" width="100%" viewBox="0 0 100 200">
+        <Path
+          d={
+            isEven
+              ? 'M50 0 C75 50 75 150 50 200'
+              : 'M50 0 C25 50 25 150 50 200'
+          }
+          stroke="#C8B89A"
+          strokeWidth="2"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <Circle
+          cx={isEven ? '68' : '32'}
+          cy="100"
+          r="5"
+          fill="#7B1D1D"
+          stroke="#C8B89A"
+          strokeWidth="1.5"
+        />
+      </Svg>
+    </View>
+  );
+};
+
 export default function Timeline() {
   const [items, setItems] = useState<Stamp[]>([]);
   const [loading, setLoading] = useState(false);
   const [monthOpen, setMonthOpen] = useState(false);
   const [yearOpen, setYearOpen] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState("March");
-  const [selectedYear, setSelectedYear] = useState("2026");
+  const [selectedMonth, setSelectedMonth] = useState('March');
+  const [selectedYear, setSelectedYear] = useState('2026');
+  const [selectedStamp, setSelectedStamp] = useState<Stamp | null>(null);
 
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
-  const years = ["2023", "2024", "2025", "2026"];
-
-  const CurvedTimelinePath = ({ isEven }: { isEven: boolean }) => {
-    const circleX = isEven ? 72 : 27;
-    return (
-      <View style={styles.timeline}>
-        <Svg height="220" width="120" viewBox="0 -20 100 140">
-          <Path
-            d={
-              isEven
-                ? "M50 -20 C80 30 80 90 44 140"
-                : "M50 -20 C20 30 20 90 56 140"
-            }
-            stroke="#5A390E"
-            strokeWidth="2"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <Circle
-            cx={circleX}
-            cy="50"
-            r="4"
-            fill="#5A390E"
-          />
-        </Svg>
-        <Image
-          source={require('../../assets/images/folder-line.png')}
-          style={[
-            styles.brushLine,
-            {
-              left: isEven ? 175 : 180,
-              transform: [{ scaleX: isEven ? -1 : 1 }]
-            }
-          ]}
-        />
-      </View>
-    );
-  };
-
-  const [selectedStamp, setSelectedStamp] = useState<Stamp | null>(null);
+  const years = ['2023', '2024', '2025', '2026'];
 
   useEffect(() => {
     const firstBatch = MOCK_API.data.slice(0, 5);
@@ -118,302 +219,395 @@ export default function Timeline() {
     }, 100);
   };
 
-  return (
-    <View style={styles.container}>
-      <ImageBackground
-        style={styles.redSwirlContainer}
-        imageStyle={styles.redSwirl}
-        source={require('../../assets/images/RED swirl subtle.png')}
-      >
-        <Text style={styles.welcomeBackHeader}>
-          Welcome Back, Name
-        </Text>
-        <View style={styles.dropdownRow}>
-          <View style={styles.dropdownContainer}>
-            <Pressable
-              style={styles.dropdownButton}
-              onPress={() => setMonthOpen(!monthOpen)}
-            >
-              <View style={styles.dropdown}>
-                <Text style={styles.dropdownText}>{selectedMonth} </Text>
-                <Ionicons name="chevron-down" size={16} color="#5A390E" />
-              </View>
-            </Pressable>
+  const renderTimelineItem = ({ item, index }: { item: Stamp; index: number }) => {
+    const isEven = index % 2 === 0; // even -> left, odd -> right
 
-            {monthOpen && (
-              <View style={styles.dropdownList}>
-                {months.map((month) => (
-                  <Pressable
-                    key={month}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setSelectedMonth(month);
-                      setMonthOpen(false);
-                    }}
-                  >
-                    <Text>{month}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-          </View>
+    const stampWidth = SCREEN_WIDTH * 0.27;
+    const isSelected = selectedStamp?.id === item.id;
 
-          <View style={styles.dropdownContainer}>
-            <Pressable
-              style={styles.dropdownButton}
-              onPress={() => setYearOpen(!yearOpen)}
-            >
-              <View style={styles.dropdown}>
-                <Text style={styles.dropdownText}>{selectedYear} </Text>
-                <Ionicons name="chevron-down" size={16} color="#5A390E" />
-              </View>
-            </Pressable>
+    return (
+      <View style={styles.row}>
+        {/* Curved timeline path */}
+        <CurvedTimelinePath isEven={isEven} />
 
-            {yearOpen && (
-              <View style={styles.dropdownList}>
-                {years.map((year) => (
-                  <Pressable
-                    key={year}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setSelectedYear(year);
-                      setYearOpen(false);
-                    }}
-                  >
-                    <Text>{year}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-          </View>
-        </View>
-
-        <View style={styles.paperBackgroundContainer}>
-          <ImageBackground
-            source={require('../../assets/images/layered-vintage-paper.png')}
-            style={styles.paperBackground}
+        {/* Stamp group (card + date + popup) */}
+        <View
+          style={[
+            styles.stampGroup,
+            {
+              alignSelf: isEven ? 'flex-start' : 'flex-end',
+            },
+          ]}
+        >
+          {/* Stamp card */}
+          <View
+            style={[
+              styles.stampCard,
+              {
+                width: stampWidth,
+              },
+            ]}
           >
-            <FlatList
-              data={items}
-              keyExtractor={(item, index) => item.id + index}
-              renderItem={({ item, index }) => {
-                const isEven = index % 2 === 0;
+            <Pressable onPress={() => setSelectedStamp(isSelected ? null : item)}>
+              <View style={styles.stampImageWrapper}>
+                <Image source={item.image} style={styles.stampImage} />
+              </View>
+              <View style={styles.labelBar}>
+                <Text style={styles.labelTitle} numberOfLines={1}>
+                  {item.title}
+                </Text>
+              </View>
+            </Pressable>
+          </View>
 
-                return (
-                  <View style={styles.row}>
-                    <CurvedTimelinePath isEven={isEven} />
-                    <View style={[
-                      styles.stampGroup,
-                      {
-                        alignSelf: isEven ? 'flex-start' : 'flex-end',
-                        flexDirection: isEven ? 'row' : 'row-reverse'
-                      }
-                    ]}>
-                      <View style={[styles.stampContainer,]}>
-                        <Pressable onPress={() => setSelectedStamp(item)}>
-                          <Image
-                            source={item.image}
-                            style={styles.stampImage}
-                          />
-                        </Pressable>
-                        {selectedStamp?.id === item.id && (
-                          <View style={styles.infoCard}>
-                            <Text style={styles.folderTitle}>{item.title}</Text>
-                            <Text style={styles.folderDate}>
-                              {item.date}
-                            </Text>
-                            <Pressable
-                              style={styles.openButton}
-                              onPress={() => {
-                                router.push({
-                                  pathname: '/bulletin-board',
-                                  params: { id: item.id, title: item.title },
-                                });
-                              }}
-                            >
-                              <Text style={styles.openButtonText}>
-                                Open Folder
-                              </Text>
-                            </Pressable>
-                          </View>
-                        )}
-                      </View>
-                    </View>
+          {/* Date badge centered below card */}
+          <View style={styles.dateBadge}>
+            <Text style={styles.dateBadgeText}>{item.date}</Text>
+          </View>
+
+          {/* Info popup centered relative to stamp */}
+          {isSelected && (
+            <View style={styles.infoPopup}>
+              <Text style={styles.infoTitle}>{item.title}</Text>
+              <Text style={styles.infoDate}>{item.date}</Text>
+              <Pressable
+                style={styles.infoButton}
+                onPress={() => {
+                  router.push({
+                    pathname: '/bulletin-board',
+                    params: { id: item.id, title: item.title },
+                  });
+                }}
+              >
+                <Text style={styles.infoButtonText}>Open Folder</Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.root}>
+      <ImageBackground
+        source={require('../../assets/images/RED swirl subtle.png')}
+        style={styles.outerBackground}
+        imageStyle={styles.outerBackgroundImage}
+      >
+        <SafeAreaView style={styles.safeArea}>
+          {/* Header section */}
+          <View style={styles.header}>
+            <Text style={styles.welcomeBackHeader}>Welcome Back, Name</Text>
+
+            <View style={styles.dropdownRow}>
+              {/* Month dropdown */}
+              <View style={styles.dropdownWrapper}>
+                <Pressable
+                  style={styles.dropdownButton}
+                  onPress={() => {
+                    setMonthOpen(!monthOpen);
+                    if (yearOpen) setYearOpen(false);
+                  }}
+                >
+                  <View style={styles.dropdownInner}>
+                    <Text style={styles.dropdownText}>{selectedMonth}</Text>
+                    <Text style={styles.dropdownArrow}>▾</Text>
                   </View>
-                );
-              }}
-              onEndReached={fetchNextPage}
-              onEndReachedThreshold={0.5}
-              showsVerticalScrollIndicator={false}
-              ListFooterComponent={() => (
-                <View style={{ padding: 30 }}>
-                  {loading ? (
-                    <ActivityIndicator size="large" color="#4A3728" />
-                  ) : (
-                    <Text style={{ textAlign: 'center', color: '#4A3728' }}>
-                      {items.length >= MOCK_API.data.length ? "Making Memories since *Birth Year* " : "Scroll for more"}
-                    </Text>
-                  )}
-                </View>
-              )}
-            />
-          </ImageBackground>
+                </Pressable>
+
+                {monthOpen && (
+                  <View style={styles.dropdownList}>
+                    {months.map((month) => (
+                      <Pressable
+                        key={month}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setSelectedMonth(month);
+                          setMonthOpen(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemText}>{month}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </View>
+
+              {/* Year dropdown */}
+              <View style={styles.dropdownWrapper}>
+                <Pressable
+                  style={styles.dropdownButton}
+                  onPress={() => {
+                    setYearOpen(!yearOpen);
+                    if (monthOpen) setMonthOpen(false);
+                  }}
+                >
+                  <View style={styles.dropdownInner}>
+                    <Text style={styles.dropdownText}>{selectedYear}</Text>
+                    <Text style={styles.dropdownArrow}>▾</Text>
+                  </View>
+                </Pressable>
+
+                {yearOpen && (
+                  <View style={styles.dropdownList}>
+                    {years.map((year) => (
+                      <Pressable
+                        key={year}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setSelectedYear(year);
+                          setYearOpen(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemText}>{year}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {/* Paper content area */}
+          <View style={styles.paperContainer}>
+            <ImageBackground
+              source={require('../../assets/images/layered-vintage-paper.png')}
+              style={styles.paperBackground}
+            >
+              <FlatList
+                data={items}
+                keyExtractor={(item, index) => item.id + index}
+                renderItem={renderTimelineItem}
+                onEndReached={fetchNextPage}
+                onEndReachedThreshold={0.5}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 100 }}
+                ListFooterComponent={() => (
+                  <View style={styles.footerContainer}>
+                    {loading ? (
+                      <ActivityIndicator size="large" color="#7B1D1D" />
+                    ) : (
+                      <Text style={styles.footerText}>
+                        {items.length >= MOCK_API.data.length
+                          ? 'Making Memories since *Birth Year* ✦'
+                          : 'Scroll for more'}
+                      </Text>
+                    )}
+                  </View>
+                )}
+              />
+            </ImageBackground>
+          </View>
+        </SafeAreaView>
+
+        <View style={styles.navbarWrapper}>
+          <BottomNavbar />
         </View>
       </ImageBackground>
-      <BottomNavbar />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#6D1B12',
-    alignItems: 'center',
+    backgroundColor: '#7B1D1D',
   },
-  redSwirlContainer: {
-    width: '100%',
-    flex: 1,
-    backgroundColor: '#6D1B12',
-  },
-  redSwirl: {
-    resizeMode: 'cover',
-    opacity: 0.1,
-  },
-  paperBackgroundContainer: {
+  outerBackground: {
     flex: 1,
     width: '100%',
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginTop: 10,
+    height: '100%',
   },
-  paperBackground: {
-    flex: 1,
-    borderRadius: 20,
+  outerBackgroundImage: {
     resizeMode: 'cover',
+    opacity: 0.12,
+  },
+  safeArea: {
+    flex: 1,
+    paddingTop: 12,
+    paddingHorizontal: 20,
+  },
+  header: {
+    paddingBottom: 8,
   },
   welcomeBackHeader: {
     fontFamily: 'Calistoga',
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 28,
     color: '#F6E5CD',
+    marginBottom: 14,
     textAlign: 'center',
-    marginTop: 50,
+  },
+  dropdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+  },
+  dropdownWrapper: {
+    flexShrink: 0,
+  },
+  dropdownButton: {
+    backgroundColor: 'rgba(246,229,205,0.15)',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(246,229,205,0.3)',
+  },
+  dropdownInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dropdownText: {
+    color: '#F6E5CD',
+    fontSize: 15,
+    fontWeight: '600',
+    fontFamily: 'Inter',
+    marginRight: 4,
+  },
+  dropdownArrow: {
+    color: '#F6E5CD',
+    fontSize: 14,
+  },
+  dropdownList: {
+    marginTop: 6,
+    borderRadius: 12,
+    backgroundColor: '#EDE8D9',
+    position: 'absolute',
+    top: 44,
+    minWidth: 140,
+    zIndex: 100,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  dropdownItemText: {
+    color: '#5A390E',
+    fontSize: 14,
+  },
+  paperContainer: {
+    flex: 1,
+    marginTop: 16,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    overflow: 'hidden',
+  },
+  paperBackground: {
+    flex: 1,
   },
   row: {
-    height: 180,
-    justifyContent: 'center'
+    height: 200,
+    justifyContent: 'center',
   },
   timeline: {
-    position: "absolute",
+    position: 'absolute',
     left: 0,
     right: 0,
-    alignItems: "center"
-  },
-  stampContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 0,
+    top: 0,
+    bottom: 0,
     alignItems: 'center',
-    backgroundColor: '#6D1B12',
-    height: 120,
-    width: 100,
-    borderRadius: 10,
-  },
-  stampImage: {
-    width: 100,
-    height: 120,
-    marginLeft: 20,
-  },
-  stampText: {
-    marginTop: 10,
-    fontSize: 16
-  },
-  line: {
-    width: 60,
-    height: 20,
-    marginHorizontal: 10,
   },
   stampGroup: {
     width: '60%',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  brushLine: {
-    position: 'absolute',
-    top: 112,
-    width: 45,
-    height: 10,
-    resizeMode: 'contain',
-    tintColor: '#5A390E',
-  },
-  dropdown: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  dropdownRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 12,
-    marginBottom: 10,
-  },
-  dropdownContainer: {
-    paddingTop: 20,
-    alignItems: "center",
-  },
-  dropdownButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#F6E5CD',
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: "#5A390E",
-    fontWeight: "600",
-    fontFamily: 'Inter',
-  },
-  dropdownList: {
-    marginTop: 10,
-    borderRadius: 10,
-    backgroundColor: '#F6E5CD',
-    overflow: "hidden",
-    position: "absolute",
-    top: 40,
-    zIndex: 10,
-  },
-  dropdownItem: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-  },
-  infoCard: {
-    backgroundColor: '#F6F0E4',
+  stampCard: {
+    backgroundColor: '#7B1D1D',
     borderRadius: 12,
-    padding: 12,
-    marginTop: 8,
-    width: 180,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-    zIndex: 3,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
-  folderTitle: {
-    fontWeight: "700",
-    fontSize: 16,
-    marginBottom: 4,
+  stampImageWrapper: {
+    width: '100%',
+    height: 110,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#7B1D1D',
   },
-  folderDate: {
-    color: "#666",
-    marginBottom: 8,
+  stampImage: {
+    width: '100%',
+    height: 110,
+    resizeMode: 'cover',
   },
-  openButton: {
-    backgroundColor: "#5A390E",
+  labelBar: {
+    backgroundColor: '#5C1010',
     paddingVertical: 6,
-    borderRadius: 8,
-    alignItems: "center",
+    paddingHorizontal: 8,
   },
-  openButtonText: {
-    color: "white",
-    fontWeight: "600",
+  labelTitle: {
+    color: '#F6E5CD',
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  dateBadge: {
+    marginTop: 6,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(237,232,217,0.9)',
+    borderRadius: 999,
+    paddingVertical: 3,
+    paddingHorizontal: 10,
+  },
+  dateBadgeText: {
+    color: '#5A390E',
+    fontSize: 10,
+    fontWeight: '600',
+    textAlign: 'center',
+    alignSelf: 'center',
+  },
+  infoPopup: {
+    marginTop: 10,
+    alignSelf: 'center',
+    backgroundColor: '#EDE8D9',
+    borderRadius: 14,
+    padding: 14,
+    zIndex: 20,
+  },
+  infoTitle: {
+    fontWeight: '700',
+    color: '#3B2C1A',
+    fontSize: 14,
+  },
+  infoDate: {
+    color: '#8B7355',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  infoButton: {
+    backgroundColor: '#7B1D1D',
+    borderRadius: 8,
+    paddingVertical: 8,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  infoButtonText: {
+    color: '#F6E5CD',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  footerContainer: {
+    padding: 30,
+  },
+  footerText: {
+    textAlign: 'center',
+    color: '#8B7355',
+    fontSize: 13,
+    fontStyle: 'italic',
+  },
+  navbarWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 100,
   },
 });
