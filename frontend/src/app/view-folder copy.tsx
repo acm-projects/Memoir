@@ -12,7 +12,6 @@ import {
   Image,
 } from 'react-native';
 import { router } from 'expo-router';
-import { ChevronLeft, Search, Plus } from 'lucide-react-native';
 import BottomNavbar from '../components/BottomNavbar';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -62,8 +61,7 @@ export default function viewFolder() {
           <View style={styles.cardTop}>
             {item.isAdd ? (
               <View style={styles.addCircle}>
-                {/* No extra props on Plus to satisfy LucideProps */}
-                <Plus size={32} />
+                <Text style={styles.addPlus}>+</Text>
               </View>
             ) : (
               item.image && (
@@ -109,16 +107,14 @@ export default function viewFolder() {
               style={styles.backButton}
               hitSlop={12}
             >
-              {/* No extra props on ChevronLeft */}
-              <ChevronLeft size={24} />
+              <Text style={styles.backArrow}>←</Text>
             </Pressable>
             <Text style={styles.headerTitle}>Name&apos;s Memories</Text>
           </View>
 
           {/* Search bar */}
           <View style={styles.searchBar}>
-            {/* No extra props on Search */}
-            <Search size={16} />
+            <Text style={styles.searchIcon}>🔍</Text>
             <TextInput
               style={styles.searchInput}
               placeholder="Search folders"
@@ -194,6 +190,10 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 4,
   },
+  backArrow: {
+    fontSize: 22,
+    color: '#EDE8D9',
+  },
 
   headerTitle: {
     flex: 1,
@@ -213,7 +213,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-
+  searchIcon: {
+    marginRight: 8,
+    fontSize: 14,
+    color: '#EDE8D9',
+  },
   searchInput: {
     flex: 1,
     fontSize: 14,
@@ -292,6 +296,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
+  },
+  addPlus: {
+    fontSize: 30,
+    color: '#EDE8D9',
+    lineHeight: 32,
   },
 
   cardBottom: {
