@@ -27,7 +27,7 @@ const folders = [
 
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 3;
 
-export default function viewFolder() {
+export default function ViewFolder() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredFolders = useMemo(

@@ -47,6 +47,10 @@ export default function Login() {
          </TouchableOpacity>
        </View>
 
+       <Text style={styles.subtitle}>
+        Save the cards and letters you never want to lose—even when they&apos;re not in your hands.
+      </Text>
+
 
 
 
@@ -198,9 +202,13 @@ const styles = StyleSheet.create({
   width: 450,  
   height: 500,
   zIndex: 2,
- }
+ },
 
-
-
-
+ subtitle: {
+  marginTop: 12,
+  marginHorizontal: 24,
+  textAlign: 'center',
+  color: '#F6E5CD',
+  fontSize: 14,
+},
 })
