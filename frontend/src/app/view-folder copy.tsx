@@ -30,6 +30,9 @@ const CARD_WIDTH = (SCREEN_WIDTH - 48) / 3;
 
 export default function viewFolder() {
   const [searchQuery, setSearchQuery] = useState('');
+  const Icon = ChevronLeft as any;
+  const SearchIcon = Search as any;
+  const PlusIcon = Plus as any;
 
   const filteredFolders = useMemo(
     () =>
@@ -62,8 +65,7 @@ export default function viewFolder() {
           <View style={styles.cardTop}>
             {item.isAdd ? (
               <View style={styles.addCircle}>
-                {/* No extra props on Plus to satisfy LucideProps */}
-                <Plus size={32} />
+                <PlusIcon size={24} color="#8B7355" strokeWidth={4} />
               </View>
             ) : (
               item.image && (
@@ -109,8 +111,9 @@ export default function viewFolder() {
               style={styles.backButton}
               hitSlop={12}
             >
-              {/* No extra props on ChevronLeft */}
-              <ChevronLeft size={24} />
+              
+            
+            <Icon size={24} color="#EDE8D9" />
             </Pressable>
             <Text style={styles.headerTitle}>Name&apos;s Memories</Text>
           </View>
@@ -118,10 +121,10 @@ export default function viewFolder() {
           {/* Search bar */}
           <View style={styles.searchBar}>
             {/* No extra props on Search */}
-            <Search size={16} />
+            <SearchIcon size={16} color="#EDE8D9" />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search folders"
+              placeholder="   Search folders"
               placeholderTextColor="rgba(237,232,217,0.6)"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -193,6 +196,7 @@ const styles = StyleSheet.create({
 
   backButton: {
     padding: 4,
+    color:'#5A390E'
   },
 
   headerTitle: {
@@ -287,11 +291,11 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    borderWidth: 2,
-    borderColor: 'rgba(237,232,217,0.4)',
+    borderWidth: 4,
+    borderColor: '#8B7355',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 20,
   },
 
   cardBottom: {
