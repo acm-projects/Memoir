@@ -5,7 +5,6 @@ import DraggableItem from "../components/draggableItem";
 import BottomNavbar from '../components/BottomNavbar';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from "expo-router";
-import BackButton from "../components/back-Button";
 
 
 
@@ -208,66 +207,65 @@ async function searchGifs(query: string) {
 
   return (
     <View style={styles.container}>
+      {/* Top red banner */}
+      <ImageBackground
+        source={require('../../assets/images/RED swirl subtle.png')}
+        style={styles.topBanner}
+        imageStyle={{ resizeMode: 'cover' }}
+      >
+        {/* Back button */}
+        <TouchableOpacity onPress={() => router.back()} style={styles.bannerBack}>
+          <Text style={styles.bannerBackText}>←</Text>
+        </TouchableOpacity>
+
+        {/* Title */}
+        <Text style={styles.bannerTitle} numberOfLines={1}>
+          {title}
+        </Text>
+
+        {/* Stamp top right */}
+        <Image
+          source={require('../../assets/images/star-stamp.png')}
+          style={styles.bannerStamp}
+        />
+      </ImageBackground>
+
       <ImageBackground 
         source={require('../../assets/images/layered-vintage-paper.png')} 
         style={styles.paperBackground}
       > 
-        <ImageBackground 
-          source={require('../../assets/images/RED swirl subtle.png')} 
-          imageStyle={styles.redSwirl}
-        >
-        </ImageBackground> 
-        
-        <View style = {{ flexDirection: 'row' , padding:5, alignItems: "flex-start",marginTop:50, justifyContent: "space-between"}}>
-          <Text style = {styles.folderName}>{title}</Text>
-          <Image source = {require('../../assets/images/star-stamp.png')} 
-          style = {styles.folderImage}
-          />
-        </View>
-
-        <View style={styles.line} />
-        
         {/* TOOLBAR */}
         <View style={styles.toolbar}>
-        <Pressable style={styles.button} onPress={() => setIsEditing(!isEditing)}>
-          <Text style={styles.buttonText}>{isEditing ? "Done" : "Edit"}</Text>
-        </Pressable>
-       {isEditing && (  
-        <Pressable style={styles.plusButton} onPress={() => setShowAddSheet(true)}>
-      <Text style={styles.plusText}>+</Text>
-        </Pressable>
-  )}
+          <Pressable style={styles.button} onPress={() => setIsEditing(!isEditing)}>
+            <Text style={styles.buttonText}>{isEditing ? "Done" : "Edit"}</Text>
+          </Pressable>
+          {isEditing && (
+            <Pressable style={[styles.plusButton, { marginLeft: 'auto' }]} onPress={() => setShowAddSheet(true)}>
+              <Text style={styles.plusText}>+</Text>
+            </Pressable>
+          )}
         </View>
-
-
-
-       
-
-        
 
         {/* BOARD */}
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView
-          style={styles.board}
-          contentContainerStyle={styles.boardContent}
-          scrollEnabled={!isEditing}>
-          {items.map((item) => (
-            <DraggableItem
-              key={item.id}
-              item={item}
-              deleteItem={deleteItem}
-              isEditing={isEditing}
-              selectedId={selectedId}
-              setSelectedId={setSelectedId}
-              onColorChange={onColorChange}
-              onPositionChange={handlePositionChange}  
-               />  
-          ))}
-        
-         </ScrollView>
+            style={styles.board}
+            contentContainerStyle={styles.boardContent}
+            scrollEnabled={!isEditing}>
+            {items.map((item) => (
+              <DraggableItem
+                key={item.id}
+                item={item}
+                deleteItem={deleteItem}
+                isEditing={isEditing}
+                selectedId={selectedId}
+                setSelectedId={setSelectedId}
+                onColorChange={onColorChange}
+                onPositionChange={handlePositionChange}  
+              />  
+            ))}
+          </ScrollView>
         </TouchableWithoutFeedback>
-
-        
 
         {/* FLOATING COLOR PICKER */}
         {showColorPicker && (
@@ -457,47 +455,78 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F5F3EE",
   },
-
-  toolbar: {
-    flexDirection: "row",
-    padding: 12,
-    gap: 10,
-    marginTop: -80,
-    paddingBottom: 49,
+  topBanner: {
+    height: 150,
+    width: '105%',
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingTop: 40,
+    paddingBottom: 30,
+    paddingHorizontal: 16,
   },
-
-  button: {
-    backgroundColor: "#6D1B12",
-    padding: 7,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
+  bannerBack: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(246,229,205,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
   },
-
-  buttonText:{
-    color:"#FFFFFF",
-    fontFamily: 'Inter',
-    fontSize: 14,
-
+  bannerBackText: {
+    fontSize: 20,
+    color: '#F6E5CD',
   },
-
-
-
-  board: {
+  bannerTitle: {
     flex: 1,
+    fontSize: 24, // increased from 22
+    fontWeight: '700',
+    color: '#F6E5CD',
+    fontFamily: 'Calistoga',
   },
-
-  redSwirl:{ 
-    height: 60, 
-    }, 
-    
-    paperBackground:{ 
+  bannerStamp: {
+    width: 110,
+    height: 80,
+    resizeMode: 'contain',
+    marginLeft: 8,
+    marginBottom: -10, // lower the stamp slightly
+  },
+  paperBackground:{ 
     flex: 1,  
     width: '100%', 
     height: '100%', 
     borderRadius:10,
-    }, 
-
+  }, 
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 10,
+  },
+  button: {
+    backgroundColor: "#6D1B12",
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 0,
+  },
+  buttonText:{
+    color:"#FFFFFF",
+    fontFamily: 'Inter',
+    fontSize: 14,
+  },
+  board: {
+    flex: 1,
+  },
+  boardContent: {
+    height: 1500,
+    paddingHorizontal: 8,
+  },
+  redSwirl:{ 
+    height: 60, 
+  }, 
+    
     folderName:{
       fontFamily:'Calistoga',
       fontSize:32,
@@ -620,65 +649,67 @@ overlay: {
   backgroundColor: "rgba(0,0,0,0.3)",
 },
 sheet: {
-  backgroundColor: "#F5EEE1",
-  borderTopLeftRadius: 20,
-  borderTopRightRadius: 20,
+  backgroundColor: '#EDE8D9',
+  borderTopLeftRadius: 24,
+  borderTopRightRadius: 24,
   padding: 16,
   paddingBottom: 40,
-  height: "70%",   // ← change this to make it taller
+  height: '70%',
 },
 
-tabs: { flexDirection: "row", borderBottomWidth: 1, borderColor: "#e8e0d0", marginBottom: 16 },
+tabs: {
+  flexDirection: 'row',
+  borderBottomWidth: 1,
+  borderColor: '#D4C9A8',
+  marginBottom: 16,
+},
 tab: { flex: 1, paddingVertical: 8, alignItems: "center" },
-tabText: { fontSize: 13, color: "#9a7a60", fontFamily: "Inter" },
-tabActive: { color: "#6D1B12", fontWeight: "500" },
+tabText: { fontSize: 13, color: '#8B7355', fontFamily: 'Inter' },
+tabActive: { color: '#7B1D1D', fontWeight: '600' },
 
-hint: { fontSize: 12, color: "#9a7a60", fontFamily: "Inter", marginBottom: 10 },
+hint: {
+  fontSize: 12,
+  color: '#8B7355',
+  fontFamily: 'Inter',
+  marginBottom: 10,
+},
 colorsRow: { flexDirection: "row", gap: 10 },
-colorDot: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: "#c8b89a" },
+colorDot: {
+  width: 36,
+  height: 36,
+  borderRadius: 18,
+  borderWidth: 1.5,
+  borderColor: '#C8B89A',
+},
 stickersRow: { flexDirection: "row", gap: 10, flexWrap: "wrap" },
 
 
 uploadArea: {
   borderWidth: 1.5,
-  borderColor: "#c8b89a",
-  borderStyle: "dashed",
+  borderColor: '#C8B89A',
+  borderStyle: 'dashed',
   borderRadius: 12,
   padding: 32,
-  alignItems: "center",
+  alignItems: 'center',
   gap: 10,
 },
 
 uploadText: {
   fontSize: 13,
-  color: "#9a7a60",
-  fontFamily: "Inter",
-  textAlign: "center",
+  color: '#8B7355',
+  fontFamily: 'Inter',
+  textAlign: 'center',
 },
-
-boardContent: {
-  height: 1500,  // ← tall enough to scroll through, adjust as needed
-},
-
-line: {
-  height: 1,
-  backgroundColor: "#6D1B12",
-  width: "90%",
-  marginLeft:20,
-
-},
-
 input: {
-  backgroundColor: "#F5EEE1",
+  backgroundColor: '#EDE8D9',
   borderWidth: 1,
-  borderColor: "#c8b89a",
+  borderColor: '#C8B89A',
   borderRadius: 10,
   padding: 12,
   fontSize: 14,
-  color: "#3a2010",
-  fontFamily: "Inter",
+  color: '#3B2C1A',
+  fontFamily: 'Inter',
   marginBottom: 12,
 },
-
 });
 

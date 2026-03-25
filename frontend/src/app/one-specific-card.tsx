@@ -132,8 +132,8 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   topBanner: {
-    height: 110,
-    width: '100%',
+    height: 130,
+    width: '105%',
     paddingTop: 40,
     paddingHorizontal: 20,
     flexDirection: 'row',
