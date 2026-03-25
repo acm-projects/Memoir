@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground, TouchableOpacity, ScrollView,Image} from "react-native";
+import { View, Text, Pressable, StyleSheet, ImageBackground, TouchableOpacity, ScrollView, Image } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
-import FolderItem from '../components/folder-item';
 import BottomNavbar from '../components/BottomNavbar';
 import BackButton from "../components/back-Button";
 import DraggableItem from '../components/draggableItem'; 
@@ -19,7 +18,7 @@ type Item = {
 };
 
 
-export default function createCard() {
+export default function CreateCard() {
     const [cardColor, setCardColor] = useState("#FFFFFF");
     const [items, setItems] = useState<Item[]>([]);
     const [activeTool, setActiveTool] = useState<string | null>(null);

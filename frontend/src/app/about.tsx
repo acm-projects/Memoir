@@ -9,9 +9,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import BottomNavbar from '../components/BottomNavbar';
-import { ChevronLeft, Flame, ScanLine, FolderOpen, Sparkles } from 'lucide-react-native';
 
-// Small helper type to satisfy lucide-react-native typings when passing color/size directly
+// Small helper type left for future icons if needed
 type IconProps = { size?: number; color?: string };
 
 export default function AboutPage() {
@@ -34,7 +33,7 @@ export default function AboutPage() {
           <View style={styles.bannerContent}>
             {/* Back button */}
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ChevronLeft {...({ size: 26, color: '#F6E5CD' } as IconProps)} />
+              <Text style={{ fontSize: 22, color: '#F6E5CD' }}>{'<'}</Text>
             </TouchableOpacity>
 
             {/* Title */}
@@ -56,7 +55,7 @@ export default function AboutPage() {
           <Text style={styles.heroTagline}>Preserving the moments that matter most.</Text>
           <Text style={styles.heroSubtitle}>
             In a world where meaningful messages get lost, Memoir creates a dedicated space to scan, organize,
-            and revisit handwritten cards and letters- while helping you design new ones worth saving.
+            and revisit handwritten cards and letters so they&apos;re never lost — while helping you design new ones worth saving.
           </Text>
 
           {/* Ornamental divider */}
@@ -69,7 +68,7 @@ export default function AboutPage() {
           {/* SECTION 2 — Inspiration card */}
           <View style={styles.inspirationCard}>
             <View style={styles.inspirationHeaderRow}>
-              <Flame {...({ size: 20, color: '#F6E5CD' } as IconProps)} />
+              <Text style={{ fontSize: 18, marginRight: 4 }}>🔥</Text>
               <Text style={styles.inspirationLabel}>THE INSPIRATION</Text>
             </View>
             <View style={styles.inspirationDivider} />
@@ -86,12 +85,12 @@ export default function AboutPage() {
           {/* Feature 1 - Preserve */}
           <View style={styles.featureCard}>
             <View style={styles.featureIconCirclePreserve}>
-              <ScanLine {...({ size: 20, color: '#FFF9F2' } as IconProps)} />
+              <Text style={{ fontSize: 18, color: '#FFF9F2' }}>📷</Text>
             </View>
             <View style={styles.featureTextWrapper}>
               <Text style={styles.featureTitle}>Preserve the Past</Text>
               <Text style={styles.featureBody}>
-                Scan and digitize handwritten cards, letters, and notes so they're never lost.
+                Scan and digitize handwritten cards, letters, and notes so they&apos;re never lost.
               </Text>
             </View>
           </View>
@@ -99,7 +98,7 @@ export default function AboutPage() {
           {/* Feature 2 - Organize */}
           <View style={styles.featureCard}>
             <View style={styles.featureIconCircleOrganize}>
-              <FolderOpen {...({ size: 20, color: '#FFF9F2' } as IconProps)} />
+              <Text style={{ fontSize: 18, color: '#FFF9F2' }}>🗂️</Text>
             </View>
             <View style={styles.featureTextWrapper}>
               <Text style={styles.featureTitle}>Organize Your Memories</Text>
@@ -112,7 +111,7 @@ export default function AboutPage() {
           {/* Feature 3 - Create */}
           <View style={styles.featureCard}>
             <View style={styles.featureIconCircleCreate}>
-              <Sparkles {...({ size: 20, color: '#FFF9F2' } as IconProps)} />
+              <Text style={{ fontSize: 18, color: '#FFF9F2' }}>✨</Text>
             </View>
             <View style={styles.featureTextWrapper}>
               <Text style={styles.featureTitle}>Create New Moments</Text>
