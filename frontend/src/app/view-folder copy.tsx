@@ -14,17 +14,17 @@ import {
 
 import { router } from 'expo-router';
 import BottomNavbar from '../components/BottomNavbar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons,MaterialIcons } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const folders = [
   { id: '1', title: 'Create New Folder', date: '', isAdd: true, image: null },
-  { id: '2', title: 'All Memories', date: 'March 18, 2026', isAdd: false, image: require('../../assets/images/Australia-Stamp.png') },
-  { id: '3', title: 'Spring Break', date: 'March 24, 2026', isAdd: false, image: require('../../assets/images/star-stamp.png') },
-  { id: '4', title: 'Prom', date: 'April 6, 2026', isAdd: false, image: require('../../assets/images/costa-rica-stamp.png') },
-  { id: '5', title: 'College grad', date: 'April 6, 2026', isAdd: false, image: require('../../assets/images/costa-rica-stamp.png') },
-  { id: '6', title: 'Bestieee', date: 'March 18, 2026', isAdd: false, image: require('../../assets/images/costa-rica-stamp.png') },
+  { id: '2', title: 'All Memories', date: 'March 18, 2026', isAdd: false, image: require('../../assets/images/bird-stamp.png') },
+  { id: '3', title: 'Spring Break', date: 'March 24, 2026', isAdd: false, image: require('../../assets/images/blueFlower-stamp.png') },
+  { id: '4', title: 'Prom', date: 'April 6, 2026', isAdd: false, image: require('../../assets/images/brasil-stamp.png') },
+  { id: '5', title: 'College grad', date: 'April 6, 2026', isAdd: false, image: require('../../assets/images/butterfly-stamp.png') },
+  { id: '6', title: 'Bestieee', date: 'March 18, 2026', isAdd: false, image: require('../../assets/images/bird-stamp.png') },
 ];
 
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 3;
@@ -64,8 +64,8 @@ export default function ViewFolder() {
           <View style={styles.cardTop}>
             {item.isAdd ? (
               <View style={styles.addCircle}>
-                <Ionicons name="add"size={24} color="#8B7355" strokeWidth={4}/>
-                <Text style={styles.addPlus}>+</Text>
+                <MaterialIcons name="add"size={30} color="#EDE8D9"/>
+                
               </View>
             ) : (
               item.image && (
@@ -112,8 +112,7 @@ export default function ViewFolder() {
               hitSlop={12}
             >
               
-              <Ionicons name="arrow-back" size={16} color="#EDE8D9" />
-              <Text style={styles.backArrow}>←</Text>
+              <Ionicons name="arrow-back" size={24} color="#EDE8D9" />
             </Pressable>
             <Text style={styles.headerTitle}>Name&apos;s Memories</Text>
           </View>
@@ -122,7 +121,6 @@ export default function ViewFolder() {
           <View style={styles.searchBar}>
             {/* No extra props on Search */}
             <Ionicons name="search" size={16} color="#EDE8D9" />
-            <Text style={styles.searchIcon}>🔍</Text>
             <TextInput
               style={styles.searchInput}
               placeholder="   Search folders"
@@ -206,10 +204,12 @@ const styles = StyleSheet.create({
 
   headerTitle: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: -5,
     fontSize: 28,
     fontWeight: '700',
     color: '#EDE8D9',
+    textAlign:'center',
+    fontFamily:'Calistoga'
   },
 
   searchBar: {
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   },
 
   cardTop: {
-    height: CARD_WIDTH * 0.85,
+    height: CARD_WIDTH * 0.8,
     backgroundColor: '#7B1D1D',
     alignItems: 'center',
     justifyContent: 'flex-end',
@@ -300,21 +300,17 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    borderWidth: 4,
-    borderColor: '#8B7355',
+    borderWidth: 3,
+    borderColor: '#EDE8D9',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 15,
   },
-  addPlus: {
-    fontSize: 30,
-    color: '#EDE8D9',
-    lineHeight: 32,
-  },
+  
 
   cardBottom: {
     backgroundColor: '#C8B89A',
-    paddingVertical: 6,
+    paddingVertical: 10,
     paddingHorizontal: 4,
   },
 

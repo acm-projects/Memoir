@@ -1,5 +1,5 @@
 import React, { useState, useRef  } from "react";
-import { View, Text, StyleSheet, Pressable, ImageBackground, Image, TouchableOpacity,ScrollView,Platform,Keyboard, TouchableWithoutFeedback } from "react-native";
+import { View, Text, StyleSheet, Pressable, ImageBackground, Image, TouchableOpacity,ScrollView,Platform,Keyboard, TouchableWithoutFeedback,TextInput,FlatList } from "react-native";
 import { Modal } from "react-native";
 import DraggableItem from "../components/draggableItem";
 import BottomNavbar from '../components/BottomNavbar';
@@ -28,6 +28,8 @@ export default function BulletinBoard() {
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<any>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [gifs, setGifs] = useState<any[]>([]);
+  const [gifSearch, setGifSearch] = useState("");
   const [items, setItems] = useState<Item[]>([
     {
       id: '2',
@@ -92,7 +94,7 @@ const handlePositionChange = (id: string, newX: number, newY: number) => {
 };
 
   const [showAddSheet, setShowAddSheet] = useState(false);
-  const [activeTab, setActiveTab] = useState<"note" | "sticker" | "photo">("note");
+  const [activeTab, setActiveTab] = useState<"note" | "sticker" | "photo" | "gif">("note");
 
   function addNote(color: string) {
     setItems([
@@ -189,6 +191,20 @@ function onPickFileWeb(e: any) {
   ]);
   setShowAddSheet(false);
 }
+
+async function searchGifs(query: string) {
+  const apiKey = process.env.EXPO_PUBLIC_GIPHY_KEY;
+  const url = query
+    ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${query}&limit=50`
+    : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=50`;
+  
+  const res = await fetch(url);
+  const json = await res.json();
+  setGifs(json.data);
+}
+
+
+ 
 
   return (
     <View style={styles.container}>
@@ -290,13 +306,16 @@ function onPickFileWeb(e: any) {
     
     <View style={styles.tabs}>
       
-      {["note","sticker","photo"].map((t) => (
-        <Pressable key={t} style={styles.tab} onPress={() => setActiveTab(t as any)}>
-          <Text style={[styles.tabText, activeTab === t && styles.tabActive]}>
-            {t.charAt(0).toUpperCase() + t.slice(1)}
-          </Text>
-        </Pressable>
-      ))}
+      {["note", "sticker", "photo", "gif"].map((t) => (
+  <Pressable key={t} style={styles.tab} onPress={() => {
+    setActiveTab(t as any);
+    if (t === "gif") searchGifs(""); // load trending immediately
+  }}>
+    <Text style={[styles.tabText, activeTab === t && styles.tabActive]}>
+      {t.charAt(0).toUpperCase() + t.slice(1)}
+    </Text>
+  </Pressable>
+))}
    
     </View>
     
@@ -373,6 +392,46 @@ function onPickFileWeb(e: any) {
       />
     )}
   </ScrollView>
+
+)}
+
+{activeTab === "gif" && (
+  <View style={styles.tabContent}>
+    <TextInput
+      style={styles.input}
+      placeholder="Search GIFs..."
+      placeholderTextColor="#9a7a60"
+      value={gifSearch}
+      onChangeText={(text) => {
+        setGifSearch(text);
+        searchGifs(text);
+      }}
+      autoFocus
+    />
+    <FlatList
+      data={gifs}
+      numColumns={2}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <Pressable onPress={() => {
+          setItems(prev => [...prev, {
+            id: Date.now().toString(),
+            type: "sticker",
+            content: "",
+            x: 100,
+            y: 150,
+            sticker: item.images.fixed_height.url,
+          }]);
+          setShowAddSheet(false);
+        }}>
+          <Image
+            source={{ uri: item.images.fixed_height.url }}
+            style={{ width: 150, height: 150, margin: 15, borderRadius: 8 }}
+          />
+        </Pressable>
+      )}
+      showsVerticalScrollIndicator={false}/>
+  </View>
 )}
 
     </View>
@@ -383,6 +442,8 @@ function onPickFileWeb(e: any) {
 
 
  
+
+
 
 </ImageBackground> 
 <BottomNavbar />
@@ -605,7 +666,19 @@ line: {
   width: "90%",
   marginLeft:20,
 
-}
+},
+
+input: {
+  backgroundColor: "#F5EEE1",
+  borderWidth: 1,
+  borderColor: "#c8b89a",
+  borderRadius: 10,
+  padding: 12,
+  fontSize: 14,
+  color: "#3a2010",
+  fontFamily: "Inter",
+  marginBottom: 12,
+},
 
 });
 

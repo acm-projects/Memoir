@@ -159,8 +159,8 @@ export default function DraggableItem({ item, deleteItem, isEditing, selectedId,
       }
     }
     if (item.type === "sticker") {
-  const isPhoto = 
-    item.sticker?.startsWith("file")
+ const isPhoto = 
+    item.sticker?.startsWith("file") || item.sticker?.startsWith("http")
 
   if (isPhoto) {
     return (
