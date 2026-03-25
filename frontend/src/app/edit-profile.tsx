@@ -36,25 +36,32 @@ export default function EditProfilePage({
 
   return (
     <View style={{ flex: 1 }}>
-      <ImageBackground
-        source={bgImage}
-        style={styles.bg}
-        resizeMode="repeat"
-        imageStyle={{ resizeMode: 'repeat' }}
-      >
+      <ImageBackground source={bgImage} style={styles.bg}>
+        {/* Green header section */}
+        <View style={styles.greenHeader}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backArrow}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <View style={{ width: 36 }} />
+        </View>
+
+        {/* Avatar overlapping header and card */}
+        <View style={styles.avatarWrapper}>
+          <View style={styles.avatarContainer}>
+            {avatarSrc ? (
+              <Image source={{ uri: avatarSrc }} style={styles.avatar} />
+            ) : (
+              <Text style={{ fontSize: 36 }}>🌸</Text>
+            )}
+          </View>
+        </View>
+
+        {/* KeyboardAvoidingView wrapping the card */}
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          {/* Back button */}
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-            accessibilityLabel="Back"
-          >
-            <Text style={{ fontSize: 28, color: '#7B1D1D' }}>{'‹'}</Text>
-          </TouchableOpacity>
-
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
@@ -62,16 +69,6 @@ export default function EditProfilePage({
           >
             <View style={styles.card}>
               <Divider />
-              <Text style={styles.title}>Edit Profile</Text>
-
-              {/* Avatar */}
-              <View style={styles.avatarContainer}>
-                {avatarSrc ? (
-                  <Image source={{ uri: avatarSrc }} style={styles.avatar} />
-                ) : (
-                  <Text style={{ fontSize: 36 }}>🌸</Text>
-                )}
-              </View>
 
               {/* Input fields */}
               <View style={styles.fieldsContainer}>
@@ -123,11 +120,6 @@ export default function EditProfilePage({
               <Divider />
             </View>
           </ScrollView>
-
-          {/* Navbar pinned to bottom */}
-          <View style={styles.navbarContainer}>
-            {/* intentionally left empty inside KeyboardAvoidingView */}
-          </View>
         </KeyboardAvoidingView>
       </ImageBackground>
       <View style={styles.navbarContainer}>
@@ -143,35 +135,58 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
+  greenHeader: {
+    paddingTop: 70,
+    paddingHorizontal: 20,
+    paddingBottom: 50,
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 60,
-    paddingBottom: 100, // space for navbar
-    paddingHorizontal: 16,
+    justifyContent: 'space-between',
   },
   backButton: {
-    position: 'absolute',
-    top: 40,
-    left: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(237,232,217,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backArrow: {
+    fontSize: 20,
+    color: '#EDE8D9',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#EDE8D9',
+    textAlign: 'center',
+    flex: 1,
+  },
+  avatarWrapper: {
+    alignItems: 'center',
+    marginTop: -40,
     zIndex: 10,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingTop: 16,
+    paddingBottom: 100,
+    paddingHorizontal: 16,
   },
   card: {
-    width: width * 0.9, // wider — 90% of screen
+    width: width * 0.9,
     backgroundColor: '#EDE8D9',
     borderRadius: 32,
-    paddingVertical: 24,
-    paddingHorizontal: 24, // less horizontal padding so fields are wider
+    paddingTop: 16,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
+    marginTop: 8,
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -201,13 +216,17 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    borderWidth: 4,
-    borderColor: '#6B1A1A',
+    borderWidth: 3,
+    borderColor: '#7B1D1D',
     backgroundColor: '#EDE8D9',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
   avatar: {
     width: 80,
