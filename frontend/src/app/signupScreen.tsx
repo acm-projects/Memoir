@@ -1,5 +1,6 @@
 import React,{useState} from 'react';
-import { Button, View, Text, TextInput , StyleSheet, ImageBackground,  Image, TouchableOpacity, Platform,Pressable } from "react-native";
+import { Button, View, Text, TextInput , StyleSheet, ImageBackground,  Image, TouchableOpacity, Platform,Pressable, TouchableWithoutFeedback, 
+  Keyboard  } from "react-native";
 import { useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { RedButton } from '../components/redButton';
@@ -41,6 +42,7 @@ export default function Signup() {
   };
 
   return (
+     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <View style={styles.container}>
 
 
@@ -138,10 +140,10 @@ export default function Signup() {
 
 
 
-       <View style = {{ flexDirection: 'row' ,justifyContent:'center', padding:5}}>{/*have account text and log in button next to each other s*/}
+       <View style = {{ flexDirection: 'row' ,justifyContent:'center', padding:5, marginTop:20}}>{/*have account text and log in button next to each other s*/}
          <Text style = {styles.noAccount}>Already have an account?</Text>
          <TouchableOpacity onPress = {() => {router.push('/loginScreen' as any)}} activeOpacity={0.7}>{/*create button to go to login page*/}
-           <Text style ={styles.noAccount}> Log in</Text>
+           <Text style ={styles.loginText}> Log in</Text>
          </TouchableOpacity>
        </View>
 
@@ -167,6 +169,7 @@ export default function Signup() {
   
     
  </View>
+ </TouchableWithoutFeedback>
  )
 }
 
@@ -298,6 +301,13 @@ confirmButtonText: {
    fontFamily:'Inter',
    fontSize: 12,
    color: "#5A390E",
+ },
+
+ loginText:{
+   fontFamily:'Inter',
+   fontSize: 12,
+   color: "#5A390E",
+   textDecorationLine: 'underline'
  },
 
 

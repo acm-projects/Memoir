@@ -1,10 +1,12 @@
-import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground,  Image, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground,  Image, TouchableOpacity,TouchableWithoutFeedback, 
+  Keyboard  } from "react-native";
 import { useRouter } from 'expo-router';
 import { RedButton } from '../components/redButton';
 
 export default function Login() {
   const router = useRouter();
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <View style={styles.container}>
 
 
@@ -43,13 +45,11 @@ export default function Login() {
        <View style = {{ flexDirection: 'row' ,justifyContent:'center', padding:5}}>
          <Text style = {styles.noAccount}>Don't have an account?</Text>
          <TouchableOpacity onPress = {() => {router.push('/signupScreen')}} activeOpacity={0.7}>
-           <Text style ={styles.noAccount}> Sign Up</Text>
+           <Text style ={styles.SignUp}> Sign Up</Text>
          </TouchableOpacity>
        </View>
 
-       <Text style={styles.subtitle}>
-        Save the cards and letters you never want to lose—even when they&apos;re not in your hands.
-      </Text>
+       
 
 
 
@@ -79,6 +79,7 @@ export default function Login() {
   
     
  </View>
+ </TouchableWithoutFeedback>
  )
 }
 
@@ -183,6 +184,14 @@ const styles = StyleSheet.create({
    fontFamily:'Inter',
    fontSize: 12,
    color: "#5A390E",
+   marginTop:20,
+ },
+ SignUp:{
+   fontFamily:'Inter',
+   fontSize: 12,
+   color: "#5A390E",
+   textDecorationLine: 'underline',
+   marginTop:20,
  },
 
  

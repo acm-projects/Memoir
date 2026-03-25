@@ -29,7 +29,7 @@ const [selectedId, setSelectedId] = useState<number | null>(null);
         <View style={styles.headerCard}>
           <BackButton color="#557263" />
           <Text style={styles.headerText}>Send Card</Text>
-          <Text style={styles.subText}>Choose who to send this to</Text>
+          <Text style={styles.subText}>Choose who to send this to:</Text>
         </View>
 
         {/* Contacts List */}

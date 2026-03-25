@@ -18,7 +18,7 @@ interface AvatarOptProps {
 
         <View style = {[styles.avatarCircle,
             
-            {borderWidth: isSelected? 3 : 2,}
+            {borderWidth: isSelected? 4 : 2,}
             
         ]}>
         
