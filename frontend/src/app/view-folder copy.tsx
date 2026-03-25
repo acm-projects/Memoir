@@ -11,9 +11,10 @@ import {
   Dimensions,
   Image,
 } from 'react-native';
+
 import { router } from 'expo-router';
-import { ChevronLeft, Search, Plus } from 'lucide-react-native';
 import BottomNavbar from '../components/BottomNavbar';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -28,11 +29,9 @@ const folders = [
 
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 3;
 
-export default function viewFolder() {
+export default function ViewFolder() {
   const [searchQuery, setSearchQuery] = useState('');
-  const Icon = ChevronLeft as any;
-  const SearchIcon = Search as any;
-  const PlusIcon = Plus as any;
+
 
   const filteredFolders = useMemo(
     () =>
@@ -65,7 +64,8 @@ export default function viewFolder() {
           <View style={styles.cardTop}>
             {item.isAdd ? (
               <View style={styles.addCircle}>
-                <PlusIcon size={24} color="#8B7355" strokeWidth={4} />
+                <Ionicons name="add"size={24} color="#8B7355" strokeWidth={4}/>
+                <Text style={styles.addPlus}>+</Text>
               </View>
             ) : (
               item.image && (
@@ -112,8 +112,8 @@ export default function viewFolder() {
               hitSlop={12}
             >
               
-            
-            <Icon size={24} color="#EDE8D9" />
+              <Ionicons name="arrow-back" size={16} color="#EDE8D9" />
+              <Text style={styles.backArrow}>←</Text>
             </Pressable>
             <Text style={styles.headerTitle}>Name&apos;s Memories</Text>
           </View>
@@ -121,7 +121,8 @@ export default function viewFolder() {
           {/* Search bar */}
           <View style={styles.searchBar}>
             {/* No extra props on Search */}
-            <SearchIcon size={16} color="#EDE8D9" />
+            <Ionicons name="search" size={16} color="#EDE8D9" />
+            <Text style={styles.searchIcon}>🔍</Text>
             <TextInput
               style={styles.searchInput}
               placeholder="   Search folders"
@@ -198,6 +199,10 @@ const styles = StyleSheet.create({
     padding: 4,
     color:'#5A390E'
   },
+  backArrow: {
+    fontSize: 22,
+    color: '#EDE8D9',
+  },
 
   headerTitle: {
     flex: 1,
@@ -217,7 +222,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-
+  searchIcon: {
+    marginRight: 8,
+    fontSize: 14,
+    color: '#EDE8D9',
+  },
   searchInput: {
     flex: 1,
     fontSize: 14,
@@ -296,6 +305,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
+  },
+  addPlus: {
+    fontSize: 30,
+    color: '#EDE8D9',
+    lineHeight: 32,
   },
 
   cardBottom: {
