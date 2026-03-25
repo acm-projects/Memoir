@@ -9,7 +9,7 @@ import Animated, {
   runOnJS
 } from "react-native-reanimated";
 
-export default function DraggableItem({ item, deleteItem, isEditing,selectedId, setSelectedId, onColorChange}: any){
+export default function DraggableItem({ item, deleteItem, isEditing, selectedId, setSelectedId, onColorChange, onPositionChange}: any){
 
   const confirmDelete = () => {
   Alert.alert(
@@ -21,6 +21,8 @@ export default function DraggableItem({ item, deleteItem, isEditing,selectedId, 
     ]
   );
 };
+
+
   const router = useRouter();
 
   const x = useSharedValue(item.x);
@@ -59,6 +61,9 @@ export default function DraggableItem({ item, deleteItem, isEditing,selectedId, 
     x.value = startX.value + event.translationX;
     y.value = startY.value + event.translationY;
   })
+  .onEnd(() => {
+    runOnJS(onPositionChange)(item.id, x.value, y.value); // 👈 save it
+  });
     
     const pinch = Gesture.Pinch()
     .onUpdate((e) => {

@@ -27,6 +27,7 @@ export default function BulletinBoard() {
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<any>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([
     {
       id: '2',
@@ -72,6 +73,23 @@ export default function BulletinBoard() {
     { key: "heart", source: require("../../assets/images/costa-rica-stamp.png") },
     { key: "flower", source: require("../../assets/images/Australia-Stamp.png") },
   ];
+
+  
+
+const onColorChange = (id: string, color: string) => {
+  setItems(prev =>
+    prev.map(item =>
+      item.id === id ? { ...item, color } : item
+    )
+  );
+};
+const handlePositionChange = (id: string, newX: number, newY: number) => {
+  setItems(prev =>
+    prev.map(item =>
+      item.id === id ? { ...item, x: newX, y: newY } : item
+    )
+  );
+};
 
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [activeTab, setActiveTab] = useState<"note" | "sticker" | "photo">("note");
@@ -223,7 +241,11 @@ function onPickFileWeb(e: any) {
               item={item}
               deleteItem={deleteItem}
               isEditing={isEditing}
-            />
+              selectedId={selectedId}
+              setSelectedId={setSelectedId}
+              onColorChange={onColorChange}
+              onPositionChange={handlePositionChange}  
+               />  
           ))}
         
          </ScrollView>
