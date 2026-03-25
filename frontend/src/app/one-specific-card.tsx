@@ -39,35 +39,50 @@ export default function OneSpecificCard() {
   return (
     <View style={styles.container}>
       <ImageBackground source={paperTexture} style={styles.paperBackground}>
+        {/* Top red banner */}
+        <ImageBackground source={redSwirl} style={styles.topBanner} imageStyle={{ resizeMode: 'cover' }}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={styles.backArrow}>{'←'}</Text>
+          </TouchableOpacity>
+
+          <Image source={starStamp} style={styles.bannerStamp} />
+        </ImageBackground>
+
+        {/* Scrollable content below banner */}
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Top red banner */}
-          <ImageBackground source={redSwirl} style={styles.topBanner} imageStyle={{ resizeMode: 'cover' }}>
-            <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Text style={styles.backArrow}>{'←'}</Text>
-            </TouchableOpacity>
-            <Text style={styles.bannerTitle} numberOfLines={1}>
+          {/* Title row */}
+          <View style={styles.titleRow}>
+            <Text style={styles.title} numberOfLines={1}>
               {title}
             </Text>
-          </ImageBackground>
-
-          {/* Stamp in top-right of paper area */}
-          <Image source={starStamp} style={styles.stampImage} />
-
-          {/* Title */}
-          <Text style={styles.title}>{title}</Text>
-
-          {/* Green image container with tape corners (no texture background) */}
-          <View style={styles.imageWrapper}>
-            <View style={[styles.tape, styles.tapeTopLeft]} />
-            <View style={[styles.tape, styles.tapeTopRight]} />
-            <View style={[styles.tape, styles.tapeBottomLeft]} />
-            <View style={[styles.tape, styles.tapeBottomRight]} />
-
-            <Image source={cardImage} style={styles.cardImage} />
+            <Text style={styles.flourish}>✦</Text>
           </View>
 
-          {/* Caption box - editable */}
-          <View style={styles.captionBox}>
+          {/* Green image container with swirly texture and tape corners */}
+          <View style={styles.imageContainerOuter}>
+            <ImageBackground
+              source={swirlySubtle}
+              style={styles.imageContainerInner}
+              imageStyle={{ resizeMode: 'cover', borderRadius: 16 }}
+            >
+              <View style={[styles.tape, styles.tapeTopLeft]} />
+              <View style={[styles.tape, styles.tapeTopRight]} />
+              <View style={[styles.tape, styles.tapeBottomLeft]} />
+              <View style={[styles.tape, styles.tapeBottomRight]} />
+
+              <Image source={cardImage} style={styles.cardImage} />
+            </ImageBackground>
+          </View>
+
+          {/* Memory notes label */}
+          <Text style={styles.sectionLabel}>Memory Notes</Text>
+
+          {/* Caption box */}
+          <View style={styles.noteBox}>
+            <Text style={styles.noteLabel}>Caption</Text>
             <TextInput
               style={styles.captionText}
               placeholder="Tap to add a caption..."
@@ -78,8 +93,9 @@ export default function OneSpecificCard() {
             />
           </View>
 
-          {/* OCR Description box - editable */}
-          <View style={styles.captionBox}>
+          {/* OCR box */}
+          <View style={styles.noteBox}>
+            <Text style={styles.noteLabel}>OCR Text</Text>
             <Text style={styles.ocrTitle}>OCR Description:</Text>
             <TextInput
               style={styles.ocrBody}
@@ -115,14 +131,11 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  scrollContent: {
-    paddingBottom: 120,
-  },
   topBanner: {
-    height: 100,
+    height: 110,
     width: '100%',
-    paddingHorizontal: 0, // remove side padding so the red bar touches the edges
     paddingTop: 40,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -130,47 +143,51 @@ const styles = StyleSheet.create({
   backArrow: {
     fontSize: 24,
     color: '#F6E5CD',
-    paddingHorizontal: 16,
   },
-  bannerTitle: {
-    flex: 1,
-    textAlign: 'right',
-    color: '#F6E5CD',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  stampImage: {
-    position: 'absolute',
-    top: 90,
-    right: 16,
-    width: 80,
-    height: 90,
+  bannerStamp: {
+    width: 70,
+    height: 80,
     resizeMode: 'contain',
   },
+  scrollContent: {
+    paddingBottom: 120,
+  },
+  titleRow: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#6D1B12',
-    marginTop: 16,
-    paddingHorizontal: 24, // slightly increase to keep text away from edges
+    flex: 1,
   },
-  imageWrapper: {
+  flourish: {
+    color: '#C8B89A',
+    fontSize: 18,
+    marginLeft: 8,
+  },
+  imageContainerOuter: {
     backgroundColor: '#4A7568',
-    width: '90%', // updated from '80%'
-    alignSelf: 'center', // updated from 'stretch'
-    marginHorizontal: 0,
-    marginTop: 32, // move the wrapper lower
-    borderRadius: 10,
-    overflow: 'visible',
-    height: 240,
+    marginHorizontal: 20,
+    borderRadius: 16,
+    padding: 12,
+    marginTop: 8,
+  },
+  imageContainerInner: {
+    borderRadius: 16,
+    overflow: 'hidden',
     padding: 16,
-    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cardImage: {
-    width: '50%',
-    height: 220,
+    width: '100%',
+    height: 260,
     borderRadius: 10,
     resizeMode: 'cover',
   },
@@ -202,35 +219,57 @@ const styles = StyleSheet.create({
     right: 8,
     transform: [{ rotate: '-8deg' }],
   },
-  captionBox: {
-    backgroundColor: 'rgba(255,255,255,0.85)',
-    borderRadius: 12,
-    padding: 16,
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#8B7355',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginTop: 20,
+    marginBottom: 10,
+    paddingHorizontal: 20,
+  },
+  noteBox: {
+    backgroundColor: '#EDE8D9',
+    borderRadius: 14,
+    padding: 14,
     marginHorizontal: 20,
-    marginTop: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#D4C9A8',
+  },
+  noteLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#8B7355',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 6,
   },
   captionText: {
-    fontSize: 15,
+    fontSize: 14,
     fontStyle: 'italic',
-    color: '#8B6914',
+    color: '#5A390E',
+    minHeight: 60,
   },
   ocrTitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '700',
     color: '#6D1B12',
     marginBottom: 4,
   },
   ocrBody: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6D1B12',
+    minHeight: 50,
   },
   saveButton: {
     backgroundColor: '#6D1B12',
-    borderRadius: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
+    borderRadius: 999,
+    paddingVertical: 14,
+    paddingHorizontal: 48,
     alignSelf: 'center',
-    marginTop: 20,
+    marginTop: 16,
     marginBottom: 40,
   },
   saveButtonText: {
