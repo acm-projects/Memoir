@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet, ImageBackground, TouchableOpacity, ScrollView, Image } from "react-native";
+import { View, Text, Pressable, StyleSheet, ImageBackground, TouchableOpacity, ScrollView, Image, FlatList, TextInput } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
 import BottomNavbar from '../components/BottomNavbar';
 import BackButton from "../components/back-Button";
 import DraggableItem from '../components/draggableItem'; 
+
 
 type Item = {
   id: string;
@@ -23,6 +24,8 @@ export default function CreateCard() {
     const [items, setItems] = useState<Item[]>([]);
     const [activeTool, setActiveTool] = useState<string | null>(null);
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [gifs, setGifs] = useState<any[]>([]);
+    const [gifSearch, setGifSearch] = useState("");
 
         const TEXT_COLORS = ["#5A390E", "#6D1B12", "#2C5F2E", "#1A1A2E", "#FF6B6B", "#000000"];
         const STICKERS = [
@@ -65,6 +68,19 @@ export default function CreateCard() {
         "#E6D6FF",
         "#D6FFD6"
       ];
+    
+
+      async function searchGifs(query: string) {
+      const apiKey = process.env.EXPO_PUBLIC_GIPHY_KEY;
+      const url = query
+        ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${query}&limit=50`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=50`;
+      
+      const res = await fetch(url);
+      const json = await res.json();
+      setGifs(json.data);
+    }
+
   return (
     <View style={styles.container}>
       {/* Full green swirl background */}
@@ -150,6 +166,41 @@ export default function CreateCard() {
     ))}
   </ScrollView>
 )}
+{activeTool === "gif" && (
+  <View>
+    <TextInput
+      style={styles.gifInput}
+      placeholder="Search GIFs..."
+      placeholderTextColor="#9a7a60"
+      value={gifSearch}
+      onChangeText={(text) => {
+        setGifSearch(text);
+        searchGifs(text);
+      }}
+      autoFocus
+    />
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      {gifs.map((item) => (
+        <Pressable key={item.id} onPress={() => {
+          setItems(prev => [...prev, {
+            id: Date.now().toString(),
+            type: "sticker",
+            content: "",
+            x: 0,
+            y: 0,
+            sticker: item.images.fixed_height.url,
+          }]);
+          setActiveTool(null);
+        }}>
+          <Image
+            source={{ uri: item.images.fixed_height.url }}
+            style={{ width: 100, height: 100, margin: 4, borderRadius: 8 }}
+          />
+        </Pressable>
+      ))}
+    </ScrollView>
+  </View>
+)}
     </View>
   )}
 
@@ -175,13 +226,25 @@ export default function CreateCard() {
 >
   <Ionicons name="happy-outline" size={24} color="#5A390E" />
 </Pressable>
+
+
+<Pressable
+  style={[styles.toolButton, activeTool === "gif" && styles.activeToolBtn]}
+  onPress={() => {
+    setActiveTool(activeTool === "gif" ? null : "gif");
+    searchGifs("");
+  }}
+>
+  <Ionicons name="film-outline" size={24} color="#5A390E" />
+</Pressable>
+
   </View>
  
    <View style={styles.headerButtons}>
   <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
     <Text style={styles.cancelText}>Cancel</Text>
   </TouchableOpacity>
-  <TouchableOpacity style={styles.sendBtn} onPress={() => router.push("/send-card" as any)}>
+ <TouchableOpacity style={styles.sendBtn} onPress={() => router.push("/send-card" as any)}>
     <Text style={styles.sendText}>Send</Text>
   </TouchableOpacity>
   </View>
@@ -400,6 +463,17 @@ sendText: {
   color: "#F8E5CF",
   fontFamily: "Calistoga",
   fontSize: 14,
+},
+gifInput: {
+  backgroundColor: "#F5EEE1",
+  borderWidth: 1,
+  borderColor: "#c8b89a",
+  borderRadius: 10,
+  padding: 10,
+  fontSize: 14,
+  color: "#3a2010",
+  fontFamily: "Inter",
+  marginBottom: 8,
 },
 });
 
