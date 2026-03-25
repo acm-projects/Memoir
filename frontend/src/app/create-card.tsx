@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet, ImageBackground, TouchableOpacity, ScrollView, Image, FlatList, TextInput } from "react-native";
+import { View, Text, Pressable, StyleSheet, ImageBackground, TouchableOpacity, ScrollView, Image, FlatList, TextInput,TouchableWithoutFeedback, 
+  Keyboard } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
 import BottomNavbar from '../components/BottomNavbar';
@@ -82,6 +83,7 @@ export default function CreateCard() {
     }
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <View style={styles.container}>
       {/* Full green swirl background */}
       <View style={{ flex: 1 }}>
@@ -177,7 +179,7 @@ export default function CreateCard() {
         setGifSearch(text);
         searchGifs(text);
       }}
-      autoFocus
+      
     />
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       {gifs.map((item) => (
@@ -256,6 +258,7 @@ export default function CreateCard() {
           <BottomNavbar />
           </View>
           </View> 
+          </TouchableWithoutFeedback>
           ); }
 
 
