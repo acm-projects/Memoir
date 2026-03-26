@@ -9,6 +9,7 @@ import {
   ImageBackground,
   SafeAreaView,
   Dimensions,
+  
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { router } from 'expo-router';
@@ -288,12 +289,22 @@ export default function Timeline() {
     );
   };
 
+  const closeAllDropdowns = () => {
+  setMonthOpen(false);
+  setYearOpen(false);
+  };
+
   return (
     <View style={styles.root}>
       <ImageBackground
         source={require('../../assets/images/RED swirl subtle.png')}
         style={styles.outerBackground}
         imageStyle={styles.outerBackgroundImage}
+      >
+        <Pressable 
+        style={{ flex: 1 }} 
+        onPress={closeAllDropdowns}
+        accessible={false}
       >
         <SafeAreaView style={styles.safeArea}>
           {/* Header section */}
@@ -399,8 +410,9 @@ export default function Timeline() {
               />
             </ImageBackground>
           </View>
+          
         </SafeAreaView>
-
+        </Pressable>
         <View style={styles.navbarWrapper}>
           <BottomNavbar />
         </View>
