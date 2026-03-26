@@ -19,28 +19,32 @@ const { width } = Dimensions.get('window');
 const swirlyBg = require('../../assets/images/swirly-subtle.png');
 const paperTexture = require('../../assets/images/layered-vintage-paper.png');
 
+// Updated STAMP_DATA to match folders/images from ViewFolder
 const STAMP_DATA = [
   {
     id: 'all',
-    label: 'All memories',
-    image: require('../../assets/images/Australia-Stamp.png'),
+    label: 'All Memories',
+    image: require('../../assets/images/bird-stamp.png'),
   },
   {
     id: 'prom',
     label: '16th Birthday',
-    image: require('../../assets/images/star-stamp.png'),
+    image: require('../../assets/images/blueFlower-stamp.png'),
   },
   {
     id: 'plain',
     label: 'Prom',
-    image: require('../../assets/images/costa-rica-stamp.png'),
+    image: require('../../assets/images/brasil-stamp.png'),
   },
   {
     id: 'spring',
-    label: 'Spring Break +',
-    image: require('../../assets/images/star-stamp.png'),
+    label: 'Spring Break',
+    image: require('../../assets/images/butterfly-stamp.png'),
   },
 ];
+
+// CARD_WIDTH for 2-column layout (slightly smaller cards)
+const CARD_WIDTH = (width - 72) / 2; // was (width - 48) / 2
 
 export default function SelectMemory() {
   const router = useRouter();
@@ -56,24 +60,30 @@ export default function SelectMemory() {
     router.push('/view-folder copy');
   };
 
+  // New renderItem using ViewFolder-style card structure
   const renderItem = ({ item }: { item: (typeof STAMP_DATA)[number] }) => {
-    const isSelected = selectedId === item.id;
-
     return (
       <TouchableOpacity
-        style={[styles.stampCard, isSelected && styles.stampCardSelected]}
+        style={styles.cardWrapper}
         activeOpacity={0.8}
         onPress={() => setSelectedId(item.id)}
       >
-        <View style={[styles.stampTop, isSelected && styles.stampTopSelected]}>
-          <Image source={item.image} style={styles.stampImage} resizeMode="contain" />
-        </View>
-        <View style={[styles.stampBottom, isSelected && styles.stampBottomSelected]}>
-          {item.label ? (
-            <Text style={[styles.stampLabel, isSelected && styles.stampLabelSelected]}>
+        <View style={styles.card}>
+          {/* Top red stamp area */}
+          <View style={styles.cardTop}>
+            <Image
+              source={item.image}
+              style={styles.stampImage}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* Bottom label */}
+          <View style={styles.cardBottom}>
+            <Text numberOfLines={1} style={styles.cardTitle}>
               {item.label}
             </Text>
-          ) : null}
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -260,64 +270,45 @@ const styles = StyleSheet.create({
     color: '#5A390E',
   },
   gridContent: {
-    paddingHorizontal: 30,
+    paddingHorizontal: 32,
     paddingBottom: 16,
   },
   columnWrapper: {
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 18,
   },
-  stampCard: {
-    borderRadius: 16,
-    width: 120,
-    aspectRatio: 0.85,
+  // New card styles matching ViewFolder
+  cardWrapper: {
+    width: CARD_WIDTH,
+  },
+  card: {
+    width: '70%',
+    backgroundColor: '#7B1D1D',
+    borderRadius: 14,
     overflow: 'hidden',
-    marginBottom: 10,
-    marginRight: 0,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: 'rgba(200,184,154,0.3)',
   },
-  stampCardSelected: {
-    borderWidth: 2,
-    borderColor: '#FFE9C7',
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
-  },
-  stampTop: {
-    flex: 2,
+  cardTop: {
+    height: CARD_WIDTH * 0.6, 
     backgroundColor: '#7B1D1D',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stampTopSelected: {
-    backgroundColor: '#8F2626',
-  },
-  stampBottom: {
-    flex: 1,
-    backgroundColor: '#D9C29A',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stampBottomSelected: {
-    backgroundColor: '#E2CFA7',
+    justifyContent: 'flex-end',
   },
   stampImage: {
-    width: '120%',
-    height: '120%',
+    width: '85%',
+    height: '90%',
+    marginBottom: -4,
     resizeMode: 'contain',
   },
-  stampLabel: {
-    color: '#5A390E',
-    fontSize: 12,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  cardBottom: {
+    backgroundColor: '#C8B89A',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
   },
-  stampLabelSelected: {
-    color: '#5A390E',
+  cardTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#3B2C1A',
+    textAlign: 'center',
   },
   footerRowFloating: {
     position: 'absolute',
