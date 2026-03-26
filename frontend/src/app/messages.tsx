@@ -241,7 +241,10 @@ export default function Messages() {
       <View style={styles.listArea}>
         <Text style={styles.sectionLabel}>Recent</Text>
         {users.length > 0 ? (
-          <ScrollView style={styles.scrollView}showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+          >
             {filteredUsers.map(user => {
               const isUnread = user.unread > 0; 
               return(
