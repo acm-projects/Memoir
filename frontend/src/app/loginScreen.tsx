@@ -1,5 +1,5 @@
 import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground,  Image, TouchableOpacity,TouchableWithoutFeedback, 
-  Keyboard  } from "react-native";
+  Keyboard,  } from "react-native";
 import { useRouter } from 'expo-router';
 import { RedButton } from '../components/redButton';
 
@@ -44,9 +44,13 @@ export default function Login() {
 
        <View style = {{ flexDirection: 'row' ,justifyContent:'center', padding:5}}>
          <Text style = {styles.noAccount}>Don't have an account?</Text>
-         <TouchableOpacity onPress = {() => {router.push('/signupScreen')}} activeOpacity={0.7}>
-           <Text style ={styles.SignUp}> Sign Up</Text>
-         </TouchableOpacity>
+         <TouchableOpacity 
+            onPress={() => router.push('/signupScreen')} 
+            activeOpacity={0.7}
+            hitSlop={20} // Simple way to make it easier to tap
+          >
+            <Text style={styles.SignUp}> Sign Up</Text>
+          </TouchableOpacity>
        </View>
 
        
@@ -66,18 +70,27 @@ export default function Login() {
      </ImageBackground>
     
      
-     <Image
-         source = {require('../../assets/images/envelope-stamp.png')}
-         style = {styles.stamps}
-       />
+     <View 
+  pointerEvents="none" 
+  style={styles.stamps}
+>
+  <Image
+    source={require('../../assets/images/envelope-stamp.png')}
+    style = {styles.stamps}
+  />
+</View>
 
-     <Image
-         source = {require('../../assets/images/front-envelope.png')}
-         style = {styles.frontEnvelope}
-       />
+<View 
+  pointerEvents="none" 
+  style={styles.frontEnvelope}
+>
+  <Image
+    source={require('../../assets/images/front-envelope.png')}
+      style = {styles.frontEnvelope}
+  />
+</View>
       
-  
-    
+
  </View>
  </TouchableWithoutFeedback>
  )
@@ -192,13 +205,14 @@ const styles = StyleSheet.create({
    color: "#5A390E",
    textDecorationLine: 'underline',
    marginTop:20,
+   zIndex:5,
  },
 
  
  frontEnvelope:{
    position: 'absolute',
    resizeMode: 'contain',
-   bottom: -100,
+   bottom:-50,
    width: '100%',
    zIndex: 3,
   
@@ -207,7 +221,7 @@ const styles = StyleSheet.create({
  stamps:{
   position: 'absolute',
   resizeMode: 'contain',
-  bottom : -100,
+  bottom : -50,
   width: 450,  
   height: 500,
   zIndex: 2,

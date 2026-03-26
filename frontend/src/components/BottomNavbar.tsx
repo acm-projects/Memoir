@@ -3,7 +3,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet,
   Image, Modal, Pressable,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 import { House, Mail, FolderOpen, User, Upload, PenLine, X } from 'lucide-react-native';
 
 const plusSeal = require('../../assets/images/plus-seal.png');
@@ -12,9 +12,11 @@ type AnyIconProps = React.ComponentProps<typeof House>;
 
 export default function BottomNavbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [modalVisible, setModalVisible] = useState(false);
 
-  const iconColor = '#7a2a2a';
+  const activeColor = '#54110a';
+  const inactiveColor = '#6D1B12';
 
   const handleUpload = () => {
     setModalVisible(false);
@@ -28,7 +30,6 @@ export default function BottomNavbar() {
 
   return (
     <>
-      {/* Custom Modal */}
       <Modal
         transparent
         visible={modalVisible}
@@ -37,8 +38,6 @@ export default function BottomNavbar() {
       >
         <Pressable style={styles.overlay} onPress={() => setModalVisible(false)}>
           <Pressable style={styles.modalBox} onPress={() => {}}>
-
-            {/* Header */}
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add a Card</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
@@ -48,7 +47,6 @@ export default function BottomNavbar() {
 
             <Text style={styles.modalSubtitle}>What would you like to do?</Text>
 
-            {/* Options */}
             <TouchableOpacity style={styles.optionButton} onPress={handleUpload}>
               <View style={styles.optionIcon}>
                 <Upload {...({ size: 20, color: '#7a2a2a' } as AnyIconProps)} />
@@ -68,27 +66,64 @@ export default function BottomNavbar() {
                 <Text style={styles.optionDesc}>Design one from scratch</Text>
               </View>
             </TouchableOpacity>
-
           </Pressable>
         </Pressable>
       </Modal>
 
-      {/* Bottom Navbar */}
       <View style={styles.bottomNavbar}>
-        <TouchableOpacity style={styles.navButton} onPress={() => router.replace('/timelineScreen' as any)}>
-          <House {...({ size: 30, color: iconColor } as AnyIconProps)} />
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => router.replace('/timelineScreen' as any)}
+        >
+          <House
+            {...({
+              size: pathname === '/timelineScreen' ? 34 : 30,
+              color: pathname === '/timelineScreen' ? activeColor : inactiveColor,
+            } as AnyIconProps)}
+          />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => router.replace('/messages' as any)}>
-          <Mail {...({ size: 30, color: iconColor } as AnyIconProps)} />
+
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => router.replace('/messages' as any)}
+        >
+          <Mail
+            {...({
+              size: pathname === '/messages' ? 34 : 30,
+              color: pathname === '/messages' ? activeColor : inactiveColor,
+            } as AnyIconProps)}
+          />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.navButton, styles.centerButtonWrap]} onPress={() => setModalVisible(true)}>
+
+        <TouchableOpacity
+          style={[styles.navButton, styles.centerButtonWrap]}
+          onPress={() => setModalVisible(true)}
+        >
           <Image source={plusSeal} style={styles.plusSealIcon} resizeMode="contain" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => router.replace('/view-folder copy' as any)}>
-          <FolderOpen {...({ size: 30, color: iconColor } as AnyIconProps)} />
+
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => router.replace('/view-folder copy' as any)}
+        >
+          <FolderOpen
+            {...({
+              size: pathname === '/view-folder copy' ? 34 : 30,
+              color: pathname === '/view-folder copy' ? activeColor : inactiveColor,
+            } as AnyIconProps)}
+          />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => router.replace('/profile' as any)}>
-          <User {...({ size: 30, color: iconColor } as AnyIconProps)} />
+
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => router.replace('/profile' as any)}
+        >
+          <User
+            {...({
+              size: pathname === '/profile' ? 34 : 30,
+              color: pathname === '/profile' ? activeColor : inactiveColor,
+            } as AnyIconProps)}
+          />
         </TouchableOpacity>
       </View>
     </>
