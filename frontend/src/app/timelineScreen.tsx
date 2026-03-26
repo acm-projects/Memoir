@@ -290,8 +290,8 @@ export default function Timeline() {
   };
 
   const closeAllDropdowns = () => {
-  setMonthOpen(false);
-  setYearOpen(false);
+    setMonthOpen(false);
+    setYearOpen(false);
   };
 
   return (
@@ -301,121 +301,125 @@ export default function Timeline() {
         style={styles.outerBackground}
         imageStyle={styles.outerBackgroundImage}
       >
-        <Pressable 
-        style={{ flex: 1 }} 
-        onPress={closeAllDropdowns}
-        accessible={false}
-      >
         <SafeAreaView style={styles.safeArea}>
-          {/* Header section */}
-          <View style={styles.header}>
-            <Text style={styles.welcomeBackHeader}>Welcome Back, Name</Text>
+          <Pressable
+            style={{ flex: 1 }}
+            onPress={closeAllDropdowns}
+            pointerEvents="box-none"
+            accessible={false}
+          >
+            <View style={{ flex: 1 }}>
+              {/* Header section */}
+              <View style={styles.header}>
+                <Text style={styles.welcomeBackHeader}>Welcome Back, Name</Text>
 
-            <View style={styles.dropdownRow}>
-              {/* Month dropdown */}
-              <View style={styles.dropdownWrapper}>
-                <Pressable
-                  style={styles.dropdownButton}
-                  onPress={() => {
-                    setMonthOpen(!monthOpen);
-                    if (yearOpen) setYearOpen(false);
-                  }}
-                >
-                  <View style={styles.dropdownInner}>
-                    <Text style={styles.dropdownText}>{selectedMonth}</Text>
-                    <Text style={styles.dropdownArrow}>▾</Text>
-                  </View>
-                </Pressable>
+                <View style={styles.dropdownRow}>
+                  {/* Month dropdown */}
+                  <View style={styles.dropdownWrapper}>
+                    <Pressable
+                      style={styles.dropdownButton}
+                      onPress={() => {
+                        setMonthOpen(!monthOpen);
+                        if (yearOpen) setYearOpen(false);
+                      }}
+                    >
+                      <View style={styles.dropdownInner}>
+                        <Text style={styles.dropdownText}>{selectedMonth}</Text>
+                        <Text style={styles.dropdownArrow}>▾</Text>
+                      </View>
+                    </Pressable>
 
-                {monthOpen && (
-                  <View style={styles.dropdownList}>
-                    {months.map((month) => (
-                      <Pressable
-                        key={month}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setSelectedMonth(month);
-                          setMonthOpen(false);
-                        }}
-                      >
-                        <Text style={styles.dropdownItemText}>{month}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                )}
-              </View>
-
-              {/* Year dropdown */}
-              <View style={styles.dropdownWrapper}>
-                <Pressable
-                  style={styles.dropdownButton}
-                  onPress={() => {
-                    setYearOpen(!yearOpen);
-                    if (monthOpen) setMonthOpen(false);
-                  }}
-                >
-                  <View style={styles.dropdownInner}>
-                    <Text style={styles.dropdownText}>{selectedYear}</Text>
-                    <Text style={styles.dropdownArrow}>▾</Text>
-                  </View>
-                </Pressable>
-
-                {yearOpen && (
-                  <View style={styles.dropdownList}>
-                    {years.map((year) => (
-                      <Pressable
-                        key={year}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setSelectedYear(year);
-                          setYearOpen(false);
-                        }}
-                      >
-                        <Text style={styles.dropdownItemText}>{year}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                )}
-              </View>
-            </View>
-          </View>
-
-          {/* Paper content area */}
-          <View style={styles.paperContainer}>
-            <ImageBackground
-              source={require('../../assets/images/layered-vintage-paper.png')}
-              style={styles.paperBackground}
-            >
-              <FlatList
-                data={items}
-                keyExtractor={(item, index) => item.id + index}
-                renderItem={renderTimelineItem}
-                onEndReached={fetchNextPage}
-                onEndReachedThreshold={0.5}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 100 }}
-                ListFooterComponent={() => (
-                  <View style={styles.footerContainer}>
-                    {loading ? (
-                      <ActivityIndicator size="large" color="#7B1D1D" />
-                    ) : (
-                      <Text style={styles.footerText}>
-                        {items.length >= MOCK_API.data.length
-                          ? 'Making Memories since *Birth Year* ✦'
-                          : 'Scroll for more'}
-                      </Text>
+                    {monthOpen && (
+                      <View style={styles.dropdownList}>
+                        {months.map((month) => (
+                          <Pressable
+                            key={month}
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              setSelectedMonth(month);
+                              setMonthOpen(false);
+                            }}
+                          >
+                            <Text style={styles.dropdownItemText}>{month}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
                     )}
                   </View>
-                )}
-              />
-            </ImageBackground>
+
+                  {/* Year dropdown */}
+                  <View style={styles.dropdownWrapper}>
+                    <Pressable
+                      style={styles.dropdownButton}
+                      onPress={() => {
+                        setYearOpen(!yearOpen);
+                        if (monthOpen) setMonthOpen(false);
+                      }}
+                    >
+                      <View style={styles.dropdownInner}>
+                        <Text style={styles.dropdownText}>{selectedYear}</Text>
+                        <Text style={styles.dropdownArrow}>▾</Text>
+                      </View>
+                    </Pressable>
+
+                    {yearOpen && (
+                      <View style={styles.dropdownList}>
+                        {years.map((year) => (
+                          <Pressable
+                            key={year}
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              setSelectedYear(year);
+                              setYearOpen(false);
+                            }}
+                          >
+                            <Text style={styles.dropdownItemText}>{year}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </View>
+
+              {/* Paper content area */}
+              <View style={styles.paperContainer}>
+                <ImageBackground
+                  source={require('../../assets/images/layered-vintage-paper.png')}
+                  style={styles.paperBackground}
+                >
+                  <FlatList
+                    style={{ flex: 1 }}
+                    data={items}
+                    keyExtractor={(item, index) => item.id + index}
+                    renderItem={renderTimelineItem}
+                    onEndReached={fetchNextPage}
+                    onEndReachedThreshold={0.5}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingBottom: 120 }}
+                    ListFooterComponent={() => (
+                      <View style={styles.footerContainer}>
+                        {loading ? (
+                          <ActivityIndicator size="large" color="#7B1D1D" />
+                        ) : (
+                          <Text style={styles.footerText}>
+                            {items.length >= MOCK_API.data.length
+                              ? 'Making Memories since *Birth Year* ✦'
+                              : 'Scroll for more'}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  />
+                </ImageBackground>
+              </View>
+            </View>
+          </Pressable>
+
+          <View style={styles.navbarWrapper}>
+            <BottomNavbar />
           </View>
-          
         </SafeAreaView>
-        </Pressable>
-        <View style={styles.navbarWrapper}>
-          <BottomNavbar />
-        </View>
       </ImageBackground>
     </View>
   );
