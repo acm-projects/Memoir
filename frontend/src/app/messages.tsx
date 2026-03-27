@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Platfo
 import { router } from 'expo-router';
 import BottomNavbar from '../components/BottomNavbar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle } from 'react-native-svg';
 
 const ios = Platform.OS === 'ios';
 
@@ -50,6 +51,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     paddingTop: 20,
     paddingHorizontal: 14,
+    position: 'relative',
   },
 
   sectionLabel: {
@@ -89,12 +91,24 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     marginRight: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  avatarStampBorder: {
+    borderWidth: 2,
+    borderColor: '#C8B89A',
+    borderStyle: 'dashed',
+    borderRadius: 999,
+    padding: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   avatarImg: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: 999,
     backgroundColor: '#d4b896',
   },
 
@@ -212,6 +226,10 @@ export default function Messages() {
     router.push({ pathname: '/chatRoom', params: user });
   };
 
+  // For grainy overlay, get area dimensions
+  const [areaWidth, setAreaWidth] = useState(0);
+  const [areaHeight, setAreaHeight] = useState(0);
+
   return (
     <View style={[styles.container, { paddingTop: ios ? top : top + 10 }]}>
       <View style={styles.headerRow}>
@@ -235,14 +253,48 @@ export default function Messages() {
         onChangeText={setSearchQuery}
       />
 
-      <View style={styles.listArea}>
+      <View style={styles.listArea}
+        onLayout={e => {
+          setAreaWidth(e.nativeEvent.layout.width);
+          setAreaHeight(e.nativeEvent.layout.height);
+        }}
+      >
+        {/* Grainy dot SVG overlay */}
+        {areaWidth > 0 && areaHeight > 0 && (
+          <Svg
+            width={areaWidth}
+            height={areaHeight}
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: areaWidth,
+              height: areaHeight,
+              zIndex: 0,
+              pointerEvents: 'none',
+            }}
+          >
+            {Array.from({ length: Math.ceil(areaWidth / 6) }).map((_, ix) =>
+              Array.from({ length: Math.ceil(areaHeight / 6) }).map((_, iy) => (
+                <Circle
+                  key={`dot-${ix}-${iy}`}
+                  cx={ix * 6}
+                  cy={iy * 6}
+                  r={0.6}
+                  fill="#8B6A3E"
+                  opacity={0.06}
+                />
+              ))
+            )}
+          </Svg>
+        )}
+
         <Text style={styles.sectionLabel}>Recent</Text>
 
         {users.length > 0 ? (
           <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 120 }}>
             {filteredUsers.map(user => {
               const isUnread = user.unread > 0;
-
               return (
                 <TouchableOpacity
                   key={user.id}
@@ -250,7 +302,9 @@ export default function Messages() {
                   style={isUnread ? styles.userCardUnread : styles.userCardRead}
                 >
                   <View style={styles.avatarWrapper}>
-                    <Image source={user.avatar} style={styles.avatarImg} />
+                    <View style={styles.avatarStampBorder}>
+                      <Image source={user.avatar} style={styles.avatarImg} />
+                    </View>
                     {isUnread && <View style={styles.avatarDot} />}
                   </View>
 
