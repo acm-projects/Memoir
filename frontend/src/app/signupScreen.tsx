@@ -22,11 +22,13 @@ export default function Signup() {
   };
 
   const onChange = (event: any, selectedDate?: Date) => {
+  if (event.type === 'set') {
     const currentDate = selectedDate || date;
-    setShow(Platform.OS === 'ios'); 
-    setShow(false);
     setDate(currentDate);
-  };
+  } else {
+    setShow(false);
+  }
+};
 
   const handleSignup = () => {
     if (!name || !email) {
@@ -40,6 +42,8 @@ export default function Signup() {
     };
     router.push('/avatar-selection');
   };
+
+  
 
   return (
      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -76,6 +80,7 @@ export default function Signup() {
               mode="date"
               display="spinner" 
               maximumDate={new Date()} 
+              onChange={onChange}
             />
           )}
           

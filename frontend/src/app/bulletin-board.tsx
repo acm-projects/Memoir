@@ -5,6 +5,7 @@ import DraggableItem from "../components/draggableItem";
 import BottomNavbar from '../components/BottomNavbar';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from "expo-router";
+import Svg, { Path, Circle } from 'react-native-svg';
 
 
 
@@ -18,7 +19,14 @@ type Item = {
   sticker?: string;
   image?: any;
   noteBackground?: any;
+  rotation: number; // degrees
 };
+
+function seededRotation(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  return ((hash % 13) - 6); // -6 to +6 degrees
+}
 
 export default function BulletinBoard() {
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -37,6 +45,7 @@ export default function BulletinBoard() {
       x: 30,
       y: 260,
       image: require('../../assets/images/cards.jpg'),
+      rotation: seededRotation('2'),
     },
     {
       id: '3',
@@ -45,6 +54,7 @@ export default function BulletinBoard() {
       x: 200,
       y: 400,
       image: require('../../assets/images/card2.jpg'),
+      rotation: seededRotation('3'),
     },
     {
       id: '4',
@@ -53,6 +63,7 @@ export default function BulletinBoard() {
       x: 60,
       y: 550,
       image: require('../../assets/images/card3.jpg'),
+      rotation: seededRotation('4'),
     },
   ]);
 
@@ -75,7 +86,14 @@ export default function BulletinBoard() {
     { key: "flower", source: require("../../assets/images/Australia-Stamp.png") },
   ];
 
-  
+  const ACCENT_COLORS = ["#557263", "#7B1D1D", "#8B6A3E", "#4A6741", "#6B4F6B"];
+
+  // Helper to get a seeded rotation for notes
+  function getSeededRotation(id: string) {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    return ((hash % 9) - 4) + 'deg'; // -4deg to +4deg
+  }
 
 const onColorChange = (id: string, color: string) => {
   setItems(prev =>
@@ -96,30 +114,34 @@ const handlePositionChange = (id: string, newX: number, newY: number) => {
   const [activeTab, setActiveTab] = useState<"note" | "sticker" | "photo" | "gif">("note");
 
   function addNote(color: string) {
+    const id = Date.now().toString();
     setItems([
       ...items,
       {
-        id: Date.now().toString(),
+        id,
         type: "note",
         content: "New note",
         x: 80,
         y: 100,
-        color
+        color,
+        rotation: seededRotation(id),
       }
     ]);
     setShowColorPicker(false);
   }
 
   function addSticker(sticker: string) {
+    const id = Date.now().toString();
     setItems([
       ...items,
       {
-        id: Date.now().toString(),
+        id,
         type: "sticker",
         content: "",
         x: 150,
         y: 200,
-        sticker
+        sticker,
+        rotation: seededRotation(id),
       }
     ]);
     setShowStickerPicker(false);
@@ -158,15 +180,17 @@ const handlePositionChange = (id: string, newX: number, newY: number) => {
   });
 
   if (!res.canceled && res.assets && res.assets[0]?.uri) {
+    const id = Date.now().toString();
     setItems([
       ...items,
       {
-        id: Date.now().toString(),
+        id,
         type: "sticker",
         content: "",
         x: 100,
         y: 150,
         sticker: res.assets[0].uri,
+        rotation: seededRotation(id),
       }
     ]);
     setShowAddSheet(false);
@@ -177,15 +201,17 @@ function onPickFileWeb(e: any) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
   const uri = URL.createObjectURL(file);
+  const id = Date.now().toString();
   setItems([
     ...items,
     {
-      id: Date.now().toString(),
+      id,
       type: "sticker",
       content: "",
       x: 100,
       y: 150,
       sticker: uri,
+      rotation: seededRotation(id),
     }
   ]);
   setShowAddSheet(false);
@@ -202,8 +228,25 @@ async function searchGifs(query: string) {
   setGifs(json.data);
 }
 
-
+function onRotationChange(id: string, newRotation: number) {
+  setItems(prev =>
+    prev.map(item =>
+      item.id === id ? { ...item, rotation: newRotation } : item
+    )
+  );
+}
  
+  // Add this handler for text content changes
+  function onContentChange(id: string, newContent: string) {
+    setItems(prev =>
+      prev.map(item =>
+        item.id === id ? { ...item, content: newContent } : item
+      )
+    );
+  }
+
+  // State to hold board dimensions
+  const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
 
   return (
     <View style={styles.container}>
@@ -223,49 +266,82 @@ async function searchGifs(query: string) {
           {title}
         </Text>
 
+        {/* Edit and Add buttons in banner */}
+        <Pressable style={styles.button} onPress={() => setIsEditing(!isEditing)}>
+          <Text style={styles.buttonText}>{isEditing ? "Done" : "Edit"}</Text>
+        </Pressable>
+        <Pressable style={styles.plusButton} onPress={() => setShowAddSheet(true)}>
+          <Text style={styles.plusText}>+</Text>
+        </Pressable>
+
         {/* Stamp top right */}
         <Image
           source={require('../../assets/images/star-stamp.png')}
           style={styles.bannerStamp}
         />
       </ImageBackground>
-
+      {/* Torn paper edge */}
+      <View style={{ marginTop: -18, zIndex: 10, backgroundColor: 'transparent', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4 }}>
+        <Svg height="28" width="100%" style={{ width: '100%' }}>
+          <Path
+            d="M0,10 Q20,0 40,20 Q60,0 80,20 Q100,0 120,20 Q140,0 160,20 Q180,0 200,20 Q220,0 240,20 Q260,0 280,20 Q300,0 320,20 Q340,0 360,20 Q380,0 400,20 Q420,0 440,20 Q460,0 480,20 Q500,0 520,20 Q540,0 560,20 Q580,0 600,20 Q620,0 640,20 Q660,0 680,20 Q700,0 720,20 Q740,0 760,20 Q780,0 800,20 Q820,0 840,20 Q860,0 880,20 Q900,0 920,20 Q940,0 960,20 Q980,0 1000,20 Q1020,0 1040,20 Q1060,0 1080,20 Q1100,0 1120,20 Q1140,0 1160,20 Q1180,0 1200,20 Q1220,0 1240,20 Q1260,0 1280,20 Q1300,0 1320,20 Q1340,0 1360,20 Q1380,0 1400,20 Q1420,0 1440,20 Q1460,0 1480,20 Q1500,0 1520,20 Q1540,0 1560,20 Q1580,0 1600,20 Q1620,0 1640,20 Q1660,0 1680,20 Q1700,0 1720,20 Q1740,0 1760,20 Q1780,0 1800,20 Q1820,0 1840,20 Q1860,0 1880,20 Q1900,0 1920,20 Q1940,0 1960,20 Q1980,0 2000,20 L2000,28 L0,28 Z"
+            fill="#F0E8D8"
+          />
+        </Svg>
+      </View>
       <ImageBackground 
         source={require('../../assets/images/layered-vintage-paper.png')} 
         style={styles.paperBackground}
       > 
-        {/* TOOLBAR */}
-        <View style={styles.toolbar}>
-          <Pressable style={styles.button} onPress={() => setIsEditing(!isEditing)}>
-            <Text style={styles.buttonText}>{isEditing ? "Done" : "Edit"}</Text>
-          </Pressable>
-          {isEditing && (
-            <Pressable style={[styles.plusButton, { marginLeft: 'auto' }]} onPress={() => setShowAddSheet(true)}>
-              <Text style={styles.plusText}>+</Text>
-            </Pressable>
-          )}
+        {/* Corkboard frame */}
+        <View style={styles.corkboardFrame} onLayout={e => setBoardSize(e.nativeEvent.layout)}>
+          {/* BOARD */}
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <ScrollView
+              style={styles.board}
+              contentContainerStyle={styles.boardContent}
+              scrollEnabled={!isEditing}>
+              {/* Cork texture overlay */}
+              <Svg width="100%" height="1500" style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}>
+                {Array.from({ length: 90 }).map((_, row) =>
+                  Array.from({ length: 60 }).map((_, col) => (
+                    <Circle
+                      key={`dot-${row}-${col}`}
+                      cx={col * 18 + 10}
+                      cy={row * 18 + 10}
+                      r={1.2}
+                      fill="#8B6A3E"
+                      opacity={0.12}
+                    />
+                  ))
+                )}
+              </Svg>
+              {/* Decorative twine */}
+              <Svg width="100%" height="1500" style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}>
+                <Path d="M60 120 Q180 60 300 180" stroke="#8B6A3E" strokeWidth={1.2} opacity={0.3} strokeDasharray="4 6" fill="none" />
+                <Path d="M200 400 Q320 320 440 500" stroke="#8B6A3E" strokeWidth={1.2} opacity={0.3} strokeDasharray="4 6" fill="none" />
+              </Svg>
+              {/* Items */}
+              {items.map((item, idx) => (
+                <DraggableItem
+                  key={item.id}
+                  item={item}
+                  deleteItem={deleteItem}
+                  isEditing={isEditing}
+                  selectedId={selectedId}
+                  setSelectedId={setSelectedId}
+                  onColorChange={onColorChange}
+                  onPositionChange={handlePositionChange}
+                  onRotationChange={onRotationChange}
+                  accentColor={ACCENT_COLORS[idx % ACCENT_COLORS.length]}
+                  onContentChange={onContentChange}
+                  boardWidth={boardSize.width}
+                  boardHeight={boardSize.height}
+                />
+              ))}
+            </ScrollView>
+          </TouchableWithoutFeedback>
         </View>
-
-        {/* BOARD */}
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView
-            style={styles.board}
-            contentContainerStyle={styles.boardContent}
-            scrollEnabled={!isEditing}>
-            {items.map((item) => (
-              <DraggableItem
-                key={item.id}
-                item={item}
-                deleteItem={deleteItem}
-                isEditing={isEditing}
-                selectedId={selectedId}
-                setSelectedId={setSelectedId}
-                onColorChange={onColorChange}
-                onPositionChange={handlePositionChange}  
-              />  
-            ))}
-          </ScrollView>
-        </TouchableWithoutFeedback>
 
         {/* FLOATING COLOR PICKER */}
         {showColorPicker && (
@@ -280,19 +356,17 @@ async function searchGifs(query: string) {
           </View>
         )}
         {showStickerPicker && (
-              <View style={styles.StickerPicker}>
-                {STICKERS.map((sticker: { key: string; source: any }) => (
-                  <Pressable
-                    key={sticker.key}
-                    onPress={() => addSticker(sticker.key)}
-                  >
-                    <Image source={sticker.source} style={{ width: 50, height: 50 }} />
-                  </Pressable>
-                ))}
-              </View>
-            )}
-
-
+          <View style={styles.StickerPicker}>
+            {STICKERS.map((sticker: { key: string; source: any }) => (
+              <Pressable
+                key={sticker.key}
+                onPress={() => addSticker(sticker.key)}
+              >
+                <Image source={sticker.source} style={{ width: 50, height: 50 }} />
+              </Pressable>
+            ))}
+          </View>
+        )}
 
         <Modal visible={showAddSheet} transparent animationType="slide">
           <View style={styles.modalContainer}>
@@ -328,13 +402,15 @@ async function searchGifs(query: string) {
           <Pressable
             key={bg.key}
             onPress={() => {
+              const id = Date.now().toString();
               setItems([...items, {
-                id: Date.now().toString(),
+                id,
                 type: "note",
                 content: "",
                 x: 80,
                 y: 100,
                 noteBackground: bg.source,
+                rotation: seededRotation(id),
               }]);
               setShowAddSheet(false);
             }}
@@ -412,13 +488,15 @@ async function searchGifs(query: string) {
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
         <Pressable onPress={() => {
+          const id = Date.now().toString();
           setItems(prev => [...prev, {
-            id: Date.now().toString(),
+            id,
             type: "sticker",
             content: "",
             x: 100,
             y: 150,
             sticker: item.images.fixed_height.url,
+            rotation: seededRotation(id),
           }]);
           setShowAddSheet(false);
         }}>
@@ -518,6 +596,7 @@ const styles = StyleSheet.create({
   },
   board: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
   boardContent: {
     height: 1500,
@@ -710,6 +789,15 @@ input: {
   color: '#3B2C1A',
   fontFamily: 'Inter',
   marginBottom: 12,
+},
+corkboardFrame: {
+  flex: 1,
+  borderWidth: 12,
+  borderColor: '#8B6A3E',
+  borderRadius: 24,
+  margin: 10,
+  overflow: 'hidden',
+  backgroundColor: 'rgba(139,106,62,0.04)', // subtle cork tint
 },
 });
 
