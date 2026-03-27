@@ -122,7 +122,7 @@ export default function CreateFolder() {
 }
 
 const styles = StyleSheet.create({
-  bg: { flex: 1, backgroundColor: "#F5F0E8" },
+  bg: { flex: 1, backgroundColor: "#F5F0E8", borderRadius:32, overflow:'hidden' },
   scroll: { flexGrow: 1, paddingBottom: 40 },
   backBtn: { padding: 4 },
   backArrow: { color: "#f5e6c8", fontSize: 22 },
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   stampsRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   stampBtn: { opacity: 0.6, borderRadius: 8, overflow: "hidden" },
   stampBtnSelected: { opacity: 1, borderWidth: 2, borderColor: "#6D1B12", borderRadius: 8 },
-  stampImage: { width: 70, height: 70, resizeMode: "contain" },
+  stampImage: { width: 150, height: 150, resizeMode: "contain" },
   divider: { height: 1, backgroundColor: "#d8cfc0", marginTop: 20 },
   createBtn: { backgroundColor: "#6D1B12", borderRadius: 12, padding: 14, alignItems: "center", marginTop: 20 },
   createBtnDisabled: { backgroundColor: "#c8a898" },

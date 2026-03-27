@@ -1,156 +1,174 @@
-import { View, Text, Pressable,FlatList, StyleSheet, ImageBackground,  Image, TouchableOpacity, } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ImageBackground,
+  Animated,
+  Pressable,
+} from "react-native";
 import { router } from "expo-router";
-import {useState} from 'react';
-import { AvatarOptions } from '../components/avatarOptions';
-import { RedButton } from '../components/redButton';
+import { useState, useRef } from "react";
+import { AvatarOptions } from "../components/avatarOptions";
 
+const AVATAR_DATA = [
+  { id: "1", image: require("../../assets/images/origami-gorilla.png") },
+  { id: "2", image: require("../../assets/images/default-avatar.png") },
+  { id: "3", image: require("../../assets/images/origami-fox.png") },
+  { id: "4", image: require("../../assets/images/origami-purpleflower.png") },
+  { id: "5", image: require("../../assets/images/origami-sunflower.png") },
+  { id: "6", image: require("../../assets/images/origami-hyacinth.png") },
+  { id: "7", image: require("../../assets/images/origami-windmill.png") },
+  { id: "8", image: require("../../assets/images/origami-snack.png") },
+  { id: "9", image: require("../../assets/images/origami-heart.png") },
+];
 
-      const AVATAR_DATA = [
-        {id:'1', image: require('../../assets/images/origami-gorilla.png')},
-        {id:'2', image: require('../../assets/images/default-avatar.png')},
-        {id:'3', image: require('../../assets/images/origami-fox.png')},
+export default function AvatarSelection() {
+  const [selectedAvatarId, setSelectedAvatarId] = useState<string | null>(null);
+  const buttonScale = useRef(new Animated.Value(1)).current;
 
-        {id:'4', image: require('../../assets/images/origami-purpleflower.png')},
-        {id:'5', image: require('../../assets/images/origami-sunflower.png')},
-        {id:'6', image: require('../../assets/images/origami-hyacinth.png')},
+  const handleSelectAvatar = (id: string) => setSelectedAvatarId(id);
 
-        {id:'7', image: require('../../assets/images/origami-windmill.png')},
-        {id:'8', image: require('../../assets/images/origami-snack.png')},
-        {id:'9', image: require('../../assets/images/origami-heart.png')},
-      ];
+  const handlePressIn = () =>
+    Animated.spring(buttonScale, { toValue: 0.95, useNativeDriver: true }).start();
 
+  const handlePressOut = () =>
+    Animated.spring(buttonScale, { toValue: 1, friction: 3, useNativeDriver: true }).start();
 
-      export default function AvatarSelection() {
-        const [selectedAvatarId, setSelectedAvatarId] = useState<string | null>(null);
+  return (
+    <View style={styles.root}>
 
-        const handleSelectAvatar = (id: string) => {
-          setSelectedAvatarId(id); // Update our state
-          console.log(`Avatar ${id} selected!`);
-        };
-      
+      {/* ── Top beige section with header ── */}
+      <View style={styles.topSection}>
+        <Text style={styles.headerTitle}>Select an Avatar</Text>
+      </View>
 
+      {/* ── Green curved panel with background image ── */}
+      <ImageBackground
+        source={require("../../assets/images/swirly-subtle.png")}
+        style={styles.greenPanelWrapper}
+        resizeMode="cover"
+      >
+        <View style={styles.greenPanel}>
+          <FlatList
+            data={AVATAR_DATA}
+            renderItem={({ item }) => (
+              <AvatarOptions
+                imageSource={item.image}
+                onSelect={() => handleSelectAvatar(item.id)}
+                isSelected={item.id === selectedAvatarId}
+              />
+            )}
+            keyExtractor={(item) => item.id}
+            numColumns={3}
+            contentContainerStyle={styles.listContainer}
+            columnWrapperStyle={styles.columnWrapper}
+            showsVerticalScrollIndicator={false}
+          />
 
-      return(
-        
-        <View style = {styles.container}>
-          <ImageBackground 
-            source={require('../../assets/images/swirls.jpg')} 
-            imageStyle={{ opacity: 0.2 }} 
-  >
-          <View style={styles.headerContainer}>
-            <ImageBackground
-              source={require('../../assets/images/header-paper.png')}
-              style={styles.paperHeader}
-              resizeMode="stretch" 
+          <View style={styles.buttonWrapper}>
+            <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+              <Pressable
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                onPress={() => router.push("/timelineScreen")}
+                style={[
+                  styles.continueButton,
+                  !selectedAvatarId && styles.continueButtonDisabled,
+                ]}
+                disabled={!selectedAvatarId}
               >
-          <Text style={styles.avatarText}>Select an Avatar</Text>
-            </ImageBackground>
+                <Text style={styles.continueText}>Continue →</Text>
+              </Pressable>
+            </Animated.View>
           </View>
-
-        <FlatList
-          data={AVATAR_DATA}
-          renderItem={({ item }) => (
-            <AvatarOptions
-              imageSource={item.image}
-              onSelect={() => handleSelectAvatar(item.id)}
-              isSelected={item.id === selectedAvatarId} 
-            />
-          )}
-          
-
-          keyExtractor={(item: { id: any; }) => item.id}
-          numColumns={3}
-          contentContainerStyle={styles.listContainer} 
-          columnWrapperStyle={styles.columnWrapper} 
-        />
-
-
-        <TouchableOpacity onPress = {() => {router.push('/timelineScreen')}} style= {styles.continueButton}activeOpacity={0.7}>
-         <Text style ={styles.continue}> Continue</Text>
-        </TouchableOpacity>
-        </ImageBackground>
         </View>
-       
-      
+      </ImageBackground>
 
-
-
-      
-      
-      );
-    }
-
-
-
-
-
-
-
-
-
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
-    container:{
-       flex: 1,
-        backgroundColor: "#557263",
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-      },
+  root: {
+    flex: 1,
+    backgroundColor: "#EDE8D9",
+  },
 
-      headerContainer:{
-        width: '100%',
-        marginRight:200,
-        marginBottom: 50,
-        
-      },
+  // ── Top beige band ───────────────────────────────────────────────────
+  topSection: {
+    backgroundColor: "#EDE8D9",
+    paddingTop: 80,
+    paddingBottom: 60,
+    alignItems: "center",
+    width: "100%",
+  },
 
-      paperHeader:{
-        width: '120%',
-        height: 120,
-        marginTop:70,
-        
-      },
+  headerTitle: {
+    fontFamily: "Calistoga",
+    fontSize: 42,
+    color: "#5A390E",
+    lineHeight: 46,
+  },
 
-      avatarText:{
-        width: '100%',
-        fontFamily: 'Montaga',
-        fontSize: 40,
-        color:"#5A390E",
-        textAlign: 'center',
-        marginTop: 40,
-        marginLeft:200,
-      },
+  // ── Green curved panel ────────────────────────────────────────────────
+  greenPanelWrapper: {
+    flex: 1,
+    marginTop: -40,
+    backgroundColor: "#557263",
+    borderRadius:32,
+    overflow: "hidden",
+  },
 
-      listContainer: {
-        paddingHorizontal:180,
-        paddingBottom: 40,
-      },
-      columnWrapper: {
-        justifyContent: 'space-between', // Spreads the 3 items evenly
-        marginBottom: 40, // Space between rows
-        gap: 20,
-      },
+  greenPanel: {
+    flex: 1,
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
+    paddingTop: 24,
+  },
 
-      continueButton:{
-        backgroundColor:'#590502',
-        borderRadius: 20,
-        width: 200,
-        height: '5%',
-        alignSelf:'center',
-        marginBottom: 150,
-        marginTop: 20,
-      },
+  // ── Grid ─────────────────────────────────────────────────────────────
+  listContainer: {
+    alignItems: "center",
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+  },
 
-      continue:{
-        fontFamily:'Inter',
-        fontSize: 20,
-        color: '#E8DCDC',
-        textAlign: 'center',
-        fontWeight: 'bold',
-        marginTop: 10,
-        marginRight: 5,
-     
-      }
+  columnWrapper: {
+    justifyContent: "center",
+    gap: 16,
+    marginBottom: 16,
+  },
 
+  // ── Button ───────────────────────────────────────────────────────────
+  buttonWrapper: {
+    alignItems: "center",
+    marginBottom: 48,
+    marginTop: 4,
+  },
 
-    })
+  continueButton: {
+    backgroundColor: "#590502",
+    borderRadius: 20,
+    width: 220,
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#1A0000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+
+  continueButtonDisabled: {
+    opacity: 0.45,
+  },
+
+  continueText: {
+    fontFamily: "Calistoga",
+    fontSize: 22,
+    color: "#EDE8D9",
+    letterSpacing: 0.5,
+  },
+});
