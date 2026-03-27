@@ -12,7 +12,7 @@ export default function ChatRoomHeader({ user, router }) {
         title: '',
         headerShadowVisible: false,
         headerStyle: {
-        backgroundColor: '#590502',
+        backgroundColor: '#7a1a1a',
         headerLeftContainerStyle: {
         backgroundColor: 'transparent',},
         },

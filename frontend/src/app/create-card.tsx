@@ -21,7 +21,7 @@ type Item = {
 
 
 export default function CreateCard() {
-    const [cardColor, setCardColor] = useState("#FFFFFF");
+    const [cardColor, setCardColor] = useState("#fffaf4");
     const [items, setItems] = useState<Item[]>([]);
     const [activeTool, setActiveTool] = useState<string | null>(null);
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -87,18 +87,13 @@ export default function CreateCard() {
     <View style={styles.container}>
       {/* Full green swirl background */}
       <View style={{ flex: 1 }}>
-      <ImageBackground
-        source={require('../../assets/images/swirly-subtle.png')}
-        style={styles.fullBackground}
-        imageStyle={{ width: '100%', height: '100%' }}
-      >
         {/* Header card (cream/paper colored) */}
         <View style={styles.headerCard}>
-        <BackButton color="#557263" />
+        <BackButton color="#f5ede0" />
          <Text style = {styles.headerText}>Create a Card</Text>
          
           </View>
-
+      <View style={styles.bgArea}>
           <View style={[styles.cardPreview, { backgroundColor: cardColor }]}>
   
   {items.length === 0 && (
@@ -253,8 +248,7 @@ export default function CreateCard() {
   
   
 </View>
-          
-          </ImageBackground>
+          </View>
           <BottomNavbar />
           </View>
           </View> 
@@ -274,32 +268,33 @@ export default function CreateCard() {
 
   // Cream header card at the top
   headerCard: {
-    backgroundColor: '#F8E5CF',
-    borderRadius: 18,
-    marginHorizontal: 12,
-    marginTop: 50,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    paddingTop: 10,
-    zIndex: 10,
+  backgroundColor: '#7a1a1a',       // dark red, matching other screens
+  paddingTop: 59,                    // accounts for status bar
+  paddingBottom: 28,
+  paddingHorizontal: 25,
+  flexDirection: 'row',             // back button + title side by side
+  alignItems: 'center',
+  gap: 55,
+  zIndex: 10,
   },
 
   headerText: {
-    paddingTop:5,
     fontFamily: 'Calistoga',
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#5A390E',
-    textAlign:'center',
+  fontSize: 25,
+  fontWeight: 'bold',
+  color: '#f5e8d8', // updated color
+  letterSpacing: 0.8,              // cream text on dark red
   },
   cardPreview: {
-    width: "85%",
-    height: 450,
-    alignSelf: "center",
-    marginTop: 30,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
+  width: "85%",
+  height: 450,
+  alignSelf: "center",
+  marginTop: 20,
+  borderRadius: 20,
+  justifyContent: "center",
+  alignItems: "center",
+  borderWidth: 1,
+  borderColor: 'rgba(139,26,26,0.15)',  // subtle dark red border
   },
 
   previewText: {
@@ -336,12 +331,12 @@ export default function CreateCard() {
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    backgroundColor: "#F8E5CF", // Match your header theme
+    backgroundColor: "#ede0cc", // Match your header theme
     height: 50,
     width: "85%",
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: "#d7c3ac",
+    borderColor: "rgba(139,26,26,0.15)",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -357,7 +352,7 @@ export default function CreateCard() {
     backgroundColor: 'rgba(90, 57, 14, 0.1)', // Subtle highlight
   },
   panel: {
-    backgroundColor: "#F8E5CF",
+    backgroundColor: "#ede0cc",
     width: "90%",
     borderRadius: 20,
     padding: 16,
@@ -419,7 +414,6 @@ export default function CreateCard() {
   buttonText: {
     color: "#F8E5CF",           // Cream color to contrast the dark button
     fontSize: 16,
-    fontFamily: "Calistoga",    // Using your header font for consistency
     fontWeight: "600",
     marginLeft: 8,              // Space between the icon and the text
   },
@@ -446,25 +440,23 @@ cancelBtn: {
   paddingVertical: 10,
   borderRadius: 20,
   borderWidth: 1,
-  borderColor: "#5A390E",
+  borderColor: "rgba(139,26,26,0.3)",
   alignItems: "center",
-  backgroundColor: "#F8E5CF",
+  backgroundColor: "#ede0cc",
 },
 cancelText: {
-  color: "#5A390E",
-  fontFamily: "Calistoga",
+  color: "#8b1a1a",
   fontSize: 14,
 },
 sendBtn: {
   flex: 1,
   paddingVertical: 10,
   borderRadius: 20,
-  backgroundColor: "#6D1B12",
+  backgroundColor: "#7a1a1a",
   alignItems: "center",
 },
 sendText: {
-  color: "#F8E5CF",
-  fontFamily: "Calistoga",
+  color: "#f5ede0",
   fontSize: 14,
 },
 gifInput: {
@@ -477,6 +469,14 @@ gifInput: {
   color: "#3a2010",
   fontFamily: "Inter",
   marginBottom: 8,
+},
+bgArea: {               // new — cream tray with rounded top corners over crimson bg
+  flex: 1,
+  backgroundColor: '#f5e8d8',
+  // borderTopLeftRadius: 28,
+  // borderTopRightRadius: 28,
+  paddingTop: 20,
+  paddingHorizontal: 14,
 },
 });
 

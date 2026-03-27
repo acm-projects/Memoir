@@ -52,7 +52,7 @@ export default function ChatRoom() {
     };
 
     return(
-        <View style={{ flex: 1, backgroundColor: '#590502'}}>
+        <View style={{ flex: 1, backgroundColor: '#7a1a1a'}}>
             <StatusBar barStyle="light-content" />
             <ChatRoomHeader user={item} router={router}/> 
             <ImageBackground
@@ -84,7 +84,7 @@ export default function ChatRoom() {
                       </TouchableOpacity>
                     )}
                     <View style={{
-                      backgroundColor: message.sent ? '#590502' : 'white',
+                      backgroundColor: message.sent ? '#7a1a1a' : '#fff8f0',
                       borderRadius: 12,
                       padding: 10,
                       shadowColor: '#000',
@@ -99,13 +99,13 @@ export default function ChatRoom() {
                   </View>
                 ))}
               </ScrollView>
-              <View style={{ flexDirection: 'row', marginHorizontal: 10, marginBottom: 20, backgroundColor: '#590502', borderRadius: 20, paddingHorizontal: 15, paddingVertical: 10, gap: 10 }}>
+              <View style={{ flexDirection: 'row', marginHorizontal: 10, marginBottom: 20, backgroundColor: '#7a1a1a', borderRadius: 20, paddingHorizontal: 15, paddingVertical: 10, gap: 10 }}>
                 <TextInput
                   placeholder="Type your message..."
                   value={inputText}
                   onChangeText={setInputText}
                   placeholderTextColor="white"
-                  style={{ color: '#F5EEE1', fontSize: 16, flex: 1, marginRight: 2 }}
+                  style={{ color: '#f5e8d8', fontSize: 16, flex: 1, marginRight: 2 }}
                 />
                 <TouchableOpacity onPress={() => setShowPopInfo(true)} style={{ backgroundColor: '#F5EEE1', borderRadius: 20, padding: 10 }}>
                   <Feather name="paperclip" size={20} gap={5} color="#590502" />
