@@ -15,7 +15,7 @@ export default function BottomNavbar() {
   const pathname = usePathname();
   const [modalVisible, setModalVisible] = useState(false);
 
-  const activeColor = '#54110a';
+  const activeColor = '#4f0b02';
   const inactiveColor = '#6D1B12';
 
   const handleUpload = () => {
