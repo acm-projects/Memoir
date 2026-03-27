@@ -23,12 +23,6 @@ export default function DraggableItem({ item, deleteItem, isEditing, selectedId,
 
   const [isDragging, setIsDragging] = useState(false);
 
-  // Washi tape logic
-  const showTape = parseInt(item.id) % 3 !== 0;
-  const tapeColors = ["#557263", "#8B6A3E", "#6B4F6B", "#4A6741"];
-  const tapeColor = tapeColors[parseInt(item.id) % tapeColors.length];
-  const tapeRotation = ((parseInt(item.id) % 17) - 8) + 'deg';
-
   // Pin style logic
   const isThumbtack = parseInt(item.id) % 2 === 0;
   const pinSize = 14;
@@ -161,17 +155,6 @@ export default function DraggableItem({ item, deleteItem, isEditing, selectedId,
         </View>
       );
     }
-  }
-
-  function renderWashiTape() {
-    if (!showTape) return null;
-    return (
-      <View style={{ position: 'absolute', top: -14, alignSelf: 'center', width: 48, height: 14, opacity: 0.65, borderRadius: 2, flexDirection: 'row', transform: [{ rotate: tapeRotation }], zIndex: 20 }}>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <View key={i} style={{ width: 8, height: '100%', backgroundColor: i % 2 === 0 ? tapeColor : tapeColor, opacity: i % 2 === 0 ? 1 : 0.4, borderRadius: 1 }} />
-        ))}
-      </View>
-    );
   }
 
   function renderContent() {
@@ -342,7 +325,6 @@ export default function DraggableItem({ item, deleteItem, isEditing, selectedId,
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View style={[animatedStyle, { zIndex, shadowColor: '#000', shadowOpacity, shadowRadius, elevation }]}> 
-        {renderWashiTape()}
         {renderPin()}
         {/* Delete button (edit mode) */}
         {isEditing && (
