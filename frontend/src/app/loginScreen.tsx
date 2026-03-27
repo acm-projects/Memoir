@@ -118,9 +118,9 @@ const styles = StyleSheet.create({
 
 
  loginHeader:{
-   fontFamily: 'Montaga',
+   fontFamily: 'Calistoga',
    paddingTop: 50,
-   fontSize : 64,
+   fontSize : 60,
    color: "#5A390E",
    textAlign: 'center',
    justifyContent: 'flex-start',
@@ -197,14 +197,14 @@ const styles = StyleSheet.create({
    fontFamily:'Inter',
    fontSize: 12,
    color: "#5A390E",
-   marginTop:20,
+   marginTop:10,
  },
  SignUp:{
    fontFamily:'Inter',
    fontSize: 12,
    color: "#5A390E",
    textDecorationLine: 'underline',
-   marginTop:20,
+   marginTop:10,
    zIndex:5,
  },
 

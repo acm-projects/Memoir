@@ -145,7 +145,7 @@ export default function Signup() {
 
 
 
-       <View style = {{ flexDirection: 'row' ,justifyContent:'center', padding:5, marginTop:20}}>{/*have account text and log in button next to each other s*/}
+       <View style = {{ flexDirection: 'row' ,justifyContent:'center', padding:5, marginTop:10}}>{/*have account text and log in button next to each other s*/}
          <Text style = {styles.noAccount}>Already have an account?</Text>
          <TouchableOpacity onPress = {() => {router.push('/loginScreen' as any)}} activeOpacity={0.7}>{/*create button to go to login page*/}
            <Text style ={styles.loginText}> Log in</Text>
@@ -202,9 +202,9 @@ const styles = StyleSheet.create({
 
 
  loginHeader:{
-   fontFamily: 'Montaga',
+   fontFamily: 'Calistoga',
    paddingTop: 50,
-   fontSize : 64,
+   fontSize : 60,
    color: "#5A390E",
    textAlign: 'center',
    justifyContent: 'flex-start',

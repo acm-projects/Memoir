@@ -13,13 +13,15 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import BottomNavbar from '../components/BottomNavbar';
+import { Ionicons } from '@expo/vector-icons';
+
 
 const { width } = Dimensions.get('window');
 
 const swirlyBg = require('../../assets/images/swirly-subtle.png');
 const paperTexture = require('../../assets/images/layered-vintage-paper.png');
 
-// Updated STAMP_DATA to match folders/images from ViewFolder
+
 const STAMP_DATA = [
   {
     id: 'all',
@@ -115,25 +117,26 @@ export default function SelectMemory() {
         imageStyle={styles.paperImage}
       >
         <View style={styles.cardContent}>
-          {/* Divider row inside paper card, above search */}
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerFlourish}>✦</Text>
-            <View style={styles.dividerLine} />
-          </View>
+          
 
           {/* Search bar inside paper card, above section label */}
           <View style={styles.searchContainerOuter}>
             <View style={styles.searchContainer}>
-              <Text style={styles.searchIcon}>🔍</Text>
+              <Ionicons name="search" size={16} color="#8B7355" />
               <TextInput
-                placeholder="Search"
+                placeholder=" Search"
                 placeholderTextColor="#A07C5A"
                 value={search}
                 onChangeText={setSearch}
                 style={styles.searchInput}
               />
             </View>
+            {/* Divider row inside paper card, above search */}
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerFlourish}>✦</Text>
+            <View style={styles.dividerLine} />
+          </View>
           </View>
 
           {/* Section label inside paper */}
@@ -193,7 +196,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: '#EDE8D9',
-    marginLeft: 12,
+    marginLeft: 70,
+    fontFamily: 'Calistoga',
+    textAlign: 'center',
   },
   paperCard: {
     flex: 1,
@@ -233,7 +238,7 @@ const styles = StyleSheet.create({
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 0,
+    marginTop: 10,
     marginBottom: 6,
   },
   dividerLine: {
@@ -259,11 +264,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  searchIcon: {
-    fontSize: 18,
-    color: 'rgba(237,232,217,0.7)',
-    marginRight: 8,
-  },
+  
   searchInput: {
     flex: 1,
     fontSize: 14,
