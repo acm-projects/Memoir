@@ -15,6 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Camera, Image as ImageIcon, X } from 'lucide-react-native';
 import BottomNavbar from '../components/BottomNavbar';
+import Svg, { Circle } from 'react-native-svg';
 
 const paperTexture = require('../../assets/images/layered-vintage-paper.png');
 const swirlyBg = require('../../assets/images/swirly-subtle.png');
@@ -32,6 +33,7 @@ export default function UploadCard() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<number | string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   const onPickFileWebGallery = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -131,13 +133,39 @@ export default function UploadCard() {
           style={styles.paperCard}
           imageStyle={styles.paperImage}
         >
+          {/* Dot texture overlay */}
+          <View
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          >
+            {containerSize.width > 0 && containerSize.height > 0 && (
+              <Svg
+                width={containerSize.width}
+                height={containerSize.height}
+                style={{ position: 'absolute', top: 0, left: 0, zIndex: 0 }}
+              >
+                {Array.from({ length: Math.ceil(containerSize.width / 6) }).map((_, col) =>
+                  Array.from({ length: Math.ceil(containerSize.height / 6) }).map((_, row) => (
+                    <Circle
+                      key={`dot-${col}-${row}`}
+                      cx={col * 6 + 3}
+                      cy={row * 6 + 3}
+                      r={0.6}
+                      fill="#8B6A3E"
+                      opacity={0.06}
+                    />
+                  ))
+                )}
+              </Svg>
+            )}
+          </View>
           <ScrollView
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
           >
             {/* Photos section */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Photos</Text>
+              <Text style={styles.sectionLabel /* label font/color changed */}>Photos</Text>
 
               <View style={styles.previewContainer}>
                 <ScrollView
@@ -213,10 +241,10 @@ export default function UploadCard() {
             <View style={styles.divider} />
 
             {/* Form fields */}
-            <View style={styles.section}>
+            <View style={styles.section} onLayout={e => setContainerSize(e.nativeEvent.layout)}>
               {/* Date */}
               <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Date</Text>
+                <Text style={styles.fieldLabel /* label font/color changed */}>Date</Text>
                 {Platform.OS === 'web' ? (
                   <div style={{ width: '100%', marginBottom: 0 }}>
                     <input
@@ -276,7 +304,7 @@ export default function UploadCard() {
 
               {/* Title */}
               <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Title</Text>
+                <Text style={styles.fieldLabel /* label font/color changed */}>Title</Text>
                 <TextInput
                   placeholder=""
                   value={title}
@@ -288,7 +316,7 @@ export default function UploadCard() {
 
               {/* Caption */}
               <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Caption</Text>
+                <Text style={styles.fieldLabel /* label font/color changed */}>Caption</Text>
                 <TextInput
                   placeholder=""
                   value={caption}
@@ -363,10 +391,11 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#8B7355',
+    color: '#557263', // teal/sage
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 10,
+    fontFamily: 'Calistoga, serif',
   },
   previewContainer: {
     width: '100%',
@@ -460,10 +489,11 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#8B7355',
+    color: '#557263', // teal/sage
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 6,
+    fontFamily: 'Calistoga, serif',
   },
   input: {
     backgroundColor: 'rgba(200,184,154,0.25)',
