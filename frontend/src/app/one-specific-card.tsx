@@ -9,6 +9,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
+import { router } from "expo-router";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import BottomNavbar from '../components/BottomNavbar';
 
@@ -48,18 +49,19 @@ export default function OneSpecificCard() {
             <Text style={styles.backArrow}>{'←'}</Text>
           </TouchableOpacity>
 
-          <Image source={starStamp} style={styles.bannerStamp} />
-        </ImageBackground>
-
-        {/* Scrollable content below banner */}
-        <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Title row */}
           <View style={styles.titleRow}>
             <Text style={styles.title} numberOfLines={1}>
               {title}
             </Text>
-            <Text style={styles.flourish}>✦</Text>
           </View>
+
+          <Image source={starStamp} style={styles.bannerStamp} />
+        </ImageBackground>
+
+        {/* Scrollable content below banner */}
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          
 
           {/* Green image container with swirly texture and tape corners */}
           <View style={styles.imageContainerOuter}>
@@ -68,21 +70,18 @@ export default function OneSpecificCard() {
               style={styles.imageContainerInner}
               imageStyle={{ resizeMode: 'cover', borderRadius: 16 }}
             >
-              <View style={[styles.tape, styles.tapeTopLeft]} />
-              <View style={[styles.tape, styles.tapeTopRight]} />
-              <View style={[styles.tape, styles.tapeBottomLeft]} />
-              <View style={[styles.tape, styles.tapeBottomRight]} />
+              
 
               <Image source={cardImage} style={styles.cardImage} />
             </ImageBackground>
           </View>
 
-          {/* Memory notes label */}
-          <Text style={styles.sectionLabel}>Memory Notes</Text>
+       
+    
 
           {/* Caption box */}
           <View style={styles.noteBox}>
-            <Text style={styles.noteLabel}>Caption</Text>
+            <Text style={styles.ocrTitle}>Caption</Text>
             <TextInput
               style={styles.captionText}
               placeholder="Tap to add a caption..."
@@ -95,7 +94,6 @@ export default function OneSpecificCard() {
 
           {/* OCR box */}
           <View style={styles.noteBox}>
-            <Text style={styles.noteLabel}>OCR Text</Text>
             <Text style={styles.ocrTitle}>OCR Description:</Text>
             <TextInput
               style={styles.ocrBody}
@@ -108,9 +106,12 @@ export default function OneSpecificCard() {
           </View>
 
           {/* Save button */}
-          <TouchableOpacity style={styles.saveButton}>
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
+          <TouchableOpacity 
+              style={styles.saveButton} 
+              onPress={() => router.back()}
+            >
+              <Text style={styles.saveButtonText}>Save</Text>
+            </TouchableOpacity>
         </ScrollView>
       </ImageBackground>
 
@@ -163,8 +164,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#6D1B12',
+    color: '#F6E5CD',
     flex: 1,
+    textAlign: 'center',
+    marginRight: 60,
   },
   flourish: {
     color: '#C8B89A',
@@ -192,17 +195,18 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   tape: {
-    width: 24,
-    height: 12,
+    width: 80,
+    height: 20,
     backgroundColor: '#C8A96E',
     opacity: 0.8,
     borderRadius: 2,
     position: 'absolute',
+    zIndex:4,
   },
   tapeTopLeft: {
-    top: 8,
+    top: 20,
     left: 8,
-    transform: [{ rotate: '-10deg' }],
+    transform: [{ rotate: '-45deg' }],
   },
   tapeTopRight: {
     top: 8,
@@ -237,6 +241,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderWidth: 1,
     borderColor: '#D4C9A8',
+    marginTop:10,
   },
   noteLabel: {
     fontSize: 10,
@@ -253,7 +258,7 @@ const styles = StyleSheet.create({
     minHeight: 60,
   },
   ocrTitle: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '700',
     color: '#6D1B12',
     marginBottom: 4,
@@ -264,13 +269,7 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   saveButton: {
-    backgroundColor: '#6D1B12',
-    borderRadius: 999,
-    paddingVertical: 14,
-    paddingHorizontal: 48,
-    alignSelf: 'center',
-    marginTop: 16,
-    marginBottom: 40,
+      backgroundColor: "#6D1B12", borderRadius: 12, padding: 10, alignItems: "center", marginTop: 10 ,width: '90%', alignSelf: 'center',
   },
   saveButtonText: {
     color: '#F6E5CD',
