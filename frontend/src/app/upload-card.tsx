@@ -340,7 +340,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: '#EDE8D9',
-    marginLeft: 12,
+    marginLeft: 90,
+    fontFamily: 'Calistoga', 
+    textAlign: 'center',
+    
   },
   paperCard: {
     flex: 1,
