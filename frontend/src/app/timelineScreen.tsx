@@ -629,7 +629,8 @@ function StudyScene() {
       ))}
       {/* Pencil */}
       <Rect x={68} y={22} width={16} height={5} rx={2} fill="#F9D06A" />
-      <Polygon points="84,22 90,24.5 84,27" fill="#C4A34A" />
+      {/* Triangle tip (was Polygon) */}
+      <Path d="M84 22 L90 24.5 L84 27 Z" fill="#C4A34A" />
     </Svg>
   );
 }
@@ -646,30 +647,10 @@ function SportsScene() {
       {/* Handles */}
       <Path d="M32 48 Q18 52 32 66" stroke="#C4A34A" strokeWidth={4} fill="none" />
       <Path d="M68 48 Q82 52 68 66" stroke="#C4A34A" strokeWidth={4} fill="none" />
-      {/* Stars */}
+      {/* Stars (was Polygon) */}
       {[44, 50, 56].map((x, i) => (
-        <Polygon key={i} points={`${x},52 ${x+1.5},56 ${x+5},56.5 ${x+2.5},59 ${x+3.5},63 ${x},61 ${x-3.5},63 ${x-2.5},59 ${x-5},56.5 ${x-1.5},56`} fill="#F6E5CD" />
+        <Path key={i} d={`M${x},52 L${x+1.5},56 L${x+5},56.5 L${x+2.5},59 L${x+3.5},63 L${x},61 L${x-3.5},63 L${x-2.5},59 L${x-5},56.5 L${x-1.5},56 Z`} fill="#F6E5CD" />
       ))}
-    </Svg>
-  );
-}
-
-function MovieScene() {
-  return (
-    <Svg width={100} height={100} viewBox="0 0 100 100">
-      {/* Main board */}
-      <Rect x={15} y={30} width={70} height={55} rx={4} fill="#3B2C1A" />
-      {/* White stripe */}
-      <Rect x={15} y={30} width={70} height={15} fill="#F6E5CD" />
-      {/* Diagonal stripes */}
-      {[0,1,2,3,4].map(i => (
-        <Path key={i} d={`M${15+14*i} 30 L${15+14*i+10} 45`} stroke="#3B2C1A" strokeWidth={4} />
-      ))}
-      {/* Hinge */}
-      <Circle cx={20} cy={37} r={4} fill="#C4A34A" />
-      {/* Holes */}
-      <Circle cx={75} cy={40} r={2} fill="#F6E5CD" />
-      <Circle cx={85} cy={40} r={2} fill="#F6E5CD" />
     </Svg>
   );
 }
@@ -679,8 +660,8 @@ function FamilyScene() {
     <Svg width={100} height={100} viewBox="0 0 100 100">
       {/* House wall */}
       <Rect x={22} y={48} width={56} height={40} rx={3} fill="#C4A34A" />
-      {/* Roof */}
-      <Polygon points="15,50 50,18 85,50" fill="#7B1D1D" />
+      {/* Roof (was Polygon) */}
+      <Path d="M15 50 L50 18 L85 50 Z" fill="#7B1D1D" />
       {/* Door */}
       <Rect x={46} y={72} width={8} height={16} fill="#8B6A3E" />
       {/* Windows */}
@@ -699,34 +680,17 @@ function FamilyScene() {
 function HikingScene() {
   return (
     <Svg width={100} height={100} viewBox="0 0 100 100">
-      {/* Back mountain */}
-      <Polygon points="30,90 60,40 90,90" fill="#4A6741" />
-      {/* Front mountain */}
-      <Polygon points="10,90 40,55 70,90" fill="#557263" />
+      {/* Back mountain (was Polygon) */}
+      <Path d="M30 90 L60 40 L90 90 Z" fill="#4A6741" />
+      {/* Front mountain (was Polygon) */}
+      <Path d="M10 90 L40 55 L70 90 Z" fill="#557263" />
       {/* Trail path */}
       <Path d="M40 90 Q45 80 50 70 Q55 60 60 55 Q65 50 68 45" stroke="#F6E5CD" strokeWidth={3} fill="none" strokeDasharray="4 4" />
       {/* Flag pin */}
       <Line x1={68} y1={45} x2={68} y2={35} stroke="#E8594A" strokeWidth={3} />
-      <Polygon points="68,35 74,39 68,41" fill="#E8594A" />
+      <Path d="M68 35 L74 39 L68 41 Z" fill="#E8594A" />
       {/* Sun */}
       <Path d="M80 30 A12 12 0 0 1 92 42 L80 42 Z" fill="#F9D06A" />
-    </Svg>
-  );
-}
-
-function SpaScene() {
-  return (
-    <Svg width={100} height={100} viewBox="0 0 100 100">
-      {/* Candle */}
-      <Rect x={44} y={38} width={12} height={32} rx={4} fill="#F6E5CD" stroke="#C8B89A" strokeWidth={2} />
-      {/* Flame */}
-      <Ellipse cx={50} cy={36} rx={2.5} ry={5} fill="#F9D06A" />
-      {/* Glow */}
-      <Circle cx={50} cy={36} r={10} fill="#F9D06A" opacity={0.3} />
-      {/* Leaves */}
-      <Ellipse cx={38} cy={70} rx={10} ry={22} fill="#557263" transform="rotate(-18 38 70)" />
-      <Ellipse cx={62} cy={74} rx={10} ry={22} fill="#557263" transform="rotate(18 62 74)" />
-      <Ellipse cx={50} cy={82} rx={12} ry={8} fill="#557263" />
     </Svg>
   );
 }
@@ -993,3 +957,40 @@ const styles = StyleSheet.create({
   scriptTextTopRight: { position: 'absolute', top: 380, right: 8, fontSize: 9, opacity: 0.18, color: '#8B6A3E', fontStyle: 'italic' },
   scriptTextLowerLeft: { position: 'absolute', top: 650, left: 8, fontSize: 9, opacity: 0.18, color: '#8B6A3E', fontStyle: 'italic' },
 });
+
+function MovieScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Main board */}
+      <Rect x={15} y={30} width={70} height={55} rx={4} fill="#3B2C1A" />
+      {/* White stripe */}
+      <Rect x={15} y={30} width={70} height={15} fill="#F6E5CD" />
+      {/* Diagonal stripes */}
+      {[0,1,2,3,4].map(i => (
+        <Path key={i} d={`M${15+14*i} 30 L${15+14*i+10} 45`} stroke="#3B2C1A" strokeWidth={4} />
+      ))}
+      {/* Hinge */}
+      <Circle cx={20} cy={37} r={4} fill="#C4A34A" />
+      {/* Holes */}
+      <Circle cx={75} cy={40} r={2} fill="#F6E5CD" />
+      <Circle cx={85} cy={40} r={2} fill="#F6E5CD" />
+    </Svg>
+  );
+}
+
+function SpaScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Candle */}
+      <Rect x={44} y={38} width={12} height={32} rx={4} fill="#F6E5CD" stroke="#C8B89A" strokeWidth={2} />
+      {/* Flame */}
+      <Ellipse cx={50} cy={36} rx={2.5} ry={5} fill="#F9D06A" />
+      {/* Glow */}
+      <Circle cx={50} cy={36} r={10} fill="#F9D06A" opacity={0.3} />
+      {/* Leaves */}
+      <Ellipse cx={38} cy={70} rx={10} ry={22} fill="#557263" transform="rotate(-18 38 70)" />
+      <Ellipse cx={62} cy={74} rx={10} ry={22} fill="#557263" transform="rotate(18 62 74)" />
+      <Ellipse cx={50} cy={82} rx={12} ry={8} fill="#557263" />
+    </Svg>
+  );
+}
