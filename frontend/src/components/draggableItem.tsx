@@ -318,6 +318,7 @@ export default function DraggableItem({ item, deleteItem, isEditing, selectedId,
       )}
     </View>
   );
+  return null;
 }}
 
   

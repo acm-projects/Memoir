@@ -26,7 +26,7 @@ const folders = [
   { id: '3', title: 'Spring Break',      isAdd: false, image: require('../../assets/images/blueFlower-stamp.png'), color: '#557263', stripColor: '#3D5548', isWide: false },
   { id: '4', title: 'Prom',              isAdd: false, image: require('../../assets/images/brasil-stamp.png'),     color: '#9B2335', stripColor: '#7D1525', isWide: false },
   { id: '5', title: 'College grad',      isAdd: false, image: require('../../assets/images/butterfly-stamp.png'),  color: '#4A6B7B', stripColor: '#3A5A6A', isWide: true  },
-  { id: '6', title: 'Bestieee',          isAdd: false, image: require('../../assets/images/bird-stamp.png'),       color: '#7B2D2D', stripColor: '#621818', isWide: true  },
+  { id: '6', title: 'Bestieee',          isAdd: false, image: require('../../assets/images/cat-stamp.png'),       color: '#7B2D2D', stripColor: '#621818', isWide: true  },
 ];
 
 // AFTER — 2 columns with 16px side padding and 12px gap between
