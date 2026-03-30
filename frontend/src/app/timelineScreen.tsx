@@ -785,7 +785,7 @@ export default function TimelineScreen() {
                   <Image source={item.image} style={[styles.stampImage, { height: 110 }]} />
                 </View>
               </View>
-              <View style={[styles.labelBar, { borderBottomWidth: 2, borderBottomColor: accentColor }]}> 
+              <View style={[styles.labelBar, { backgroundColor: accentColor, borderBottomWidth: 2, borderBottomColor: accentColor }]}> 
                 <Text style={styles.labelTitle} numberOfLines={1}>{item.title}</Text>
               </View>
             </Pressable>
@@ -809,7 +809,7 @@ export default function TimelineScreen() {
             top: 50,
             width: 100,
             height: 100,
-            opacity: 0.82,
+            opacity: 0,
             zIndex: 2, // ensure above path, below card
             pointerEvents: 'none',
           }}
