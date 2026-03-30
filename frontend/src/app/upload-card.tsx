@@ -20,7 +20,6 @@ import Svg, { Circle } from 'react-native-svg';
 const paperTexture = require('../../assets/images/layered-vintage-paper.png');
 const swirlyBg = require('../../assets/images/swirly-subtle.png');
 
-// simple helper to create a temporary id without crypto
 const createTempId = () => `card-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
 
 export default function UploadCard() {
@@ -108,13 +107,11 @@ export default function UploadCard() {
 
   return (
     <>
-      {/* Outer green background with swirly image, no padding */}
       <ImageBackground
         source={swirlyBg}
         style={styles.screen}
         imageStyle={{ width: '100%', height: '100%' }}
       >
-        {/* Header on green background */}
         <View style={styles.headerArea}>
           <View style={styles.headerRow}>
             <TouchableOpacity
@@ -127,13 +124,11 @@ export default function UploadCard() {
           </View>
         </View>
 
-        {/* Paper texture card fills the rest */}
         <ImageBackground
           source={paperTexture}
           style={styles.paperCard}
           imageStyle={styles.paperImage}
         >
-          {/* Dot texture overlay */}
           <View
             style={StyleSheet.absoluteFill}
             pointerEvents="none"
@@ -159,13 +154,13 @@ export default function UploadCard() {
               </Svg>
             )}
           </View>
+
           <ScrollView
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
           >
-            {/* Photos section */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel /* label font/color changed */}>Photos</Text>
+              <Text style={styles.sectionLabel}>Photos</Text>
 
               <View style={styles.previewContainer}>
                 <ScrollView
@@ -197,7 +192,6 @@ export default function UploadCard() {
                 </ScrollView>
               </View>
 
-              {/* Upload buttons row */}
               <View style={styles.uploadButtonsRow}>
                 <TouchableOpacity
                   onPress={triggerCamera}
@@ -237,14 +231,11 @@ export default function UploadCard() {
               )}
             </View>
 
-            {/* Divider */}
             <View style={styles.divider} />
 
-            {/* Form fields */}
             <View style={styles.section} onLayout={e => setContainerSize(e.nativeEvent.layout)}>
-              {/* Date */}
               <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel /* label font/color changed */}>Date</Text>
+                <Text style={styles.fieldLabel}>Date</Text>
                 {Platform.OS === 'web' ? (
                   <div style={{ width: '100%', marginBottom: 0 }}>
                     <input
@@ -302,9 +293,8 @@ export default function UploadCard() {
                 )}
               </View>
 
-              {/* Title */}
               <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel /* label font/color changed */}>Title</Text>
+                <Text style={styles.fieldLabel}>Title</Text>
                 <TextInput
                   placeholder=""
                   value={title}
@@ -314,9 +304,8 @@ export default function UploadCard() {
                 />
               </View>
 
-              {/* Caption */}
               <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel /* label font/color changed */}>Caption</Text>
+                <Text style={styles.fieldLabel}>Caption</Text>
                 <TextInput
                   placeholder=""
                   value={caption}
@@ -328,7 +317,6 @@ export default function UploadCard() {
               </View>
             </View>
 
-            {/* Next button */}
             <View style={styles.nextButtonWrapper}>
               <TouchableOpacity style={styles.nextButton} onPress={onNext}>
                 <Text style={styles.nextText}>Next →</Text>
@@ -338,7 +326,6 @@ export default function UploadCard() {
         </ImageBackground>
       </ImageBackground>
 
-      {/* Bottom navbar pinned at bottom, always visible */}
       <View style={styles.navbarWrapper}>
         <BottomNavbar />
       </View>
@@ -354,7 +341,7 @@ const styles = StyleSheet.create({
   headerArea: {
     paddingTop: 56,
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 10,
   },
   headerRow: {
     flexDirection: 'row',
@@ -369,19 +356,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#EDE8D9',
     marginLeft: 90,
-    fontFamily: 'Calistoga', 
+    fontFamily: 'Calistoga',
     textAlign: 'center',
-    
   },
   paperCard: {
     flex: 1,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    backgroundColor: '#F5E8D8',
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
     overflow: 'hidden',
+    marginTop: 8,
   },
   paperImage: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
     resizeMode: 'cover',
   },
   content: {
@@ -394,7 +382,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#557263', // teal/sage
+    color: '#557263',
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 10,
@@ -492,7 +480,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#557263', // teal/sage
+    color: '#557263',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 6,

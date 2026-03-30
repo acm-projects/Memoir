@@ -8,7 +8,9 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-const RADIUS = 200;
+const RADIUS = 70;
+const SIZE = 200;
+const PLANE_SIZE = 36;
 
 export default function LoadingSpinner() {
   const angle = useSharedValue(0);
@@ -19,12 +21,15 @@ export default function LoadingSpinner() {
       -1,
       false
     );
-  }, []);
+  }, [angle]);
 
   const animatedStyle = useAnimatedStyle(() => {
     const rad = (angle.value * Math.PI) / 180;
+
     return {
       position: 'absolute',
+      left: SIZE / 2 - PLANE_SIZE / 2,
+      top: SIZE / 2 - PLANE_SIZE / 2,
       transform: [
         { translateX: RADIUS * Math.cos(rad) },
         { translateY: RADIUS * Math.sin(rad) },
@@ -40,7 +45,7 @@ export default function LoadingSpinner() {
         <Image
           source={require('../../assets/images/paper-airplane.png')}
           style={styles.airplane}
-          resizeMode="cover"
+          resizeMode="contain"
         />
       </Animated.View>
     </View>
@@ -49,8 +54,8 @@ export default function LoadingSpinner() {
 
 const styles = StyleSheet.create({
   container: {
-    width: 200,
-    height: 200,
+    width: SIZE,
+    height: SIZE,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -64,15 +69,13 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   planeWrapper: {
-    width: 40,
-    height: 40,
-    overflow: 'hidden',
+    width: PLANE_SIZE,
+    height: PLANE_SIZE,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   airplane: {
-  width: 1500,
-  height: 150,
-  position: 'absolute',
-  top: -20,   // shift up to show the airplane
-  left: -20,  // shift left to show the airplane
-},
+    width: PLANE_SIZE,
+    height: PLANE_SIZE,
+  },
 });

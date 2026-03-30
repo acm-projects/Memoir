@@ -240,11 +240,12 @@ const styles = StyleSheet.create({
   },
 
   listArea: {
-    flex: 1,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    overflow: 'hidden',
-  },
+  flex: 1,
+  borderTopLeftRadius: 32,
+  borderTopRightRadius: 32,
+  overflow: 'hidden',
+  marginTop: 6,
+},
 
   paperImage: {
     borderTopLeftRadius: 32,
