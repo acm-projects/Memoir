@@ -29,13 +29,13 @@ const BOARD_TOTAL = boardContents.photos + boardContents.stickers + boardContent
 export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount = 67, friendsCount = 45, foldersCount = 12 }) {
   const router = useRouter();
   const iconColor = '#7B1D1D';
-   const tagColors = [
-  '#557263', // teal/sage 
-  '#7B1D1D', // maroon
-  '#8B6A3E', // warm brown
-  '#4A6741', // deeper green
-  '#6B4F6B', // muted mauve/purple
-];
+  const tagColors = [
+    '#557263', // teal/sage 
+    '#7B1D1D', // maroon
+    '#8B6A3E', // warm brown
+    '#4A6741', // deeper green
+    '#6B4F6B', // muted mauve/purple
+  ];
 
   const barAnimPhotos = useRef(new Animated.Value(0)).current;
   const barAnimStickers = useRef(new Animated.Value(0)).current;
@@ -87,7 +87,7 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
 
   return (
     <View style={styles.root}>
-      {/* Top-left settings button */}
+      {/* Top-left settings button on maroon background */}
       <TouchableOpacity
         style={styles.settingsButton}
         onPress={() => router.push('/settings' as any)}
@@ -97,8 +97,9 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
         </View>
       </TouchableOpacity>
 
-      <View style={styles.mainContent}>
-        {/* Profile Card */}
+      {/* Cream panel with rounded top corners */}
+      <View style={styles.creamPanel}>
+        {/* Profile Card overlaps the top of the cream panel */}
         <View style={styles.outerCard}>
           <View style={styles.innerCard}>
             {/* Avatar */}
@@ -121,16 +122,12 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
             </View>
           </View>
         </View>
-
         {/* Decorative Divider */}
         <View style={styles.dividerRow}>
           <Text style={styles.dividerFlourish}>❧</Text>
           <View style={styles.dividerLine} />
           <Text style={styles.dividerFlourish}>❧</Text>
         </View>
-
-        {/* Elliptical background panel for buttons */}
-        <View style={styles.ellipsePanel} />
 
         <ScrollView
           style={styles.analyticsScroll}
@@ -327,7 +324,6 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
           </View>
         </ScrollView>
       </View>
-
       {/* Navbar pinned to bottom */}
       <View style={styles.navbarContainer}>
         <BottomNavbar />
@@ -339,47 +335,55 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#7B1D1D',
+    backgroundColor: '#7B1D1D', // full maroon background
+  },
+  creamPanel: {
+    flex: 1,
+    backgroundColor: '#EDE8D9',
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    marginTop: 160, // moved down from 140
+    paddingTop: 0,
+    alignItems: 'center',
+    zIndex: 1,
   },
   mainContent: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 180,
+    paddingTop: 150, // moved down from 130
     paddingBottom: 80,
-  },
-  analyticsScroll: {
-    flex: 1,
-    width: '100%',
-  },
-  analyticsScrollContent: {
-    paddingBottom: 120,
-    alignItems: 'center',
   },
   settingsButton: {
     position: 'absolute',
     top: 56,
     left: 20,
-    zIndex: 10,
+    zIndex: 20,
   },
   settingsCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#EDE8D9',
+    backgroundColor: '#EDE8D9', // cream
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#C4504A33', // subtle maroon border
+    shadowColor: '#C4504A',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
   outerCard: {
     backgroundColor: '#4F7C6E',
     borderRadius: 24,
     padding: 16,
-    width: width * 0.88, // wider — 88% of screen width
+    width: width * 0.88,
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     zIndex: 2,
-    marginTop: -40, // pull up to overlap with settings button
+    marginTop: -50, // moved down from -40
   },
   innerCard: {
     backgroundColor: '#EDE8D9',
@@ -392,6 +396,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
+    position: 'relative',
   },
   avatarCircle: {
     width: 80,
@@ -402,12 +407,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDE8D9',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -40,
+    marginTop: -20, // overlap top edge of card
     marginBottom: 8,
     shadowColor: '#000',
     shadowOpacity: 0.10,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
+    zIndex: 3,
+    alignSelf: 'center',
   },
   avatarEmoji: {
     fontSize: 36,
@@ -442,8 +449,8 @@ const styles = StyleSheet.create({
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: -2,
-    marginBottom: 18,
+    marginTop: 8,
+    marginBottom: 3,
     width: width * 0.88,
     alignSelf: 'center',
     zIndex: 2,
@@ -458,18 +465,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#7B1D1D',
     opacity: 0.6,
-  },
-  ellipsePanel: {
-    position: 'absolute',
-    top: 245,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 520,
-    backgroundColor: '#EDE8D9',
-    borderTopLeftRadius: 1200,
-    borderTopRightRadius: 1200, 
-    zIndex: 0,
   },
   buttonStack: {
     marginTop: 8,
@@ -656,5 +651,13 @@ const styles = StyleSheet.create({
     color: '#8B7355',
     marginHorizontal: 4,
     fontFamily: 'serif',
+  },
+  analyticsScroll: {
+    flex: 1,
+    width: '100%',
+  },
+  analyticsScrollContent: {
+    paddingBottom: 120,
+    alignItems: 'center',
   },
 });
