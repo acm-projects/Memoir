@@ -40,6 +40,7 @@ export default function OneSpecificCard() {
   return (
     <View style={styles.container}>
       <ImageBackground source={paperTexture} style={styles.paperBackground}>
+
         {/* Top red banner */}
         <ImageBackground source={redSwirl} style={styles.topBanner} imageStyle={{ resizeMode: 'cover' }}>
           <TouchableOpacity
@@ -59,29 +60,49 @@ export default function OneSpecificCard() {
           <Image source={starStamp} style={styles.bannerStamp} />
         </ImageBackground>
 
-        {/* Scrollable content below banner */}
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          
+        {/* Color accent strip under header */}
+        <View style={styles.colorStrip}>
+          <View style={[styles.stripSegment, { backgroundColor: '#6B4F6B' }]} />
+          <View style={[styles.stripSegment, { backgroundColor: '#7B1D1D' }]} />
+          <View style={[styles.stripSegment, { backgroundColor: '#8B6A3E' }]} />
+          <View style={[styles.stripSegment, { backgroundColor: '#557263' }]} />
+          <View style={[styles.stripSegment, { backgroundColor: '#4A6741' }]} />
+        </View>
 
-          {/* Green image container with swirly texture and tape corners */}
+        {/* Scrollable content */}
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+
+          {/* Green image container */}
           <View style={styles.imageContainerOuter}>
             <ImageBackground
               source={swirlySubtle}
               style={styles.imageContainerInner}
               imageStyle={{ resizeMode: 'cover', borderRadius: 16 }}
             >
-              
-
               <Image source={cardImage} style={styles.cardImage} />
             </ImageBackground>
           </View>
 
-       
-    
+          {/* Meta pills */}
+          <View style={styles.pillRow}>
+            <View style={[styles.pill, { backgroundColor: 'rgba(85,114,99,0.15)', borderColor: 'rgba(85,114,99,0.4)' }]}>
+              <Text style={[styles.pillText, { color: '#557263' }]}>Floral</Text>
+            </View>
+            <View style={[styles.pill, { backgroundColor: 'rgba(107,79,107,0.12)', borderColor: 'rgba(107,79,107,0.35)' }]}>
+              <Text style={[styles.pillText, { color: '#6B4F6B' }]}>Romantic</Text>
+            </View>
+            <View style={[styles.pill, { backgroundColor: 'rgba(139,106,62,0.12)', borderColor: 'rgba(139,106,62,0.35)' }]}>
+              <Text style={[styles.pillText, { color: '#8B6A3E' }]}>Hand-drawn</Text>
+            </View>
+          </View>
 
           {/* Caption box */}
           <View style={styles.noteBox}>
-            <Text style={styles.ocrTitle}>Caption</Text>
+            <View style={styles.noteHeader}>
+              <View style={[styles.noteDot, { backgroundColor: '#557263' }]} />
+              <Text style={styles.ocrTitle}>Caption</Text>
+            </View>
+            <View style={styles.noteDivider} />
             <TextInput
               style={styles.captionText}
               placeholder="Tap to add a caption..."
@@ -94,7 +115,11 @@ export default function OneSpecificCard() {
 
           {/* OCR box */}
           <View style={styles.noteBox}>
-            <Text style={styles.ocrTitle}>OCR Description:</Text>
+            <View style={styles.noteHeader}>
+              <View style={[styles.noteDot, { backgroundColor: '#6B4F6B' }]} />
+              <Text style={styles.ocrTitle}>OCR Description</Text>
+            </View>
+            <View style={styles.noteDivider} />
             <TextInput
               style={styles.ocrBody}
               placeholder="No OCR text available"
@@ -106,12 +131,14 @@ export default function OneSpecificCard() {
           </View>
 
           {/* Save button */}
-          <TouchableOpacity 
-              style={styles.saveButton} 
-              onPress={() => router.back()}
-            >
-              <Text style={styles.saveButtonText}>Save</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={() => router.back()}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.saveButtonText}>Save Card</Text>
+          </TouchableOpacity>
+
         </ScrollView>
       </ImageBackground>
 
@@ -150,6 +177,17 @@ const styles = StyleSheet.create({
     height: 80,
     resizeMode: 'contain',
   },
+
+  // ── Color accent strip ──────────────────────────────────────
+  colorStrip: {
+    flexDirection: 'row',
+    height: 4,
+    width: '100%',
+  },
+  stripSegment: {
+    flex: 1,
+  },
+
   scrollContent: {
     paddingBottom: 120,
   },
@@ -169,113 +207,126 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginRight: 60,
   },
-  flourish: {
-    color: '#C8B89A',
-    fontSize: 18,
-    marginLeft: 8,
-  },
+
+  // ── Image section ───────────────────────────────────────────
   imageContainerOuter: {
     backgroundColor: '#4A7568',
     marginHorizontal: 20,
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 12,
-    marginTop: 8,
+    marginTop: 16,
+    borderWidth: 2,
+    borderColor: '#557263',
+    shadowColor: '#2C1A0E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   imageContainerInner: {
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
-    padding: 16,
+    padding: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cardImage: {
     width: '100%',
     height: 260,
-    borderRadius: 10,
+    borderRadius: 8,
     resizeMode: 'cover',
   },
-  tape: {
-    width: 80,
-    height: 20,
-    backgroundColor: '#C8A96E',
-    opacity: 0.8,
-    borderRadius: 2,
-    position: 'absolute',
-    zIndex:4,
-  },
-  tapeTopLeft: {
-    top: 20,
-    left: 8,
-    transform: [{ rotate: '-45deg' }],
-  },
-  tapeTopRight: {
-    top: 8,
-    right: 8,
-    transform: [{ rotate: '10deg' }],
-  },
-  tapeBottomLeft: {
-    bottom: 8,
-    left: 8,
-    transform: [{ rotate: '8deg' }],
-  },
-  tapeBottomRight: {
-    bottom: 8,
-    right: 8,
-    transform: [{ rotate: '-8deg' }],
-  },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#8B7355',
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginTop: 20,
-    marginBottom: 10,
+
+  // ── Meta pills ──────────────────────────────────────────────
+  pillRow: {
+    flexDirection: 'row',
     paddingHorizontal: 20,
+    marginTop: 12,
+    gap: 8,
+    flexWrap: 'wrap',
   },
+  pill: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  pillText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+
+  // ── Note boxes ──────────────────────────────────────────────
   noteBox: {
     backgroundColor: '#EDE8D9',
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 16,
+    overflow: 'hidden',
     marginHorizontal: 20,
-    marginBottom: 10,
-    borderWidth: 1,
+    marginTop: 12,
+    borderWidth: 1.5,
     borderColor: '#D4C9A8',
-    marginTop:10,
+    shadowColor: '#8B6A3E',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  noteLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#8B7355',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 6,
+  noteHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(85, 114, 99, 0.08)',
+  },
+  noteDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  noteDivider: {
+    height: 1,
+    backgroundColor: '#D4C9A8',
+  },
+  ocrTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6D1B12',
+    letterSpacing: 0.3,
   },
   captionText: {
     fontSize: 14,
     fontStyle: 'italic',
     color: '#5A390E',
     minHeight: 60,
-  },
-  ocrTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#6D1B12',
-    marginBottom: 4,
+    padding: 14,
   },
   ocrBody: {
     fontSize: 13,
     color: '#6D1B12',
     minHeight: 50,
+    padding: 14,
   },
+
+  // ── Save button ─────────────────────────────────────────────
   saveButton: {
-      backgroundColor: "#6D1B12", borderRadius: 12, padding: 10, alignItems: "center", marginTop: 10 ,width: '90%', alignSelf: 'center',
+    backgroundColor: '#7B1D1D',
+    borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginTop: 16,
+    marginHorizontal: 20,
+  
   },
   saveButtonText: {
     color: '#F6E5CD',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 1,
   },
+
   navbarWrapper: {
     position: 'absolute',
     left: 0,
