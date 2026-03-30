@@ -45,8 +45,15 @@ const STAMP_DATA = [
   },
 ];
 
+const FOLDER_COLORS: Record<string, { color: string; stripColor: string }> = {
+  all: { color: '#6B4E7D', stripColor: '#573D68' },
+  prom: { color: '#4A6B7B', stripColor: '#3A5A6A' },
+  plain: { color: '#9B2335', stripColor: '#7D1525' },
+  spring: { color: '#557263', stripColor: '#3D5548' },
+};
+
 // CARD_WIDTH for 2-column layout (slightly smaller cards)
-const CARD_WIDTH = (width - 72) / 2; // was (width - 48) / 2
+const CARD_WIDTH = (width - 32 - 12) / 2;
 
 export default function SelectMemory() {
   const router = useRouter();
@@ -64,27 +71,31 @@ export default function SelectMemory() {
 
   // New renderItem using ViewFolder-style card structure
   const renderItem = ({ item }: { item: (typeof STAMP_DATA)[number] }) => {
+    const { color, stripColor } = FOLDER_COLORS[item.id] || FOLDER_COLORS['all'];
     return (
       <TouchableOpacity
         style={styles.cardWrapper}
         activeOpacity={0.8}
         onPress={() => setSelectedId(item.id)}
       >
-        <View style={styles.card}>
-          {/* Top red stamp area */}
-          <View style={styles.cardTop}>
-            <Image
-              source={item.image}
-              style={styles.stampImage}
-              resizeMode="contain"
-            />
-          </View>
-
-          {/* Bottom label */}
-          <View style={styles.cardBottom}>
-            <Text numberOfLines={1} style={styles.cardTitle}>
-              {item.label}
-            </Text>
+        <View style={styles.cardOuter}>
+          {/* Perf dashed border overlay */}
+          <View style={styles.perfBorder} pointerEvents="none" />
+          <View style={[styles.card, { borderRadius: 18 }]}> 
+            {/* Top stamp area */}
+            <View style={[styles.cardTop, { backgroundColor: color }]}> 
+              <Image
+                source={item.image}
+                style={styles.stampImage}
+                resizeMode="contain"
+              />
+            </View>
+            {/* Bottom label */}
+            <View style={[styles.cardBottom, { backgroundColor: stripColor }]}> 
+              <Text numberOfLines={1} style={styles.cardTitle}>
+                {item.label}
+              </Text>
+            </View>
           </View>
         </View>
       </TouchableOpacity>
@@ -197,6 +208,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#EDE8D9',
     marginLeft: 70,
+    marginTop: 7,
     fontFamily: 'Calistoga',
     textAlign: 'center',
   },
@@ -204,7 +216,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 0,
     marginBottom: 0,
-    marginTop: 0,
+    marginTop: 8,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     borderBottomLeftRadius: 0,
@@ -271,45 +283,76 @@ const styles = StyleSheet.create({
     color: '#5A390E',
   },
   gridContent: {
-    paddingHorizontal: 32,
+    paddingLeft: 2, // reduced from 32 to move cards left
+    paddingRight: 32,
     paddingBottom: 16,
   },
   columnWrapper: {
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start', // align items to the left
     marginBottom: 18,
   },
   // New card styles matching ViewFolder
   cardWrapper: {
     width: CARD_WIDTH,
+    alignItems: 'center',
+    marginBottom: 18,
+    marginRight: 12, // add spacing between columns
+  },
+  cardOuter: {
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 8,
+    elevation: 6,
+    borderRadius: 18,
+    overflow: 'hidden',
+    backgroundColor: 'transparent',
+  },
+  perfBorder: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    right: 6,
+    bottom: 6,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.55)',
+    borderStyle: 'dashed',
+    borderRadius: 14,
+    zIndex: 2,
+    pointerEvents: 'none',
   },
   card: {
-    width: '70%',
-    backgroundColor: '#7B1D1D',
-    borderRadius: 14,
+    width: '100%',
+    borderRadius: 18,
     overflow: 'hidden',
+    backgroundColor: 'transparent',
   },
   cardTop: {
-    height: CARD_WIDTH * 0.6, 
-    backgroundColor: '#7B1D1D',
+    height: CARD_WIDTH * 0.75,
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
   },
   stampImage: {
-    width: '85%',
-    height: '90%',
+    width: '90%',
+    height: '85%',
     marginBottom: -4,
     resizeMode: 'contain',
   },
   cardBottom: {
-    backgroundColor: '#C8B89A',
     paddingVertical: 10,
     paddingHorizontal: 4,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
   },
   cardTitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#3B2C1A',
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#fff',
     textAlign: 'center',
+    fontFamily: 'Calistoga',
   },
   footerRowFloating: {
     position: 'absolute',
