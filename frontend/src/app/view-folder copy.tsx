@@ -183,14 +183,7 @@ export default function ViewFolder() {
         {/* Header on green */}
         <View style={styles.header}>
           <View style={styles.headerRow}>
-            <Pressable
-              onPress={() => router.back()}
-              style={styles.backButton}
-              hitSlop={12}
-            >
-              
-              <Ionicons name="arrow-back" size={24} color="#EDE8D9" />
-            </Pressable>
+            {/* Removed back button */}
             <Text style={styles.headerTitle}>Name&apos;s Memories</Text>
           </View>
 
