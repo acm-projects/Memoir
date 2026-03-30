@@ -52,7 +52,6 @@ const FOLDER_COLORS: Record<string, { color: string; stripColor: string }> = {
   spring: { color: '#557263', stripColor: '#3D5548' },
 };
 
-// CARD_WIDTH for 2-column layout (slightly smaller cards)
 const CARD_WIDTH = (width - 32 - 12) / 2;
 
 export default function SelectMemory() {
@@ -69,21 +68,22 @@ export default function SelectMemory() {
     router.push('/view-folder copy');
   };
 
-  // New renderItem using ViewFolder-style card structure
   const renderItem = ({ item }: { item: (typeof STAMP_DATA)[number] }) => {
     const { color, stripColor } = FOLDER_COLORS[item.id] || FOLDER_COLORS['all'];
+    const isSelected = selectedId === item.id;
+
     return (
       <TouchableOpacity
         style={styles.cardWrapper}
         activeOpacity={0.8}
-        onPress={() => setSelectedId(item.id)}
+        onPress={() => setSelectedId(isSelected ? null : item.id)}
       >
         <View style={styles.cardOuter}>
           {/* Perf dashed border overlay */}
           <View style={styles.perfBorder} pointerEvents="none" />
-          <View style={[styles.card, { borderRadius: 18 }]}> 
+          <View style={[styles.card, { borderRadius: 18 }]}>
             {/* Top stamp area */}
-            <View style={[styles.cardTop, { backgroundColor: color }]}> 
+            <View style={[styles.cardTop, { backgroundColor: color }]}>
               <Image
                 source={item.image}
                 style={styles.stampImage}
@@ -91,12 +91,21 @@ export default function SelectMemory() {
               />
             </View>
             {/* Bottom label */}
-            <View style={[styles.cardBottom, { backgroundColor: stripColor }]}> 
+            <View style={[styles.cardBottom, { backgroundColor: stripColor }]}>
               <Text numberOfLines={1} style={styles.cardTitle}>
                 {item.label}
               </Text>
             </View>
           </View>
+
+          {/* Checkmark overlay — shown when selected */}
+          {isSelected && (
+            <View style={styles.checkOverlay} pointerEvents="none">
+              <View style={styles.checkCircle}>
+                <Ionicons name="checkmark" size={18} color="#fff" />
+              </View>
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -128,8 +137,6 @@ export default function SelectMemory() {
         imageStyle={styles.paperImage}
       >
         <View style={styles.cardContent}>
-          
-
           {/* Search bar inside paper card, above section label */}
           <View style={styles.searchContainerOuter}>
             <View style={styles.searchContainer}>
@@ -143,11 +150,11 @@ export default function SelectMemory() {
               />
             </View>
             {/* Divider row inside paper card, above search */}
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerFlourish}>✦</Text>
-            <View style={styles.dividerLine} />
-          </View>
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerFlourish}>✦</Text>
+              <View style={styles.dividerLine} />
+            </View>
           </View>
 
           {/* Section label inside paper */}
@@ -169,9 +176,13 @@ export default function SelectMemory() {
 
       <View style={styles.footerRowFloating}>
         <TouchableOpacity
-          style={styles.continueButton}
+          style={[
+            styles.continueButton,
+            !selectedId && styles.continueButtonDisabled,
+          ]}
           activeOpacity={0.8}
           onPress={handleContinue}
+          disabled={!selectedId}
         >
           <Text style={styles.continueText}>Continue</Text>
         </TouchableOpacity>
@@ -276,27 +287,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  
   searchInput: {
     flex: 1,
     fontSize: 14,
     color: '#5A390E',
   },
   gridContent: {
-    paddingLeft: 2, // reduced from 32 to move cards left
+    paddingLeft: 2,
     paddingRight: 32,
     paddingBottom: 16,
   },
   columnWrapper: {
-    justifyContent: 'flex-start', // align items to the left
+    justifyContent: 'flex-start',
     marginBottom: 18,
   },
-  // New card styles matching ViewFolder
   cardWrapper: {
     width: CARD_WIDTH,
     alignItems: 'center',
     marginBottom: 18,
-    marginRight: 12, // add spacing between columns
+    marginRight: 12,
   },
   cardOuter: {
     width: '100%',
@@ -354,6 +363,30 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'Calistoga',
   },
+  checkOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    //alignItems: 'center',
+    //justifyContent: 'center',
+    zIndex: 3,
+  },
+  checkCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#7B1D1D',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+    top:10,
+    left:10,
+  },
   footerRowFloating: {
     position: 'absolute',
     left: 16,
@@ -365,6 +398,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 999,
     width: '100%',
+  },
+  continueButtonDisabled: {
+    backgroundColor: '#7B1D1D',
+    opacity: 0.45,
   },
   continueText: {
     color: '#FFFFFF',

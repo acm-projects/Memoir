@@ -74,6 +74,7 @@ export default function OneSpecificCard() {
 
           {/* Green image container */}
           <View style={styles.imageContainerOuter}>
+            <View style = {styles.dashedLine}>
             <ImageBackground
               source={swirlySubtle}
               style={styles.imageContainerInner}
@@ -81,18 +82,19 @@ export default function OneSpecificCard() {
             >
               <Image source={cardImage} style={styles.cardImage} />
             </ImageBackground>
+            </View>
           </View>
 
           {/* Meta pills */}
           <View style={styles.pillRow}>
             <View style={[styles.pill, { backgroundColor: 'rgba(85,114,99,0.15)', borderColor: 'rgba(85,114,99,0.4)' }]}>
-              <Text style={[styles.pillText, { color: '#557263' }]}>Floral</Text>
+              <Text style={[styles.pillText, { color: '#557263' }]}>Tag1</Text>
             </View>
             <View style={[styles.pill, { backgroundColor: 'rgba(107,79,107,0.12)', borderColor: 'rgba(107,79,107,0.35)' }]}>
-              <Text style={[styles.pillText, { color: '#6B4F6B' }]}>Romantic</Text>
+              <Text style={[styles.pillText, { color: '#6B4F6B' }]}>Tag2</Text>
             </View>
             <View style={[styles.pill, { backgroundColor: 'rgba(139,106,62,0.12)', borderColor: 'rgba(139,106,62,0.35)' }]}>
-              <Text style={[styles.pillText, { color: '#8B6A3E' }]}>Hand-drawn</Text>
+              <Text style={[styles.pillText, { color: '#8B6A3E' }]}>Tag3</Text>
             </View>
           </View>
 
@@ -222,6 +224,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
+  },
+  dashedLine: {
+    borderWidth: 2,
+    borderColor: 'rgba(237,232,217,0.55)',
+    borderStyle: 'dashed',
+    borderRadius: 18,
+    padding: 8,
   },
   imageContainerInner: {
     borderRadius: 12,
