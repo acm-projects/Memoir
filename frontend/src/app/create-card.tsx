@@ -25,7 +25,17 @@ type Item = {
   sticker?: string;
   image?: any;
   color?: string;
+  rotation: number;
+  scale: number;
 };
+
+function seededRotation(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return (hash % 13) - 6;
+}
 
 export default function CreateCard() {
   const [cardColor, setCardColor] = useState("#fffaf4");
@@ -34,6 +44,7 @@ export default function CreateCard() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [gifs, setGifs] = useState<any[]>([]);
   const [gifSearch, setGifSearch] = useState("");
+  const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
 
   const STICKERS = [
     { id: "star", image: require("../../assets/images/star-stamp.png") },
@@ -47,28 +58,63 @@ export default function CreateCard() {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, color } : i)));
   };
 
+  const handlePositionChange = (id: string, newX: number, newY: number) => {
+    setItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, x: newX, y: newY } : i))
+    );
+  };
+
+  const handleRotationChange = (id: string, newRotation: number) => {
+    setItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, rotation: newRotation } : i))
+    );
+  };
+
+  const handleScaleChange = (id: string, newScale: number) => {
+    setItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, scale: newScale } : i))
+    );
+  };
+
+  const handleContentChange = (id: string, newContent: string) => {
+    setItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, content: newContent } : i))
+    );
+  };
+
   const addText = () => {
+    const id = Date.now().toString();
     const newItem: Item = {
-      id: Date.now().toString(),
+      id,
       type: "text",
       content: "Tap to type...",
-      x: 0,
-      y: 0,
+      x: 20,
+      y: 20,
       color: "#5A390E",
+      rotation: seededRotation(id),
+      scale: 1,
     };
     setItems((prev) => [...prev, newItem]);
   };
 
   const addSticker = (stickerId: string) => {
+    const id = Date.now().toString();
     const newItem: Item = {
-      id: Date.now().toString(),
+      id,
       type: "sticker",
       content: stickerId,
       sticker: stickerId,
-      x: 0,
-      y: 0,
+      x: 30,
+      y: 30,
+      rotation: seededRotation(id),
+      scale: 1,
     };
     setItems((prev) => [...prev, newItem]);
+    setActiveTool(null);
+  };
+
+  const deleteItem = (id: string) => {
+    setItems((prev) => prev.filter((i) => i.id !== id));
   };
 
   async function searchGifs(query: string) {
@@ -78,13 +124,11 @@ export default function CreateCard() {
       : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=50`;
     const res = await fetch(url);
     const json = await res.json();
-    setGifs(json.data);
+    setGifs(json.data || []);
   }
 
   return (
     <View style={styles.container}>
-
-      {/* Red header */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <BackButton color="#f5ede0" />
@@ -92,29 +136,36 @@ export default function CreateCard() {
         </View>
       </View>
 
-      {/* Paper area curves up over the red, same shape as ViewFolder */}
       <ImageBackground
-        source={require('../../assets/images/layered-vintage-paper.png')}
+        source={require("../../assets/images/layered-vintage-paper.png")}
         style={styles.paperArea}
         imageStyle={styles.paperImage}
       >
         <View style={styles.bgArea}>
-
-          <View style={[styles.cardPreview, { backgroundColor: cardColor }]}>
+          <View
+            style={[styles.cardPreview, { backgroundColor: cardColor }]}
+            onLayout={(e) => setBoardSize(e.nativeEvent.layout)}
+          >
             {items.length === 0 && (
               <Text style={styles.previewText}>Card preview</Text>
             )}
+
             {items.map((item) => (
               <DraggableItem
                 key={item.id}
                 item={item}
                 isEditing={true}
-                deleteItem={(id: string) =>
-                  setItems((prev) => prev.filter((i) => i.id !== id))
-                }
+                deleteItem={deleteItem}
                 selectedId={selectedId}
                 setSelectedId={setSelectedId}
                 onColorChange={updateItemColor}
+                onPositionChange={handlePositionChange}
+                onRotationChange={handleRotationChange}
+                onScaleChange={handleScaleChange}
+                onContentChange={handleContentChange}
+                boardWidth={boardSize.width}
+                boardHeight={boardSize.height}
+                accentColor="#8B6A3E"
               />
             ))}
           </View>
@@ -150,8 +201,15 @@ export default function CreateCard() {
                 {activeTool === "text" && (
                   <View style={{ alignItems: "center" }}>
                     <Text style={styles.panelTitle}>ADD TEXT</Text>
-                    <TouchableOpacity style={styles.addTextButton} onPress={addText}>
-                      <Ionicons name="add-circle-outline" size={20} color="#F8E5CF" />
+                    <TouchableOpacity
+                      style={styles.addTextButton}
+                      onPress={addText}
+                    >
+                      <Ionicons
+                        name="add-circle-outline"
+                        size={20}
+                        color="#F8E5CF"
+                      />
                       <Text style={styles.buttonText}>New Text Box</Text>
                     </TouchableOpacity>
                   </View>
@@ -184,27 +242,35 @@ export default function CreateCard() {
                       }}
                     />
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      {gifs.map((item: any) => (
+                      {gifs.map((gif: any) => (
                         <Pressable
-                          key={item.id}
+                          key={gif.id}
                           onPress={() => {
+                            const id = Date.now().toString();
                             setItems((prev) => [
                               ...prev,
                               {
-                                id: Date.now().toString(),
+                                id,
                                 type: "sticker",
                                 content: "",
-                                x: 0,
-                                y: 0,
-                                sticker: item.images.fixed_height.url,
+                                x: 30,
+                                y: 30,
+                                sticker: gif.images.fixed_height.url,
+                                rotation: seededRotation(id),
+                                scale: 1,
                               },
                             ]);
                             setActiveTool(null);
                           }}
                         >
                           <Image
-                            source={{ uri: item.images.fixed_height.url }}
-                            style={{ width: 100, height: 100, margin: 4, borderRadius: 8 }}
+                            source={{ uri: gif.images.fixed_height.url }}
+                            style={{
+                              width: 100,
+                              height: 100,
+                              margin: 4,
+                              borderRadius: 8,
+                            }}
                           />
                         </Pressable>
                       ))}
@@ -214,40 +280,87 @@ export default function CreateCard() {
               </View>
             )}
 
-            <View style={styles.toolbar}>
-              <Pressable
-                style={[styles.toolButton, activeTool === "background" && styles.activeToolBtn]}
-                onPress={() => setActiveTool(activeTool === "background" ? null : "background")}
-              >
-                <Ionicons name="color-palette-outline" size={24} color="#5A390E" />
-              </Pressable>
+            <View style={styles.toolbarRow}>
+              <View style={styles.toolbar}>
+                <Pressable
+                  style={[
+                    styles.toolButton,
+                    activeTool === "background" && styles.activeToolBtn,
+                  ]}
+                  onPress={() =>
+                    setActiveTool(activeTool === "background" ? null : "background")
+                  }
+                >
+                  <Ionicons
+                    name="color-palette-outline"
+                    size={24}
+                    color="#5A390E"
+                  />
+                </Pressable>
 
-              <Pressable style={styles.toolButton} onPress={addText}>
-                <Ionicons name="text-outline" size={24} color="#5A390E" />
-              </Pressable>
+                <Pressable
+                  style={[
+                    styles.toolButton,
+                    activeTool === "text" && styles.activeToolBtn,
+                  ]}
+                  onPress={() =>
+                    setActiveTool(activeTool === "text" ? null : "text")
+                  }
+                >
+                  <Ionicons name="text-outline" size={24} color="#5A390E" />
+                </Pressable>
 
-              <Pressable
-                style={[styles.toolButton, activeTool === "sticker" && styles.activeToolBtn]}
-                onPress={() => setActiveTool(activeTool === "sticker" ? null : "sticker")}
-              >
-                <Ionicons name="happy-outline" size={24} color="#5A390E" />
-              </Pressable>
+                <Pressable
+                  style={[
+                    styles.toolButton,
+                    activeTool === "sticker" && styles.activeToolBtn,
+                  ]}
+                  onPress={() =>
+                    setActiveTool(activeTool === "sticker" ? null : "sticker")
+                  }
+                >
+                  <Ionicons name="happy-outline" size={24} color="#5A390E" />
+                </Pressable>
 
-              <Pressable
-                style={[styles.toolButton, activeTool === "gif" && styles.activeToolBtn]}
-                onPress={() => {
-                  setActiveTool(activeTool === "gif" ? null : "gif");
-                  searchGifs("");
-                }}
+                <Pressable
+                  style={[
+                    styles.toolButton,
+                    activeTool === "gif" && styles.activeToolBtn,
+                  ]}
+                  onPress={() => {
+                    setActiveTool(activeTool === "gif" ? null : "gif");
+                    searchGifs("");
+                  }}
+                >
+                  <Ionicons name="film-outline" size={24} color="#5A390E" />
+                </Pressable>
+              </View>
+
+              <TouchableOpacity
+                style={styles.plusButton}
+                activeOpacity={0.8}
+                onPress={() => router.push("/send-card" as any)}
               >
-                <Ionicons name="film-outline" size={24} color="#5A390E" />
-              </Pressable>
+                <Image
+                  source={require("../../assets/images/sparkle-chat.png")}
+                  style={{
+                    marginLeft: 2,
+                    width: 45,
+                    height: 45,
+                    resizeMode: "contain",
+                  }}
+                />
+              </TouchableOpacity>
             </View>
 
             <View style={styles.headerButtons}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => router.back()}
+              >
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.sendBtn}
                 onPress={() => router.push("/send-card" as any)}
@@ -256,7 +369,6 @@ export default function CreateCard() {
               </TouchableOpacity>
             </View>
           </View>
-
         </View>
       </ImageBackground>
 
@@ -268,7 +380,7 @@ export default function CreateCard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#7a1a1a', // red peeks out behind the curve
+    backgroundColor: "#7a1a1a",
   },
 
   header: {
@@ -278,26 +390,25 @@ const styles = StyleSheet.create({
   },
 
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   headerTitle: {
     flex: 1,
     marginLeft: -5,
     fontSize: 28,
-    fontWeight: '700',
-    color: '#f5e8d8',
-    textAlign: 'center',
-    fontFamily: 'Calistoga',
+    fontWeight: "700",
+    color: "#f5e8d8",
+    textAlign: "center",
+    fontFamily: "Calistoga",
   },
 
-  // Curves up over the red header, identical to ViewFolder
   paperArea: {
     flex: 1,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
 
   paperImage: {
@@ -321,6 +432,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(139,26,26,0.15)",
     marginTop: 20,
+    overflow: "hidden",
+    position: "relative",
   },
 
   previewText: {
@@ -337,13 +450,20 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 
+  toolbarRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 20,
+  },
+
   toolbar: {
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
     backgroundColor: "#ede0cc",
     height: 50,
-    width: "85%",
+    flex: 1,
     borderRadius: 30,
     borderWidth: 1,
     borderColor: "rgba(139,26,26,0.15)",
@@ -351,6 +471,20 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
+    elevation: 5,
+  },
+
+  plusButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 25,
+    backgroundColor: "#4A7568",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
     elevation: 5,
   },
 
