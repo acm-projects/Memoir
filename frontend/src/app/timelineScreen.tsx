@@ -404,344 +404,338 @@ const BackgroundIllustrations = () => (
 );
 
 // Scene object SVGs for each category
-function BirthdayScene({ variant }: { variant: number }) {
-  if (variant === 1) {
-    // Hand-drawn Birthday Cake
-    return (
-      <Svg width={90} height={90} viewBox="0 0 90 90">
-        {/* Bottom tier (wobbly) */}
-        <Path d="M13,63 L13,79 C13,81 15,82 17,82 L73,82 C75,82 77,81 77,79 L77,63 C77,61 75,60 73,60 L17,60 C15,60 13,61 13,63" stroke="#3D2410" strokeWidth={1.6} fill="#E8A5A5" fillOpacity={0.35} strokeLinecap="round" strokeLinejoin="round" />
-        {/* Double-stroke for sketch effect */}
-        <Path d="M14,64 L14,78 C14,80 16,81 18,81 L72,81 C74,81 76,80 76,78 L76,64 C76,62 74,61 72,61 L18,61 C16,61 14,62 14,64" stroke="#3D2410" strokeWidth={1.0} fill="none" opacity={0.3} strokeLinecap="round" strokeLinejoin="round" />
-        {/* Top tier (wobbly) */}
-        <Path d="M23,45 L23,61 L67,61 L67,45 C67,43 65,42 63,42 L27,42 C25,42 23,43 23,45" stroke="#3D2410" strokeWidth={1.6} fill="#B8A8C8" fillOpacity={0.35} strokeLinecap="round" strokeLinejoin="round" />
-        <Path d="M24,46 L24,60 L66,60 L66,46 C66,44 64,43 62,43 L28,43 C26,43 24,44 24,46" stroke="#3D2410" strokeWidth={1.0} fill="none" opacity={0.3} strokeLinecap="round" strokeLinejoin="round" />
-        {/* Frosting drips */}
-        <Path d="M13,62 Q20,56 27,62 Q34,56 41,62 Q48,56 55,62 Q62,56 69,62 Q73,58 77,62" stroke="#3D2410" strokeWidth={1.2} fill="#FFF8F0" fillOpacity={0.7} strokeLinecap="round" />
-        {/* Candles (wobbly) */}
-        <Path d="M31,33 L31,44 L37,44 L37,33 C37,32 36,31 34,31 C32,31 31,32 31,33" stroke="#3D2410" strokeWidth={1.2} fill="#FFF8F0" fillOpacity={0.8} />
-        <Path d="M42,33 L42,44 L48,44 L48,33 C48,32 47,31 45,31 C43,31 42,32 42,33" stroke="#3D2410" strokeWidth={1.2} fill="#FFF8F0" fillOpacity={0.8} />
-        <Path d="M53,33 L53,44 L59,44 L59,33 C59,32 58,31 56,31 C54,31 53,32 53,33" stroke="#3D2410" strokeWidth={1.2} fill="#FFF8F0" fillOpacity={0.8} />
-        {/* Flames */}
-        <Path d="M34,31 C36,27 38,24 34,20 C30,24 32,27 34,31" fill="#E8A5A5" fillOpacity={0.8} stroke="#3D2410" strokeWidth={0.9} />
-        <Path d="M45,31 C47,27 49,24 45,20 C41,24 43,27 45,31" fill="#E8A5A5" fillOpacity={0.8} stroke="#3D2410" strokeWidth={0.9} />
-        <Path d="M56,31 C58,27 60,24 56,20 C52,24 54,27 56,31" fill="#E8A5A5" fillOpacity={0.8} stroke="#3D2410" strokeWidth={0.9} />
-        {/* Dots on bottom tier */}
-        <Path d="M29,71 C30,69 33,70 32,72 C31,74 29,73 29,71" fill="#FFF8F0" stroke="#3D2410" strokeWidth={0.8} />
-        <Path d="M44,71 C45,69 48,70 47,72 C46,74 44,73 44,71" fill="#FFF8F0" stroke="#3D2410" strokeWidth={0.8} />
-        <Path d="M59,71 C60,69 63,70 62,72 C61,74 59,73 59,71" fill="#FFF8F0" stroke="#3D2410" strokeWidth={0.8} />
-        {/* Hatching for shadow */}
-        <Path d="M18,80 L22,76" stroke="#3D2410" strokeWidth={0.8} opacity={0.35} />
-        <Path d="M20,82 L24,78" stroke="#3D2410" strokeWidth={0.8} opacity={0.35} />
-        <Path d="M25,82 L29,78" stroke="#3D2410" strokeWidth={0.8} opacity={0.35} />
-      </Svg>
-    );
-  }
-  if (variant === 2) {
-    // Hand-drawn Gift Box
-    return (
-      <Svg width={90} height={90} viewBox="0 0 90 90">
-        {/* Box body */}
-        <Path d="M15,45 L15,81 C15,82 16,83 17,83 L73,83 C74,83 75,82 75,81 L75,45" stroke="#3D2410" strokeWidth={1.6} fill="#A8BEC8" fillOpacity={0.35} strokeLinecap="round" strokeLinejoin="round" />
-        <Path d="M16,46 L16,80 C16,81 17,82 18,82 L72,82 C73,82 74,81 74,80 L74,46" stroke="#3D2410" strokeWidth={1.0} fill="none" opacity={0.3} strokeLinecap="round" strokeLinejoin="round" />
-        {/* Box lid */}
-        <Path d="M11,35 L11,47 C11,48 12,48 13,48 L77,48 C78,48 79,48 79,47 L79,35 C79,34 78,33 77,33 L13,33 C12,33 11,34 11,35" stroke="#3D2410" strokeWidth={1.6} fill="#A8BEC8" fillOpacity={0.4} strokeLinecap="round" strokeLinejoin="round" />
-        {/* Vertical ribbon */}
-        <Path d="M42,33 C43,50 43,65 42,83" stroke="#3D2410" strokeWidth={1.4} fill="none" strokeLinecap="round" />
-        <Path d="M48,33 C49,50 49,65 48,83" stroke="#3D2410" strokeWidth={1.4} fill="none" strokeLinecap="round" />
-        {/* Fill between ribbons */}
-        <Path d="M42,33 L48,33 L48,83 L42,83 Z" fill="#E8A5A5" fillOpacity={0.5} />
-        {/* Horizontal ribbon */}
-        <Path d="M11,37 C30,39 55,39 79,37" stroke="#3D2410" strokeWidth={1.2} fill="none" strokeLinecap="round" />
-        <Path d="M11,43 C30,45 55,45 79,43" stroke="#3D2410" strokeWidth={1.2} fill="none" strokeLinecap="round" />
-        {/* Fill */}
-        <Path d="M11,37 Q45,42 79,37 L79,43 Q45,48 11,43 Z" fill="#E8A5A5" fillOpacity={0.5} />
-        {/* Left bow loop */}
-        <Path d="M45,35 C38,28 26,22 24,30 C22,38 34,38 45,35" stroke="#3D2410" strokeWidth={1.4} fill="#E8A5A5" fillOpacity={0.5} strokeLinecap="round" />
-        {/* Right bow loop */}
-        <Path d="M45,35 C52,28 64,22 66,30 C68,38 56,38 45,35" stroke="#3D2410" strokeWidth={1.4} fill="#E8A5A5" fillOpacity={0.5} strokeLinecap="round" />
-        {/* Center knot */}
-        <Path d="M45,32 C47,32 49,34 49,36 C49,38 47,40 45,40 C43,40 41,38 41,36 C41,34 43,32 45,32" stroke="#3D2410" strokeWidth={1.2} fill="#FFF8F0" fillOpacity={0.8} />
-      </Svg>
-    );
-  }
-  // Hand-drawn Party Hat
+function BirthdayScene() {
   return (
-    <Svg width={90} height={90} viewBox="0 0 90 90">
-      {/* Hat outline */}
-      <Path d="M45,13 C44,13 17,73 17,74 L73,74 C73,73 46,13 45,13" stroke="#3D2410" strokeWidth={1.6} fill="#E8A5A5" fillOpacity={0.35} strokeLinecap="round" strokeLinejoin="round" />
-      {/* Double-stroke for sketch effect */}
-      <Path d="M45,14 C44,14 18,72 18,73 L72,73 C72,72 46,14 45,14" stroke="#3D2410" strokeWidth={1.0} fill="none" opacity={0.3} strokeLinecap="round" strokeLinejoin="round" />
-      {/* Brim ellipse */}
-      <Path d="M17,74 C17,79 30,82 45,82 C60,82 73,79 73,74 C73,69 60,66 45,66 C30,66 17,69 17,74" stroke="#3D2410" strokeWidth={1.4} fill="#E8A5A5" fillOpacity={0.35} strokeLinecap="round" />
-      {/* Pompom (wobbly) */}
-      <Path d="M45,7 C48,7 52,10 52,13 C52,16 49,19 45,19 C41,19 38,16 38,13 C38,10 42,7 45,7" stroke="#3D2410" strokeWidth={1.2} fill="#FFF8F0" fillOpacity={0.6} strokeLinecap="round" />
-      {/* Stripe */}
-      <Path d="M29,48 C34,46 40,45 46,45 C52,45 58,46 62,48" stroke="#3D2410" strokeWidth={1.0} fill="none" strokeLinecap="round" />
-      {/* Hatching on shadow side */}
-      <Path d="M22,62 L28,56" stroke="#3D2410" strokeWidth={0.8} opacity={0.35} />
-      <Path d="M20,68 L26,62" stroke="#3D2410" strokeWidth={0.8} opacity={0.35} />
-      <Path d="M19,74 L24,68" stroke="#3D2410" strokeWidth={0.8} opacity={0.35} />
-      {/* Confetti dots */}
-      <Path d="M19,33 C20,31 23,31 23,33 C23,35 20,36 19,34" fill="#B8A8C8" fillOpacity={0.7} stroke="#3D2410" strokeWidth={0.8} />
-      <Path d="M69,28 C70,26 73,26 73,28 C73,30 70,31 69,29" fill="#A8BEC8" fillOpacity={0.7} stroke="#3D2410" strokeWidth={0.8} />
-      <Path d="M67,53 C68,51 71,52 70,54 C69,56 67,55 67,53" fill="#A8C5B5" fillOpacity={0.7} stroke="#3D2410" strokeWidth={0.8} />
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Balloons */}
+      <Circle cx={28} cy={30} r={16} fill="#E8594A" />
+      <Circle cx={50} cy={22} r={16} fill="#F9D06A" />
+      <Circle cx={72} cy={30} r={16} fill="#6B4F6B" />
+      {/* Strings */}
+      <Path d="M28 46 Q34 60 50 72" stroke="#8B6A3E" strokeWidth={2.5} fill="none" />
+      <Path d="M50 38 Q50 60 50 72" stroke="#8B6A3E" strokeWidth={2.5} fill="none" />
+      <Path d="M72 46 Q66 60 50 72" stroke="#8B6A3E" strokeWidth={2.5} fill="none" />
+      {/* Knot */}
+      <Circle cx={50} cy={72} r={2.5} fill="#8B6A3E" />
+      {/* Gift box */}
+      <Rect x={36} y={72} width={28} height={22} rx={4} fill="#7B1D1D" />
+      {/* Ribbon cross */}
+      <Rect x={48} y={72} width={4} height={22} fill="#F9D06A" />
+      <Rect x={36} y={82} width={28} height={4} fill="#F9D06A" />
     </Svg>
   );
 }
 
-function TravelScene({ variant }: { variant: number }) {
-  if (variant === 1) {
-    // Compass Rose
-    return (
-      <Svg width={90} height={90} viewBox="0 0 90 90">
-        {/* Outer circle */}
-        <Circle cx={45} cy={45} r={36} fill="none" stroke="#A8C5B5" strokeWidth={2.5} />
-        {/* Inner circle */}
-        <Circle cx={45} cy={45} r={10} fill="#A8C5B5" stroke="#2C1810" strokeWidth={2.5} />
-        {/* Main points */}
-        <Path d="M45,9 L50,35 L45,45 L40,35 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={2} />
-        <Path d="M45,81 L50,55 L45,45 L40,55 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={2} />
-        <Path d="M81,45 L55,40 L45,45 L55,50 Z" fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
-        <Path d="M9,45 L35,40 L45,45 L35,50 Z" fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
-        {/* Minor points */}
-        <G transform="rotate(45 45 45)">
-          <Path d="M45,15 L48,35 L45,45 L42,35 Z" fill="#A8BEC8" stroke="#2C1810" strokeWidth={1.5} />
-        </G>
-        <G transform="rotate(135 45 45)">
-          <Path d="M45,15 L48,35 L45,45 L42,35 Z" fill="#A8BEC8" stroke="#2C1810" strokeWidth={1.5} />
-        </G>
-        <G transform="rotate(225 45 45)">
-          <Path d="M45,15 L48,35 L45,45 L42,35 Z" fill="#A8BEC8" stroke="#2C1810" strokeWidth={1.5} />
-        </G>
-        <G transform="rotate(315 45 45)">
-          <Path d="M45,15 L48,35 L45,45 L42,35 Z" fill="#A8BEC8" stroke="#2C1810" strokeWidth={1.5} />
-        </G>
-      </Svg>
-    );
-  }
-  if (variant === 2) {
-    // Hot Air Balloon
-    return (
-      <Svg width={90} height={90} viewBox="0 0 90 90">
-        {/* Envelope */}
-        <Path d="M45,12 Q78,12 78,45 Q78,68 45,78 Q12,68 12,45 Q12,12 45,12 Z" fill="#B8A8C8" stroke="#2C1810" strokeWidth={1.8} />
-        {/* Vertical stripe */}
-        <Path d="M45,12 Q50,45 45,78" stroke="#2C1810" strokeWidth={2} fill="none" />
-        {/* Horizontal band */}
-        <Path d="M12,45 Q45,50 78,45" stroke="#2C1810" strokeWidth={2} fill="none" />
-        {/* Ropes */}
-        <Line x1={30} y1={75} x2={34} y2={84} stroke="#2C1810" strokeWidth={2} />
-        <Line x1={38} y1={78} x2={38} y2={84} stroke="#2C1810" strokeWidth={2} />
-        <Line x1={52} y1={78} x2={52} y2={84} stroke="#2C1810" strokeWidth={2} />
-        <Line x1={60} y1={75} x2={56} y2={84} stroke="#2C1810" strokeWidth={2} />
-        {/* Basket */}
-        <Rect x={34} y={84} width={22} height={10} rx={3} fill="#C89898" stroke="#2C1810" strokeWidth={2.5} />
-      </Svg>
-    );
-  }
-  // Default: Castle Tower
+function TravelScene() {
   return (
-    <Svg width={90} height={90} viewBox="0 0 90 90">
+    <Svg width={100} height={100} viewBox="0 0 100 100">
       {/* Tower body */}
-      <Rect x={28} y={34} width={34} height={44} fill="#A8C5B5" stroke="#2C1810" strokeWidth={3} />
-      {/* Merlons */}
-      <Rect x={28} y={22} width={9} height={13} fill="#A8C5B5" stroke="#2C1810" strokeWidth={3} />
-      <Rect x={40} y={22} width={9} height={13} fill="#A8C5B5" stroke="#2C1810" strokeWidth={3} />
-      <Rect x={53} y={22} width={9} height={13} fill="#A8C5B5" stroke="#2C1810" strokeWidth={3} />
-      {/* Arched window */}
-      <Path d="M38,44 L38,60 Q45,68 52,60 L52,44 Z" fill="#FFF8F0" stroke="#2C1810" strokeWidth={2.5} />
-      {/* Flag pole */}
-      <Line x1={45} y1={22} x2={45} y2={10} stroke="#2C1810" strokeWidth={2.5} />
-      {/* Flag */}
-      <Path d="M45,10 L60,15 L45,20 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={2} />
-    </Svg>
-  );
-}
-
-function GardenScene({ variant }: { variant: number }) {
-  if (variant === 1) {
-    // Potted Plant
-    return (
-      <Svg width={90} height={90} viewBox="0 0 90 90">
-        {/* Pot body */}
-        <Path d="M26,82 L32,52 L58,52 L64,82 Z" fill="#C89898" stroke="#2C1810" strokeWidth={3} />
-        {/* Pot rim */}
-        <Ellipse cx={45} cy={52} rx={16} ry={6} fill="#C89898" stroke="#2C1810" strokeWidth={3} />
-        {/* Soil */}
-        <Ellipse cx={45} cy={52} rx={13} ry={4} fill="#2C1810" opacity={0.3} />
-        {/* Main stem */}
-        <Line x1={45} y1={52} x2={45} y2={28} stroke="#2C1810" strokeWidth={3} />
-        {/* Left branch */}
-        <Path d="M45,38 Q30,30 24,18" stroke="#2C1810" strokeWidth={2.5} fill="none" />
-        {/* Right branch */}
-        <Path d="M45,34 Q60,26 66,14" stroke="#2C1810" strokeWidth={2.5} fill="none" />
-        {/* Left leaf */}
-        <Ellipse cx={22} cy={16} rx={10} ry={15} fill="#A8C5B5" stroke="#2C1810" strokeWidth={2.5} transform="rotate(-20 22 16)" />
-        {/* Right leaf */}
-        <Ellipse cx={68} cy={12} rx={10} ry={15} fill="#A8C5B5" stroke="#2C1810" strokeWidth={2.5} transform="rotate(20 68 12)" />
-        {/* Top leaf */}
-        <Ellipse cx={45} cy={18} rx={10} ry={15} fill="#A8C5B5" stroke="#2C1810" strokeWidth={2.5} />
-      </Svg>
-    );
-  }
-  if (variant === 2) {
-    // Mushroom
-    return (
-      <Svg width={90} height={90} viewBox="0 0 90 90">
-        {/* Stem */}
-        <Rect x={33} y={52} width={24} height={28} rx={8} fill="#FFF8F0" stroke="#2C1810" strokeWidth={1.8} />
-        {/* Stem detail */}
-        <Path d="M36,60 Q45,56 54,60" stroke="#2C1810" strokeWidth={1.5} fill="none" />
-        {/* Cap */}
-        <Path d="M10,52 Q10,14 45,14 Q80,14 80,52 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.8} />
-        {/* Spots */}
-        <Circle cx={30} cy={36} r={7} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
-        <Circle cx={55} cy={28} r={9} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
-        <Circle cx={64} cy={44} r={6} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
-      </Svg>
-    );
-  }
-  // variant === 0: Symmetric flower with rotated petals
-  return (
-    <Svg width={90} height={90} viewBox="0 0 90 90">
-      <G>
-        {[0, 72, 144, 216, 288].map((angle, i) => (
-          <G key={i} transform={`rotate(${angle} 45 38)`}>
-            <Ellipse 
-              cx={45} cy={20} rx={9} ry={17}
-              fill="#FFF8F0" stroke="#2C1810" strokeWidth={2.5}
-            />
-          </G>
-        ))}
-        {/* Center circle */}
-        <Circle cx={45} cy={38} r={11} fill="#E8A5A5" stroke="#2C1810" strokeWidth={2.5} />
-        {/* Center dot detail */}
-        <Circle cx={45} cy={38} r={4} fill="#FFF8F0" stroke="#2C1810" strokeWidth={1.5} />
-        {/* Stem */}
-        <Line x1={45} y1={49} x2={45} y2={78} stroke="#2C1810" strokeWidth={3.5} strokeLinecap="round" />
-        {/* Left leaf */}
-        <G transform="rotate(-35 38 65)">
-          <Ellipse cx={38} cy={65} rx={8} ry={14} fill="#A8C5B5" stroke="#2C1810" strokeWidth={2.5} />
-        </G>
-        {/* Right leaf */}
-        <G transform="rotate(35 52 65)">
-          <Ellipse cx={52} cy={65} rx={8} ry={14} fill="#A8C5B5" stroke="#2C1810" strokeWidth={2.5} />
-        </G>
-      </G>
-    </Svg>
-  );
-}
-
-function PromScene({ variant }: { variant: number }) {
-  if (variant === 1) {
-    // Disco Ball / Sparkle
-    return (
-      <Svg width={90} height={90} viewBox="0 0 90 90">
-        {/* Ball */}
-        <Circle cx={45} cy={42} r={30} fill="#B8A8C8" stroke="#2C1810" strokeWidth={1.8} />
-        {/* Horizontal lines */}
-        <Line x1={16} y1={22} x2={74} y2={22} stroke="#2C1810" strokeWidth={1.5} />
-        <Line x1={16} y1={32} x2={74} y2={32} stroke="#2C1810" strokeWidth={1.5} />
-        <Line x1={16} y1={42} x2={74} y2={42} stroke="#2C1810" strokeWidth={1.5} />
-        <Line x1={16} y1={52} x2={74} y2={52} stroke="#2C1810" strokeWidth={1.5} />
-        <Line x1={16} y1={62} x2={74} y2={62} stroke="#2C1810" strokeWidth={1.5} />
-        {/* Vertical curves */}
-        <Path d="M45,12 Q55,42 45,72" stroke="#2C1810" strokeWidth={1.5} fill="none" />
-        <Path d="M45,12 Q65,42 55,72" stroke="#2C1810" strokeWidth={1.5} fill="none" />
-        <Path d="M45,12 Q25,42 35,72" stroke="#2C1810" strokeWidth={1.5} fill="none" />
-        {/* Hanging string */}
-        <Line x1={45} y1={12} x2={45} y2={4} stroke="#2C1810" strokeWidth={2.5} />
-        {/* Sparkle stars */}
-        <Path d="M15,20 L17,14 L19,20 L25,22 L19,24 L17,30 L15,24 L9,22 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.5} />
-        <Path d="M75,20 L77,14 L79,20 L85,22 L79,24 L77,30 L75,24 L69,22 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.5} />
-        <Path d="M15,64 L17,58 L19,64 L25,66 L19,68 L17,74 L15,68 L9,66 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.5} />
-        <Path d="M75,64 L77,58 L79,64 L85,66 L79,68 L77,74 L75,68 L69,66 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.5} />
-      </Svg>
-    );
-  }
-  // Default: Crown
-  return (
-    <Svg width={90} height={90} viewBox="0 0 90 90">
-      {/* Crown body */}
-      <Path d="M8,70 L8,40 L24,55 L45,16 L66,55 L82,40 L82,70 Z" fill="#B8A8C8" stroke="#2C1810" strokeWidth={3} strokeLinejoin="round" />
-      {/* Base band */}
-      <Rect x={8} y={62} width={74} height={12} rx={3} fill="#B8A8C8" stroke="#2C1810" strokeWidth={3} />
-      {/* Gems */}
-      <Circle cx={8} cy={40} r={5} fill="#E8A5A5" stroke="#2C1810" strokeWidth={2} />
-      <Circle cx={45} cy={16} r={7} fill="#E8A5A5" stroke="#2C1810" strokeWidth={2} />
-      <Circle cx={82} cy={40} r={5} fill="#E8A5A5" stroke="#2C1810" strokeWidth={2} />
-      {/* Band dots */}
-      <Circle cx={24} cy={68} r={3} fill="#FFF8F0" stroke="#2C1810" strokeWidth={1.5} />
-      <Circle cx={45} cy={68} r={3} fill="#FFF8F0" stroke="#2C1810" strokeWidth={1.5} />
-      <Circle cx={66} cy={68} r={3} fill="#FFF8F0" stroke="#2C1810" strokeWidth={1.5} />
-    </Svg>
-  );
-}
-
-function FamilyScene({ variant }: { variant: number }) {
-  if (variant === 1) {
-    // Polaroid Photo
-    return (
-      <Svg width={90} height={90} viewBox="0 0 90 90">
-        {/* Outer frame */}
-        <Rect x={14} y={10} width={62} height={72} rx={4} fill="#FFF8F0" stroke="#2C1810" strokeWidth={3} />
-        {/* Photo area */}
-        <Rect x={20} y={16} width={50} height={46} rx={2} fill="#A8BEC8" stroke="#2C1810" strokeWidth={2} />
-        {/* Mountains */}
-        <Path d="M20,50 L35,30 L50,50 Z" fill="#A8C5B5" stroke="#2C1810" strokeWidth={2} />
-        <Path d="M34,50 L48,36 L62,50 Z" fill="#B8A8C8" stroke="#2C1810" strokeWidth={2} />
-        <Circle cx={58} cy={22} r={8} fill="#E8A5A5" stroke="#2C1810" strokeWidth={2} />
-        {/* Caption line */}
-        <Rect x={28} y={70} width={34} height={5} rx={2} fill="#C89898" stroke="#2C1810" strokeWidth={1.5} />
-        {/* Heart sticker */}
-        <Circle cx={61} cy={72} r={4} fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.5} />
-        <Circle cx={67} cy={72} r={4} fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.5} />
-        <Path d="M57,74 L64,82 L71,74 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.5} />
-      </Svg>
-    );
-  }
-  // Default: House
-  return (
-    <Svg width={90} height={90} viewBox="0 0 90 90">
-      {/* House body */}
-      <Rect x={12} y={44} width={66} height={38} rx={3} fill="#A8BEC8" stroke="#2C1810" strokeWidth={1.8} />
-      {/* Roof */}
-      <Path d="M6,46 L45,14 L84,46 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.8} strokeLinejoin="round" />
-      {/* Chimney */}
-      <Rect x={60} y={20} width={12} height={18} rx={2} fill="#C89898" stroke="#2C1810" strokeWidth={2.5} />
+      <Rect x={30} y={30} width={40} height={55} rx={3} fill="#B8A898" />
+      {/* Battlements */}
+      <Rect x={30} y={18} width={10} height={12} fill="#B8A898" />
+      <Rect x={45} y={18} width={10} height={12} fill="#B8A898" />
+      <Rect x={60} y={18} width={10} height={12} fill="#B8A898" />
+      {/* Window */}
+      <Rect x={43} y={48} width={14} height={18} rx={7} fill="#7B9EB8" />
       {/* Door */}
-      <Rect x={36} y={60} width={18} height={22} rx={9} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2.5} />
-      <Circle cx={50} cy={72} r={2.5} fill="#2C1810" />
-      {/* Left window */}
-      <Rect x={16} y={52} width={16} height={14} rx={2} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2.5} />
-      <Line x1={16} y1={59} x2={32} y2={59} stroke="#2C1810" strokeWidth={1.5} />
-      <Line x1={24} y1={52} x2={24} y2={66} stroke="#2C1810" strokeWidth={1.5} />
-      {/* Right window */}
-      <Rect x={58} y={52} width={16} height={14} rx={2} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2.5} />
-      <Line x1={58} y1={59} x2={74} y2={59} stroke="#2C1810" strokeWidth={1.5} />
-      <Line x1={66} y1={52} x2={66} y2={66} stroke="#2C1810" strokeWidth={1.5} />
-      {/* Smoke puffs */}
-      <Circle cx={66} cy={14} r={5} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
-      <Circle cx={72} cy={9} r={4} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
+      <Rect x={42} y={68} width={16} height={17} rx={8} fill="#5A4A3A" />
+      {/* Flag */}
+      <Line x1={50} y1={30} x2={50} y2={18} stroke="#7B1D1D" strokeWidth={2.5} />
+      <Path d="M50 18 L60 22 L50 24 Z" fill="#E8594A" />
     </Svg>
   );
 }
 
-function getSceneObjects(title: string, variant: number) {
-  const t = title.toLowerCase();
-  if (t.includes('birthday') || t.includes('bday')) return <BirthdayScene variant={variant} />;
-  if (t.includes('trip') || t.includes('travel') || t.includes('prague') || t.includes('flight')) return <TravelScene variant={variant} />;
-  if (t.includes('garden') || t.includes('plant') || t.includes('flower')) return <GardenScene variant={variant} />;
-  if (t.includes('prom') || t.includes('dance') || t.includes('formal')) return <PromScene variant={variant % 2} />;
-  if (t.includes('mom') || t.includes('dad') || t.includes('family') || t.includes('home')) return <FamilyScene variant={variant % 2} />;
-  // ...existing code for other scenes...
-  // fallback: blank SVG
+function GardenScene() {
   return (
-    <Svg width={90} height={90} viewBox="0 0 90 90">
-      <Rect x={10} y={10} width={70} height={70} rx={12} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Trunk */}
+      <Rect x={44} y={65} width={12} height={28} rx={4} fill="#8B6A3E" />
+      {/* Big canopy */}
+      <Circle cx={50} cy={52} r={28} fill="#5AAA58" />
+      {/* Lighter inner circle */}
+      <Circle cx={50} cy={46} r={20} fill="#6DC26A" />
+      {/* Blossoms */}
+      <Circle cx={38} cy={44} r={5} fill="#F4A0B8" />
+      <Circle cx={62} cy={50} r={5} fill="#F4A0B8" />
+      <Circle cx={50} cy={60} r={5} fill="#F4A0B8" />
+      <Circle cx={60} cy={38} r={5} fill="#F4A0B8" />
+      <Circle cx={42} cy={62} r={5} fill="#F4A0B8" />
+      <Circle cx={55} cy={70} r={5} fill="#F4A0B8" />
     </Svg>
   );
+}
+
+function PromScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Bow tie */}
+      <Path d="M40 60 L50 70 L60 60 L50 50 Z" fill="#6B4F6B" />
+      {/* Center knot */}
+      <Circle cx={50} cy={60} r={5} fill="#C4A34A" />
+      {/* Sparkles */}
+      <Path d="M25 35 L28 40 L31 35 L28 30 Z" fill="#C4A34A" />
+      <Path d="M70 30 L73 35 L76 30 L73 25 Z" fill="#C4A34A" />
+      <Path d="M60 80 L63 85 L66 80 L63 75 Z" fill="#C4A34A" />
+      <Path d="M35 75 L38 80 L41 75 L38 70 Z" fill="#C4A34A" />
+      {/* Crown */}
+      <Path d="M45 38 L47 32 L50 38 L53 32 L55 38 Z" fill="#F9D06A" />
+      <Rect x={45} y={38} width={10} height={4} fill="#F9D06A" />
+    </Svg>
+  );
+}
+
+function MomBirthdayScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Bottom tier */}
+      <Rect x={25} y={70} width={50} height={16} rx={6} fill="#E8594A" />
+      {/* Middle tier */}
+      <Rect x={32} y={56} width={36} height={14} rx={5} fill="#F9D06A" />
+      {/* Top tier */}
+      <Rect x={38} y={44} width={24} height={12} rx={4} fill="#6B4F6B" />
+      {/* Candles */}
+      <Rect x={44} y={38} width={2} height={8} fill="#F6E5CD" />
+      <Rect x={50} y={38} width={2} height={8} fill="#F6E5CD" />
+      <Rect x={56} y={38} width={2} height={8} fill="#F6E5CD" />
+      {/* Flames */}
+      <Ellipse cx={45} cy={38} rx={1.2} ry={2} fill="#F9D06A" />
+      <Ellipse cx={51} cy={38} rx={1.2} ry={2} fill="#F9D06A" />
+      <Ellipse cx={57} cy={38} rx={1.2} ry={2} fill="#F9D06A" />
+      {/* Dots/frosting */}
+      {[30, 40, 50, 60, 70].map((x, i) => (
+        <Circle key={i} cx={x} cy={84} r={2} fill="#F6E5CD" />
+      ))}
+      {[38, 50, 62].map((x, i) => (
+        <Circle key={i} cx={x} cy={66} r={1.5} fill="#E8594A" />
+      ))}
+    </Svg>
+  );
+}
+
+function FriendsScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Two figures */}
+      <Circle cx={35} cy={60} r={10} fill="#6B4F6B" />
+      <Rect x={29} y={70} width={12} height={18} rx={5} fill="#6B4F6B" />
+      <Circle cx={65} cy={60} r={10} fill="#C4A34A" />
+      <Rect x={59} y={70} width={12} height={18} rx={5} fill="#C4A34A" />
+      {/* Speech bubble */}
+      <Rect x={28} y={28} width={44} height={18} rx={8} fill="#F6E5CD" stroke="#8B6A3E" strokeWidth={2} />
+      <Path d="M50 46 Q48 54 42 50 L50 46" fill="#F6E5CD" stroke="#8B6A3E" strokeWidth={2} />
+    </Svg>
+  );
+}
+
+function PetScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Cat head */}
+      <Circle cx={50} cy={35} r={22} fill="#8B6A3E" />
+      {/* Ears */}
+      <Path d="M34 22 L42 10 L46 28 Z" fill="#8B6A3E" />
+      <Path d="M66 22 L58 10 L54 28 Z" fill="#8B6A3E" />
+      {/* Body */}
+      <Ellipse cx={50} cy={72} rx={18} ry={22} fill="#8B6A3E" />
+      {/* Eyes */}
+      <Circle cx={44} cy={38} r={2.5} fill="#F6E5CD" />
+      <Circle cx={56} cy={38} r={2.5} fill="#F6E5CD" />
+      {/* Nose */}
+      <Path d="M50 42 L48 45 L52 45 Z" fill="#F6E5CD" />
+      {/* Tail */}
+      <Path d="M68 80 Q90 90 70 60" stroke="#8B6A3E" strokeWidth={5} fill="none" />
+    </Svg>
+  );
+}
+
+function FoodScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Plate */}
+      <Circle cx={50} cy={58} r={28} fill="#F6E5CD" stroke="#8B6A3E" strokeWidth={3} />
+      {/* Fork */}
+      <Rect x={18} y={48} width={4} height={18} rx={1} fill="#8B6A3E" />
+      <Line x1={20} y1={48} x2={20} y2={60} stroke="#8B6A3E" strokeWidth={2} />
+      <Line x1={22} y1={48} x2={22} y2={60} stroke="#8B6A3E" strokeWidth={2} />
+      <Line x1={24} y1={48} x2={24} y2={60} stroke="#8B6A3E" strokeWidth={2} />
+      {/* Knife */}
+      <Rect x={78} y={50} width={4} height={16} rx={1} fill="#8B6A3E" />
+      <Path d="M82 50 L86 54 L82 54 Z" fill="#8B6A3E" />
+      {/* Food mound */}
+      <Ellipse cx={50} cy={58} rx={10} ry={6} fill="#C4A34A" />
+    </Svg>
+  );
+}
+
+function MusicScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Note head */}
+      <Ellipse cx={38} cy={72} rx={14} ry={10} fill="#6B4F6B" transform="rotate(-18 38 72)" />
+      {/* Stem */}
+      <Rect x={46} y={38} width={6} height={34} fill="#6B4F6B" />
+      {/* Flag */}
+      <Path d="M52 38 Q70 30 54 54" stroke="#6B4F6B" strokeWidth={5} fill="none" />
+      {/* Sound arcs */}
+      <Path d="M70 30 Q80 36 72 44" stroke="#C4A34A" strokeWidth={3} fill="none" />
+      <Path d="M74 50 Q84 54 76 60" stroke="#C4A34A" strokeWidth={3} fill="none" />
+      <Path d="M60 20 Q68 24 62 32" stroke="#C4A34A" strokeWidth={3} fill="none" />
+    </Svg>
+  );
+}
+
+function BeachScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Sun */}
+      <Circle cx={50} cy={38} r={18} fill="#F9D06A" />
+      {/* Rays */}
+      {[...Array(8)].map((_,i) => {
+        const angle = (Math.PI/4)*i;
+        const x1 = 50 + 18 * Math.cos(angle);
+        const y1 = 38 + 18 * Math.sin(angle);
+        const x2 = 50 + 28 * Math.cos(angle);
+        const y2 = 38 + 28 * Math.sin(angle);
+        return <Line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#F9D06A" strokeWidth={3} />;
+      })}
+      {/* Waves */}
+      <Path d="M20 80 Q35 90 50 80 Q65 70 80 80" stroke="#7B9EB8" strokeWidth={4} fill="none" />
+      <Path d="M25 90 Q50 100 75 90" stroke="#7B9EB8" strokeWidth={4} fill="none" />
+      {/* Palm tree */}
+      <Line x1={78} y1={80} x2={85} y2={60} stroke="#4A6741" strokeWidth={4} />
+      <Ellipse cx={85} cy={60} rx={10} ry={4} fill="#4A6741" transform="rotate(-20 85 60)" />
+      <Ellipse cx={85} cy={60} rx={10} ry={4} fill="#4A6741" transform="rotate(20 85 60)" />
+      <Ellipse cx={85} cy={60} rx={10} ry={4} fill="#4A6741" />
+    </Svg>
+  );
+}
+
+function StudyScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Left page */}
+      <Rect x={14} y={35} width={34} height={42} rx={2} fill="#F6E5CD" stroke="#8B6A3E" strokeWidth={2} />
+      {/* Right page */}
+      <Rect x={52} y={35} width={34} height={42} rx={2} fill="#F6E5CD" stroke="#8B6A3E" strokeWidth={2} />
+      {/* Spine */}
+      <Line x1={50} y1={35} x2={50} y2={77} stroke="#8B6A3E" strokeWidth={2} />
+      {/* Text lines */}
+      {[40, 48, 56].map((y, i) => (
+        <Line key={i} x1={18} y1={y} x2={44} y2={y} stroke="#C8B89A" strokeWidth={2} />
+      ))}
+      {[40, 48, 56].map((y, i) => (
+        <Line key={10+i} x1={56} y1={y} x2={82} y2={y} stroke="#C8B89A" strokeWidth={2} />
+      ))}
+      {/* Pencil */}
+      <Rect x={68} y={22} width={16} height={5} rx={2} fill="#F9D06A" />
+      {/* Triangle tip (was Polygon) */}
+      <Path d="M84 22 L90 24.5 L84 27 Z" fill="#C4A34A" />
+    </Svg>
+  );
+}
+
+function SportsScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Cup body */}
+      <Rect x={32} y={38} width={36} height={28} rx={12} fill="#C4A34A" />
+      {/* Stem */}
+      <Rect x={46} y={66} width={8} height={14} rx={3} fill="#C4A34A" />
+      {/* Base */}
+      <Rect x={40} y={80} width={20} height={8} rx={2} fill="#C4A34A" />
+      {/* Handles */}
+      <Path d="M32 48 Q18 52 32 66" stroke="#C4A34A" strokeWidth={4} fill="none" />
+      <Path d="M68 48 Q82 52 68 66" stroke="#C4A34A" strokeWidth={4} fill="none" />
+      {/* Stars (was Polygon) */}
+      {[44, 50, 56].map((x, i) => (
+        <Path key={i} d={`M${x},52 L${x+1.5},56 L${x+5},56.5 L${x+2.5},59 L${x+3.5},63 L${x},61 L${x-3.5},63 L${x-2.5},59 L${x-5},56.5 L${x-1.5},56 Z`} fill="#F6E5CD" />
+      ))}
+    </Svg>
+  );
+}
+
+function FamilyScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* House wall */}
+      <Rect x={22} y={48} width={56} height={40} rx={3} fill="#C4A34A" />
+      {/* Roof (was Polygon) */}
+      <Path d="M15 50 L50 18 L85 50 Z" fill="#7B1D1D" />
+      {/* Door */}
+      <Rect x={46} y={72} width={8} height={16} fill="#8B6A3E" />
+      {/* Windows */}
+      <Rect x={30} y={58} width={10} height={10} fill="#F6E5CD" />
+      <Line x1={35} y1={58} x2={35} y2={68} stroke="#8B6A3E" strokeWidth={1.5} />
+      <Line x1={30} y1={63} x2={40} y2={63} stroke="#8B6A3E" strokeWidth={1.5} />
+      <Rect x={60} y={58} width={10} height={10} fill="#F6E5CD" />
+      <Line x1={65} y1={58} x2={65} y2={68} stroke="#8B6A3E" strokeWidth={1.5} />
+      <Line x1={60} y1={63} x2={70} y2={63} stroke="#8B6A3E" strokeWidth={1.5} />
+      {/* Chimney */}
+      <Rect x={70} y={28} width={8} height={14} fill="#8B6A3E" />
+    </Svg>
+  );
+}
+
+function HikingScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Back mountain (was Polygon) */}
+      <Path d="M30 90 L60 40 L90 90 Z" fill="#4A6741" />
+      {/* Front mountain (was Polygon) */}
+      <Path d="M10 90 L40 55 L70 90 Z" fill="#557263" />
+      {/* Trail path */}
+      <Path d="M40 90 Q45 80 50 70 Q55 60 60 55 Q65 50 68 45" stroke="#F6E5CD" strokeWidth={3} fill="none" strokeDasharray="4 4" />
+      {/* Flag pin */}
+      <Line x1={68} y1={45} x2={68} y2={35} stroke="#E8594A" strokeWidth={3} />
+      <Path d="M68 35 L74 39 L68 41 Z" fill="#E8594A" />
+      {/* Sun */}
+      <Path d="M80 30 A12 12 0 0 1 92 42 L80 42 Z" fill="#F9D06A" />
+    </Svg>
+  );
+}
+
+function DefaultScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Petal ring */}
+      {[...Array(8)].map((_,i) => {
+        const angle = (Math.PI/4)*i;
+        const cx = 50 + 28 * Math.cos(angle);
+        const cy = 50 + 28 * Math.sin(angle);
+        return <Ellipse key={i} cx={cx} cy={cy} rx={10} ry={22} fill="#C4A34A" opacity={0.6} transform={`rotate(${i*45} ${cx} ${cy})`} />;
+      })}
+      {/* Inner circle */}
+      <Circle cx={50} cy={50} r={14} fill="#7B1D1D" />
+      {/* Dot accents */}
+      {[...Array(8)].map((_,i) => {
+        const angle = (Math.PI/4)*i + Math.PI/8;
+        const cx = 50 + 38 * Math.cos(angle);
+        const cy = 50 + 38 * Math.sin(angle);
+        return <Circle key={i} cx={cx} cy={cy} r={2.5} fill="#F6E5CD" />;
+      })}
+    </Svg>
+  );
+}
+
+function getSceneObjects(title: string) {
+  const t = title.toLowerCase();
+  if (t.includes('birthday') || t.includes('bday')) return <BirthdayScene />;
+  if (t.includes('trip') || t.includes('travel') || t.includes('prague') || t.includes('flight')) return <TravelScene />;
+  if (t.includes('garden') || t.includes('plant') || t.includes('flower')) return <GardenScene />;
+  if (t.includes('prom') || t.includes('dance') || t.includes('formal')) return <PromScene />;
+  if (t.includes('mom') || t.includes('dad') || t.includes('family') || t.includes('home')) return <FamilyScene />;
+  if (t.includes('friend') || t.includes('hang') || t.includes('outing')) return <FriendsScene />;
+  if (t.includes('pet') || t.includes('cat') || t.includes('dog') || t.includes('animal')) return <PetScene />;
+  if (t.includes('food') || t.includes('dinner') || t.includes('lunch') || t.includes('cafe') || t.includes('restaurant')) return <FoodScene />;
+  if (t.includes('music') || t.includes('concert') || t.includes('festival') || t.includes('gig')) return <MusicScene />;
+  if (t.includes('beach') || t.includes('summer') || t.includes('vacation') || t.includes('holiday')) return <BeachScene />;
+  if (t.includes('study') || t.includes('school') || t.includes('exam') || t.includes('work')) return <StudyScene />;
+  if (t.includes('sport') || t.includes('gym') || t.includes('run') || t.includes('workout') || t.includes('match')) return <SportsScene />;
+  if (t.includes('movie') || t.includes('film') || t.includes('cinema') || t.includes('show')) return <MovieScene />;
+  if (t.includes('hike') || t.includes('trail') || t.includes('outdoors') || t.includes('nature') || t.includes('walk')) return <HikingScene />;
+  if (t.includes('spa') || t.includes('relax') || t.includes('wellness') || t.includes('self')) return <SpaScene />;
+  return <DefaultScene />;
 }
 
 export default function TimelineScreen() {
@@ -780,7 +774,6 @@ export default function TimelineScreen() {
     const stampWidth = SCREEN_WIDTH * 0.38;
     const isSelected = selectedStamp?.id === item.id;
     const accentColor = ILLUSTRATION_COLORS[index % ILLUSTRATION_COLORS.length];
-    const variant = parseInt(item.id) % 3;
     return (
       <View style={styles.row}>
         <CurvedTimelinePath isEven={isEven} />
@@ -812,59 +805,16 @@ export default function TimelineScreen() {
         <View
           style={{
             position: 'absolute',
-            [isEven ? 'right' : 'left']: 30,
-            top: 40,
-            zIndex: 2,
+            [isEven ? 'right' : 'left']: 12,
+            top: 50,
+            width: 100,
+            height: 100,
+            opacity: 0,
+            zIndex: 2, // ensure above path, below card
             pointerEvents: 'none',
-            transform: [{ rotate: isEven ? '3deg' : '-3deg' }],
-            shadowColor: '#5C3D1E',
-            shadowOffset: { width: 3, height: 5 },
-            shadowOpacity: 0.25,
-            shadowRadius: 10,
-            elevation: 6,
           }}
         >
-          {/* Blob/cloud sticker backing */}
-          {(() => {
-            const blobPaths = [
-              // Blob 0 - puffy left side
-              "M55,8 Q70,2 80,12 Q92,8 98,20 Q108,28 104,42 Q112,54 104,64 Q108,76 96,82 Q92,96 78,98 Q66,108 52,102 Q40,110 28,102 Q14,100 10,86 Q0,76 6,62 Q-2,48 8,36 Q6,22 18,16 Q28,4 42,8 Q48,4 55,8 Z",
-              // Blob 1 - puffy top
-              "M55,5 Q68,0 78,10 Q90,4 100,16 Q112,22 108,38 Q116,50 106,62 Q110,74 98,82 Q96,96 80,100 Q68,112 52,104 Q38,112 24,104 Q10,98 8,84 Q-2,72 6,58 Q-4,44 8,32 Q8,16 22,12 Q32,2 45,6 Q50,3 55,5 Z",
-              // Blob 2 - puffy right side  
-              "M58,6 Q72,0 84,10 Q96,6 102,20 Q114,26 110,42 Q118,56 106,66 Q108,80 94,86 Q88,100 72,102 Q60,112 44,106 Q30,112 18,102 Q4,96 4,80 Q-6,68 4,54 Q-2,40 10,28 Q10,14 24,10 Q36,2 48,6 Q52,4 58,6 Z"
-            ];
-            const blobPath = blobPaths[index % 3];
-            return (
-              <Svg
-                width={110}
-                height={110}
-                viewBox="0 0 110 110"
-                style={{
-                  position: 'absolute',
-                  top: -10,
-                  left: -10,
-                  zIndex: 0,
-                }}
-              >
-                <Path
-                  d={blobPath}
-                  fill="#EDE4D0"
-                  opacity={0.88}
-                  style={{
-                    shadowColor: '#5C3D1E',
-                    shadowOffset: { width: 2, height: 4 },
-                    shadowOpacity: 0.30,
-                    shadowRadius: 8,
-                  }}
-                />
-              </Svg>
-            );
-          })()}
-          {/* The illustration itself */}
-          <View style={{ width: 90, height: 90, opacity: 0.88, zIndex: 1 }}>
-            {getSceneObjects(item.title, variant)}
-          </View>
+          {getSceneObjects(item.title)}
         </View>
       </View>
     );
@@ -1007,3 +957,40 @@ const styles = StyleSheet.create({
   scriptTextTopRight: { position: 'absolute', top: 380, right: 8, fontSize: 9, opacity: 0.18, color: '#8B6A3E', fontStyle: 'italic' },
   scriptTextLowerLeft: { position: 'absolute', top: 650, left: 8, fontSize: 9, opacity: 0.18, color: '#8B6A3E', fontStyle: 'italic' },
 });
+
+function MovieScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Main board */}
+      <Rect x={15} y={30} width={70} height={55} rx={4} fill="#3B2C1A" />
+      {/* White stripe */}
+      <Rect x={15} y={30} width={70} height={15} fill="#F6E5CD" />
+      {/* Diagonal stripes */}
+      {[0,1,2,3,4].map(i => (
+        <Path key={i} d={`M${15+14*i} 30 L${15+14*i+10} 45`} stroke="#3B2C1A" strokeWidth={4} />
+      ))}
+      {/* Hinge */}
+      <Circle cx={20} cy={37} r={4} fill="#C4A34A" />
+      {/* Holes */}
+      <Circle cx={75} cy={40} r={2} fill="#F6E5CD" />
+      <Circle cx={85} cy={40} r={2} fill="#F6E5CD" />
+    </Svg>
+  );
+}
+
+function SpaScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Candle */}
+      <Rect x={44} y={38} width={12} height={32} rx={4} fill="#F6E5CD" stroke="#C8B89A" strokeWidth={2} />
+      {/* Flame */}
+      <Ellipse cx={50} cy={36} rx={2.5} ry={5} fill="#F9D06A" />
+      {/* Glow */}
+      <Circle cx={50} cy={36} r={10} fill="#F9D06A" opacity={0.3} />
+      {/* Leaves */}
+      <Ellipse cx={38} cy={70} rx={10} ry={22} fill="#557263" transform="rotate(-18 38 70)" />
+      <Ellipse cx={62} cy={74} rx={10} ry={22} fill="#557263" transform="rotate(18 62 74)" />
+      <Ellipse cx={50} cy={82} rx={12} ry={8} fill="#557263" />
+    </Svg>
+  );
+}
