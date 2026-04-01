@@ -403,6 +403,18 @@ const BackgroundIllustrations = () => (
   </View>
 );
 
+// Helper to pick lineart image based on event title
+function getLineartImage(title: string) {
+  const t = title.toLowerCase();
+  if (t.includes('birthday')) return birthdayCake;
+  if (t.includes('mom')) return bouquet;
+  if (t.includes('garden')) return garden;
+  if (t.includes('prom')) return gift;
+  if (t.includes('trip') || t.includes('prague')) return travel;
+  if (t.includes('home') || t.includes('family')) return house;
+  return null;
+}
+
 // Scene object SVGs for each category
 function BirthdayScene() {
   return (
@@ -774,6 +786,7 @@ export default function TimelineScreen() {
     const stampWidth = SCREEN_WIDTH * 0.38;
     const isSelected = selectedStamp?.id === item.id;
     const accentColor = ILLUSTRATION_COLORS[index % ILLUSTRATION_COLORS.length];
+    const lineartImage = getLineartImage(item.title);
     return (
       <View style={styles.row}>
         <CurvedTimelinePath isEven={isEven} />
@@ -801,21 +814,24 @@ export default function TimelineScreen() {
             </View>
           )}
         </View>
-        {/* Scene objects on opposite side of card */}
-        <View
-          style={{
-            position: 'absolute',
-            [isEven ? 'right' : 'left']: 12,
-            top: 50,
-            width: 100,
-            height: 100,
-            opacity: 0,
-            zIndex: 2, // ensure above path, below card
-            pointerEvents: 'none',
-          }}
-        >
-          {getSceneObjects(item.title)}
-        </View>
+        {/* Lineart image on opposite side */}
+        {lineartImage && (
+          <View
+            style={{
+              position: 'absolute',
+              [isEven ? 'right' : 'left']: 12,
+              top: 30,
+              width: 140,
+              height: 140,
+              zIndex: 2,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: 1,
+            }}
+          >
+            <Image source={lineartImage} style={{ width: 130, height: 130, resizeMode: 'contain', opacity: 0.85 }} />
+          </View>
+        )}
       </View>
     );
   };
@@ -957,6 +973,14 @@ const styles = StyleSheet.create({
   scriptTextTopRight: { position: 'absolute', top: 380, right: 8, fontSize: 9, opacity: 0.18, color: '#8B6A3E', fontStyle: 'italic' },
   scriptTextLowerLeft: { position: 'absolute', top: 650, left: 8, fontSize: 9, opacity: 0.18, color: '#8B6A3E', fontStyle: 'italic' },
 });
+
+// Lineart image paths
+const birthdayCake = require('../../assets/images/birthday-cake.png');
+const bouquet = require('../../assets/images/bouquet.png');
+const garden = require('../../assets/images/garden.png');
+const gift = require('../../assets/images/gift.png');
+const house = require('../../assets/images/house.png');
+const travel = require('../../assets/images/travel.png');
 
 function MovieScene() {
   return (
