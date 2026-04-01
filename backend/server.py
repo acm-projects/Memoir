@@ -1,3 +1,18 @@
+import numpy as np
+
+# THE MONKEY PATCH: This intercepts the NumPy crash
+# It forces NumPy to allow the "inhomogeneous" data the OCR library is sending.
+original_array = np.array
+def patched_array(*args, **kwargs):
+    try:
+        return original_array(*args, **kwargs)
+    except ValueError:
+        # If it fails, we force it to be an 'object' array
+        kwargs['dtype'] = object
+        return original_array(*args, **kwargs)
+
+np.array = patched_array
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -43,6 +58,10 @@ def process_card():
         user_id = data['user_id']
         use_mock = data.get('use_mock', True)
 
+        # Initialize placeholders for the response
+        card_title = "Unknown"
+        card_caption = ""
+
         results = {
             'card_id': card_id,
             'ocr': None,
@@ -63,7 +82,7 @@ def process_card():
                     all_ocr_text.append(ocr_result)
                 combined_ocr_text = "\n".join(all_ocr_text)
                 update_card_ocr(card_id, combined_ocr_text)
-                results['ocr'] = {'success': True, 'images_processed': len(card_images)}
+                results['ocr'] = {'success': True, 'images_processed': len(card_images), 'ocr_text': combined_ocr_text}
         except Exception as e:
             results['errors'].append(f'OCR failed: {str(e)}')
 
@@ -75,7 +94,12 @@ def process_card():
             ).json()
             if card_response:
                 card = card_response[0]
-                tags = generate_tags(card.get('ocr_text', ''), card.get('caption', ''), card.get('title', ''), use_mock)
+
+                # EXTRACT TITLE AND CAPTION HERE
+                card_title = card.get('title', 'Untitled Card')
+                card_caption = card.get('caption', '')
+
+                tags = generate_tags(card.get('ocr_text', ''), card_caption, card_title, use_mock)
                 saved_tags = save_tags_to_supabase(card_id, user_id, tags)
                 results['tagging'] = {'success': True, 'tags': [t['name'] for t in saved_tags]}
         except Exception as e:
@@ -94,6 +118,8 @@ def process_card():
         return jsonify({
             'success': len(results['errors']) == 0,
             'card_id': card_id,
+            'card_name': card_title,
+            'caption' : card_caption,
             'results': results
         }), 200
 
