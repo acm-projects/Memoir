@@ -12,6 +12,7 @@ import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BackButton from "../components/back-Button";
 import BottomNavbar from "../components/BottomNavbar";
+import CardSentAnimation from "../components/CardSentAnimation";
 
 const ios = Platform.OS === "ios";
 
@@ -26,9 +27,22 @@ const CONTACTS = [
 export default function SendCard() {
   const { top } = useSafeAreaInsets();
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [showAnimation, setShowAnimation] = useState(false);
+
+  const handleSend = () => {
+    setShowAnimation(true);
+  };
+
+  const handleAnimationComplete = () => {
+    setShowAnimation(false);
+    router.push("/timelineScreen");
+  };
 
   return (
     <View style={[styles.container, { paddingTop: ios ? top : top + 10 }]}>
+      {showAnimation && (
+        <CardSentAnimation onComplete={handleAnimationComplete} />
+      )}
       {/* Header Area - Matching Messages Vibe */}
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
@@ -77,10 +91,10 @@ export default function SendCard() {
         </ScrollView>
 
         {/* Floating Send Button */}
-        {selectedId && (
+        {selectedId && !showAnimation && (
           <TouchableOpacity
             style={styles.floatingSendBtn}
-            onPress={() => router.push("/timelineScreen")}
+            onPress={handleSend}
           >
             <Text style={styles.sendText}>Send Card</Text>
           </TouchableOpacity>
