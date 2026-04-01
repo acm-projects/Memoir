@@ -410,9 +410,9 @@ function BirthdayScene({ variant }: { variant: number }) {
     return (
       <Svg width={90} height={90} viewBox="0 0 90 90">
         {/* Bottom tier */}
-        <Rect x={14} y={62} width={62} height={18} rx={4} fill="#E8A5A5" stroke="#2C1810" strokeWidth={3} />
+        <Rect x={14} y={62} width={62} height={18} rx={4} fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.8} />
         {/* Top tier */}
-        <Rect x={24} y={44} width={42} height={20} rx={4} fill="#B8A8C8" stroke="#2C1810" strokeWidth={3} />
+        <Rect x={24} y={44} width={42} height={20} rx={4} fill="#B8A8C8" stroke="#2C1810" strokeWidth={1.8} />
         {/* Frosting drips */}
         <Path d="M14,62 Q22,56 30,62 Q38,56 46,62 Q54,56 62,62 Q70,56 76,62" fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
         {/* Candles */}
@@ -435,9 +435,9 @@ function BirthdayScene({ variant }: { variant: number }) {
     return (
       <Svg width={90} height={90} viewBox="0 0 90 90">
         {/* Box body */}
-        <Rect x={16} y={44} width={58} height={38} rx={4} fill="#A8BEC8" stroke="#2C1810" strokeWidth={3} />
+        <Rect x={16} y={44} width={58} height={38} rx={4} fill="#A8BEC8" stroke="#2C1810" strokeWidth={1.8} />
         {/* Box lid */}
-        <Rect x={12} y={34} width={66} height={14} rx={4} fill="#A8BEC8" stroke="#2C1810" strokeWidth={3} />
+        <Rect x={12} y={34} width={66} height={14} rx={4} fill="#A8BEC8" stroke="#2C1810" strokeWidth={1.8} />
         {/* Vertical ribbon */}
         <Rect x={41} y={34} width={8} height={48} rx={2} fill="#E8A5A5" stroke="#2C1810" strokeWidth={2} />
         {/* Horizontal ribbon */}
@@ -457,9 +457,9 @@ function BirthdayScene({ variant }: { variant: number }) {
   return (
     <Svg width={90} height={90} viewBox="0 0 90 90">
       {/* Hat body */}
-      <Path d="M45,10 L16,74 L74,74 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
+      <Path d="M45,10 L16,74 L74,74 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.8} strokeLinejoin="round" strokeLinecap="round" />
       {/* Brim ellipse */}
-      <Ellipse cx={45} cy={74} rx={29} ry={9} fill="#E8A5A5" stroke="#2C1810" strokeWidth={3} />
+      <Ellipse cx={45} cy={74} rx={29} ry={9} fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.8} />
       {/* Pompom */}
       <Circle cx={45} cy={10} r={7} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2.5} />
       {/* Band */}
@@ -507,7 +507,7 @@ function TravelScene({ variant }: { variant: number }) {
     return (
       <Svg width={90} height={90} viewBox="0 0 90 90">
         {/* Envelope */}
-        <Path d="M45,12 Q78,12 78,45 Q78,68 45,78 Q12,68 12,45 Q12,12 45,12 Z" fill="#B8A8C8" stroke="#2C1810" strokeWidth={3} />
+        <Path d="M45,12 Q78,12 78,45 Q78,68 45,78 Q12,68 12,45 Q12,12 45,12 Z" fill="#B8A8C8" stroke="#2C1810" strokeWidth={1.8} />
         {/* Vertical stripe */}
         <Path d="M45,12 Q50,45 45,78" stroke="#2C1810" strokeWidth={2} fill="none" />
         {/* Horizontal band */}
@@ -572,11 +572,11 @@ function GardenScene({ variant }: { variant: number }) {
     return (
       <Svg width={90} height={90} viewBox="0 0 90 90">
         {/* Stem */}
-        <Rect x={33} y={52} width={24} height={28} rx={8} fill="#FFF8F0" stroke="#2C1810" strokeWidth={3} />
+        <Rect x={33} y={52} width={24} height={28} rx={8} fill="#FFF8F0" stroke="#2C1810" strokeWidth={1.8} />
         {/* Stem detail */}
         <Path d="M36,60 Q45,56 54,60" stroke="#2C1810" strokeWidth={1.5} fill="none" />
         {/* Cap */}
-        <Path d="M10,52 Q10,14 45,14 Q80,14 80,52 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={3} />
+        <Path d="M10,52 Q10,14 45,14 Q80,14 80,52 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.8} />
         {/* Spots */}
         <Circle cx={30} cy={36} r={7} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
         <Circle cx={55} cy={28} r={9} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
@@ -621,7 +621,7 @@ function PromScene({ variant }: { variant: number }) {
     return (
       <Svg width={90} height={90} viewBox="0 0 90 90">
         {/* Ball */}
-        <Circle cx={45} cy={42} r={30} fill="#B8A8C8" stroke="#2C1810" strokeWidth={3} />
+        <Circle cx={45} cy={42} r={30} fill="#B8A8C8" stroke="#2C1810" strokeWidth={1.8} />
         {/* Horizontal lines */}
         <Line x1={16} y1={22} x2={74} y2={22} stroke="#2C1810" strokeWidth={1.5} />
         <Line x1={16} y1={32} x2={74} y2={32} stroke="#2C1810" strokeWidth={1.5} />
@@ -687,9 +687,9 @@ function FamilyScene({ variant }: { variant: number }) {
   return (
     <Svg width={90} height={90} viewBox="0 0 90 90">
       {/* House body */}
-      <Rect x={12} y={44} width={66} height={38} rx={3} fill="#A8BEC8" stroke="#2C1810" strokeWidth={3} />
+      <Rect x={12} y={44} width={66} height={38} rx={3} fill="#A8BEC8" stroke="#2C1810" strokeWidth={1.8} />
       {/* Roof */}
-      <Path d="M6,46 L45,14 L84,46 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={3} strokeLinejoin="round" />
+      <Path d="M6,46 L45,14 L84,46 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.8} strokeLinejoin="round" />
       {/* Chimney */}
       <Rect x={60} y={20} width={12} height={18} rx={2} fill="#C89898" stroke="#2C1810" strokeWidth={2.5} />
       {/* Door */}
