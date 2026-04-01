@@ -406,68 +406,86 @@ const BackgroundIllustrations = () => (
 // Scene object SVGs for each category
 function BirthdayScene({ variant }: { variant: number }) {
   if (variant === 1) {
-    // Birthday Cake
+    // Hand-drawn Birthday Cake
     return (
       <Svg width={90} height={90} viewBox="0 0 90 90">
-        {/* Bottom tier */}
-        <Rect x={14} y={62} width={62} height={18} rx={4} fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.8} />
-        {/* Top tier */}
-        <Rect x={24} y={44} width={42} height={20} rx={4} fill="#B8A8C8" stroke="#2C1810" strokeWidth={1.8} />
+        {/* Bottom tier (wobbly) */}
+        <Path d="M13,63 L13,79 C13,81 15,82 17,82 L73,82 C75,82 77,81 77,79 L77,63 C77,61 75,60 73,60 L17,60 C15,60 13,61 13,63" stroke="#3D2410" strokeWidth={1.6} fill="#E8A5A5" fillOpacity={0.35} strokeLinecap="round" strokeLinejoin="round" />
+        {/* Double-stroke for sketch effect */}
+        <Path d="M14,64 L14,78 C14,80 16,81 18,81 L72,81 C74,81 76,80 76,78 L76,64 C76,62 74,61 72,61 L18,61 C16,61 14,62 14,64" stroke="#3D2410" strokeWidth={1.0} fill="none" opacity={0.3} strokeLinecap="round" strokeLinejoin="round" />
+        {/* Top tier (wobbly) */}
+        <Path d="M23,45 L23,61 L67,61 L67,45 C67,43 65,42 63,42 L27,42 C25,42 23,43 23,45" stroke="#3D2410" strokeWidth={1.6} fill="#B8A8C8" fillOpacity={0.35} strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M24,46 L24,60 L66,60 L66,46 C66,44 64,43 62,43 L28,43 C26,43 24,44 24,46" stroke="#3D2410" strokeWidth={1.0} fill="none" opacity={0.3} strokeLinecap="round" strokeLinejoin="round" />
         {/* Frosting drips */}
-        <Path d="M14,62 Q22,56 30,62 Q38,56 46,62 Q54,56 62,62 Q70,56 76,62" fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
-        {/* Candles */}
-        <Rect x={32} y={34} width={6} height={12} rx={2} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
-        <Rect x={42} y={34} width={6} height={12} rx={2} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
-        <Rect x={52} y={34} width={6} height={12} rx={2} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
+        <Path d="M13,62 Q20,56 27,62 Q34,56 41,62 Q48,56 55,62 Q62,56 69,62 Q73,58 77,62" stroke="#3D2410" strokeWidth={1.2} fill="#FFF8F0" fillOpacity={0.7} strokeLinecap="round" />
+        {/* Candles (wobbly) */}
+        <Path d="M31,33 L31,44 L37,44 L37,33 C37,32 36,31 34,31 C32,31 31,32 31,33" stroke="#3D2410" strokeWidth={1.2} fill="#FFF8F0" fillOpacity={0.8} />
+        <Path d="M42,33 L42,44 L48,44 L48,33 C48,32 47,31 45,31 C43,31 42,32 42,33" stroke="#3D2410" strokeWidth={1.2} fill="#FFF8F0" fillOpacity={0.8} />
+        <Path d="M53,33 L53,44 L59,44 L59,33 C59,32 58,31 56,31 C54,31 53,32 53,33" stroke="#3D2410" strokeWidth={1.2} fill="#FFF8F0" fillOpacity={0.8} />
         {/* Flames */}
-        <Path d="M35,34 Q38,26 41,34" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.5} />
-        <Path d="M45,34 Q48,26 51,34" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.5} />
-        <Path d="M55,34 Q58,26 61,34" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.5} />
+        <Path d="M34,31 C36,27 38,24 34,20 C30,24 32,27 34,31" fill="#E8A5A5" fillOpacity={0.8} stroke="#3D2410" strokeWidth={0.9} />
+        <Path d="M45,31 C47,27 49,24 45,20 C41,24 43,27 45,31" fill="#E8A5A5" fillOpacity={0.8} stroke="#3D2410" strokeWidth={0.9} />
+        <Path d="M56,31 C58,27 60,24 56,20 C52,24 54,27 56,31" fill="#E8A5A5" fillOpacity={0.8} stroke="#3D2410" strokeWidth={0.9} />
         {/* Dots on bottom tier */}
-        <Circle cx={30} cy={72} r={3} fill="#FFF8F0" stroke="#2C1810" strokeWidth={1.5} />
-        <Circle cx={45} cy={72} r={3} fill="#FFF8F0" stroke="#2C1810" strokeWidth={1.5} />
-        <Circle cx={60} cy={72} r={3} fill="#FFF8F0" stroke="#2C1810" strokeWidth={1.5} />
+        <Path d="M29,71 C30,69 33,70 32,72 C31,74 29,73 29,71" fill="#FFF8F0" stroke="#3D2410" strokeWidth={0.8} />
+        <Path d="M44,71 C45,69 48,70 47,72 C46,74 44,73 44,71" fill="#FFF8F0" stroke="#3D2410" strokeWidth={0.8} />
+        <Path d="M59,71 C60,69 63,70 62,72 C61,74 59,73 59,71" fill="#FFF8F0" stroke="#3D2410" strokeWidth={0.8} />
+        {/* Hatching for shadow */}
+        <Path d="M18,80 L22,76" stroke="#3D2410" strokeWidth={0.8} opacity={0.35} />
+        <Path d="M20,82 L24,78" stroke="#3D2410" strokeWidth={0.8} opacity={0.35} />
+        <Path d="M25,82 L29,78" stroke="#3D2410" strokeWidth={0.8} opacity={0.35} />
       </Svg>
     );
   }
   if (variant === 2) {
-    // Gift Box
+    // Hand-drawn Gift Box
     return (
       <Svg width={90} height={90} viewBox="0 0 90 90">
         {/* Box body */}
-        <Rect x={16} y={44} width={58} height={38} rx={4} fill="#A8BEC8" stroke="#2C1810" strokeWidth={1.8} />
+        <Path d="M15,45 L15,81 C15,82 16,83 17,83 L73,83 C74,83 75,82 75,81 L75,45" stroke="#3D2410" strokeWidth={1.6} fill="#A8BEC8" fillOpacity={0.35} strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M16,46 L16,80 C16,81 17,82 18,82 L72,82 C73,82 74,81 74,80 L74,46" stroke="#3D2410" strokeWidth={1.0} fill="none" opacity={0.3} strokeLinecap="round" strokeLinejoin="round" />
         {/* Box lid */}
-        <Rect x={12} y={34} width={66} height={14} rx={4} fill="#A8BEC8" stroke="#2C1810" strokeWidth={1.8} />
+        <Path d="M11,35 L11,47 C11,48 12,48 13,48 L77,48 C78,48 79,48 79,47 L79,35 C79,34 78,33 77,33 L13,33 C12,33 11,34 11,35" stroke="#3D2410" strokeWidth={1.6} fill="#A8BEC8" fillOpacity={0.4} strokeLinecap="round" strokeLinejoin="round" />
         {/* Vertical ribbon */}
-        <Rect x={41} y={34} width={8} height={48} rx={2} fill="#E8A5A5" stroke="#2C1810" strokeWidth={2} />
+        <Path d="M42,33 C43,50 43,65 42,83" stroke="#3D2410" strokeWidth={1.4} fill="none" strokeLinecap="round" />
+        <Path d="M48,33 C49,50 49,65 48,83" stroke="#3D2410" strokeWidth={1.4} fill="none" strokeLinecap="round" />
+        {/* Fill between ribbons */}
+        <Path d="M42,33 L48,33 L48,83 L42,83 Z" fill="#E8A5A5" fillOpacity={0.5} />
         {/* Horizontal ribbon */}
-        <Rect x={12} y={38} width={66} height={8} rx={2} fill="#E8A5A5" stroke="#2C1810" strokeWidth={2} />
-        {/* Bow left loop */}
-        <Path d="M45,34 Q30,20 28,30 Q30,38 45,34" fill="#E8A5A5" stroke="#2C1810" strokeWidth={2.5} />
-        {/* Bow right loop */}
-        <Path d="M45,34 Q60,20 62,30 Q60,38 45,34" fill="#E8A5A5" stroke="#2C1810" strokeWidth={2.5} />
-        {/* Bow center */}
-        <Circle cx={45} cy={34} r={5} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2} />
-        {/* Star */}
-        <Path d="M45,52 L47,58 L53,58 L48,62 L49,68 L45,56 L40,68 L42,62 L37,58 L43,58 Z" fill="#FFF8F0" stroke="#2C1810" strokeWidth={1.5} />
+        <Path d="M11,37 C30,39 55,39 79,37" stroke="#3D2410" strokeWidth={1.2} fill="none" strokeLinecap="round" />
+        <Path d="M11,43 C30,45 55,45 79,43" stroke="#3D2410" strokeWidth={1.2} fill="none" strokeLinecap="round" />
+        {/* Fill */}
+        <Path d="M11,37 Q45,42 79,37 L79,43 Q45,48 11,43 Z" fill="#E8A5A5" fillOpacity={0.5} />
+        {/* Left bow loop */}
+        <Path d="M45,35 C38,28 26,22 24,30 C22,38 34,38 45,35" stroke="#3D2410" strokeWidth={1.4} fill="#E8A5A5" fillOpacity={0.5} strokeLinecap="round" />
+        {/* Right bow loop */}
+        <Path d="M45,35 C52,28 64,22 66,30 C68,38 56,38 45,35" stroke="#3D2410" strokeWidth={1.4} fill="#E8A5A5" fillOpacity={0.5} strokeLinecap="round" />
+        {/* Center knot */}
+        <Path d="M45,32 C47,32 49,34 49,36 C49,38 47,40 45,40 C43,40 41,38 41,36 C41,34 43,32 45,32" stroke="#3D2410" strokeWidth={1.2} fill="#FFF8F0" fillOpacity={0.8} />
       </Svg>
     );
   }
-  // Default: Party Hat
+  // Hand-drawn Party Hat
   return (
     <Svg width={90} height={90} viewBox="0 0 90 90">
-      {/* Hat body */}
-      <Path d="M45,10 L16,74 L74,74 Z" fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.8} strokeLinejoin="round" strokeLinecap="round" />
+      {/* Hat outline */}
+      <Path d="M45,13 C44,13 17,73 17,74 L73,74 C73,73 46,13 45,13" stroke="#3D2410" strokeWidth={1.6} fill="#E8A5A5" fillOpacity={0.35} strokeLinecap="round" strokeLinejoin="round" />
+      {/* Double-stroke for sketch effect */}
+      <Path d="M45,14 C44,14 18,72 18,73 L72,73 C72,72 46,14 45,14" stroke="#3D2410" strokeWidth={1.0} fill="none" opacity={0.3} strokeLinecap="round" strokeLinejoin="round" />
       {/* Brim ellipse */}
-      <Ellipse cx={45} cy={74} rx={29} ry={9} fill="#E8A5A5" stroke="#2C1810" strokeWidth={1.8} />
-      {/* Pompom */}
-      <Circle cx={45} cy={10} r={7} fill="#FFF8F0" stroke="#2C1810" strokeWidth={2.5} />
-      {/* Band */}
-      <Path d="M28,50 Q45,44 62,50" stroke="#2C1810" strokeWidth={2} fill="none" strokeDasharray="3 3" />
-      {/* Dots */}
-      <Circle cx={20} cy={35} r={5} fill="#B8A8C8" stroke="#2C1810" strokeWidth={2} />
-      <Circle cx={72} cy={30} r={5} fill="#A8BEC8" stroke="#2C1810" strokeWidth={2} />
-      <Circle cx={70} cy={55} r={4} fill="#A8C5B5" stroke="#2C1810" strokeWidth={2} />
+      <Path d="M17,74 C17,79 30,82 45,82 C60,82 73,79 73,74 C73,69 60,66 45,66 C30,66 17,69 17,74" stroke="#3D2410" strokeWidth={1.4} fill="#E8A5A5" fillOpacity={0.35} strokeLinecap="round" />
+      {/* Pompom (wobbly) */}
+      <Path d="M45,7 C48,7 52,10 52,13 C52,16 49,19 45,19 C41,19 38,16 38,13 C38,10 42,7 45,7" stroke="#3D2410" strokeWidth={1.2} fill="#FFF8F0" fillOpacity={0.6} strokeLinecap="round" />
+      {/* Stripe */}
+      <Path d="M29,48 C34,46 40,45 46,45 C52,45 58,46 62,48" stroke="#3D2410" strokeWidth={1.0} fill="none" strokeLinecap="round" />
+      {/* Hatching on shadow side */}
+      <Path d="M22,62 L28,56" stroke="#3D2410" strokeWidth={0.8} opacity={0.35} />
+      <Path d="M20,68 L26,62" stroke="#3D2410" strokeWidth={0.8} opacity={0.35} />
+      <Path d="M19,74 L24,68" stroke="#3D2410" strokeWidth={0.8} opacity={0.35} />
+      {/* Confetti dots */}
+      <Path d="M19,33 C20,31 23,31 23,33 C23,35 20,36 19,34" fill="#B8A8C8" fillOpacity={0.7} stroke="#3D2410" strokeWidth={0.8} />
+      <Path d="M69,28 C70,26 73,26 73,28 C73,30 70,31 69,29" fill="#A8BEC8" fillOpacity={0.7} stroke="#3D2410" strokeWidth={0.8} />
+      <Path d="M67,53 C68,51 71,52 70,54 C69,56 67,55 67,53" fill="#A8C5B5" fillOpacity={0.7} stroke="#3D2410" strokeWidth={0.8} />
     </Svg>
   );
 }
