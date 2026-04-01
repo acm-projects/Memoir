@@ -87,9 +87,9 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
 
   return (
     <View style={styles.root}>
-      {/* Top-left settings button on maroon background */}
+      {/* Top-right settings button on maroon background */}
       <TouchableOpacity
-        style={styles.settingsButton}
+        style={[styles.settingsButton, { left: undefined, right: 20, alignItems: 'flex-end' }]}
         onPress={() => router.push('/settings' as any)}
       >
         <View style={styles.settingsCircle}>
@@ -356,8 +356,9 @@ const styles = StyleSheet.create({
   settingsButton: {
     position: 'absolute',
     top: 50, // moved higher from 56
-    left: 20,
+    right: 20,
     zIndex: 20,
+    alignItems: 'flex-end',
   },
   settingsCircle: {
     width: 44,
