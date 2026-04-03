@@ -23,7 +23,7 @@ const imageMap: Record<string, any> = {
   card2: require('../../assets/images/card2.jpg'),
   card3: require('../../assets/images/card3.jpg'),
 };
-
+// TODO: Replace mock data with real backend response
 export default function OneSpecificCard() {
   const router = useRouter();
   const params = useLocalSearchParams<{ image?: string; title?: string; caption?: string }>();
@@ -344,3 +344,6 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
 });
+
+// TODO: Integrate with backend API here (endpoint: /card/:id, method: GET/PUT)
+// TODO: Add backend integration logic (loading, error handling, response handling)

@@ -45,6 +45,7 @@ const MOCK_API = {
   ],
   metadata: { currentPage: 1, hasNextPage: true, totalPages: 5 },
 };
+// TODO: Replace mock data with real backend response
 
 interface Stamp {
   id: string;
@@ -767,6 +768,7 @@ export default function TimelineScreen() {
   useEffect(() => {
     const firstBatch = MOCK_API.data.slice(0, 5);
     setItems(firstBatch);
+    // TODO: Integrate with backend API here (endpoint: /timeline, method: GET)
   }, []);
 
   const fetchNextPage = async () => {
@@ -778,6 +780,7 @@ export default function TimelineScreen() {
       const nextBatch = MOCK_API.data.slice(start, end);
       setItems((existingItems) => [...existingItems, ...nextBatch]);
       setLoading(false);
+      // TODO: Integrate with backend API for pagination (endpoint: /timeline?page=, method: GET)
     }, 100);
   };
 
@@ -853,6 +856,7 @@ export default function TimelineScreen() {
             <View style={{ flex: 1 }}>
               <View style={styles.header}>
                 <Text style={styles.welcomeBackHeader}>Welcome Back, Name</Text>
+                {/* TODO: Connect to authentication/user session backend */}
                 <View style={styles.dropdownRow}>
                   <View style={styles.dropdownWrapper}>
                     <Pressable style={styles.dropdownButton} onPress={() => { setMonthOpen(!monthOpen); if (yearOpen) setYearOpen(false); }}>
@@ -909,7 +913,7 @@ export default function TimelineScreen() {
                             <ActivityIndicator size="large" color="#7B1D1D" />
                           ) : (
                             <Text style={styles.footerText}>
-                              {items.length >= MOCK_API.data.length ? 'Making Memories since *Birth Year* ✦' : 'Scroll for more'}
+                              {items.length >= MOCK_API.data.length ? 'Making Memories since *Birth Year* ' : 'Scroll for more'}
                             </Text>
                           )}
                         </View>

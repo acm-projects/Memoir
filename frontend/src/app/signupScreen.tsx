@@ -344,7 +344,6 @@ confirmButtonText: {
   
  }
 
-
-
-
-})
+// TODO: Integrate with backend API here (endpoint: /signup, method: POST)
+// TODO: Add backend integration logic (loading, error handling, response handling)
+// TODO: Connect to authentication/user session backend

@@ -14,6 +14,7 @@ const STAMPS = [
   { key: "bird", source: require("../../assets/images/bird-stamp.png"), label: "Bird" },
   { key: "brazil", source: require("../../assets/images/brasil-stamp.png"), label: "Brazil" },
 ];
+// TODO: Replace mock data with real backend response
 
 export default function CreateFolder() {
   const [title, setTitle] = useState("");
@@ -287,3 +288,5 @@ const styles = StyleSheet.create({
   createBtnDisabled: { backgroundColor: "#c8a898" },
   createBtnText: { color: "#f5e6c8", fontSize: 16, fontFamily: "Calistoga", letterSpacing: 0.3, flexDirection: 'row', alignItems: 'center' },
 });
+// TODO: Integrate with backend API here (endpoint: /folders, method: POST)
+// TODO: Add backend integration logic (loading, error handling, response handling)

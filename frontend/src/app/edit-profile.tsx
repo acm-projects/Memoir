@@ -24,6 +24,9 @@ export default function EditProfilePage({
   const [name, setName] = useState(initialName);
   const [birthday, setBirthday] = useState(initialBirthday);
   const [email, setEmail] = useState(initialEmail);
+  // TODO: Integrate with backend API here (endpoint: /profile, method: GET/PUT)
+  // TODO: Add backend integration logic (loading, error handling, response handling)
+  // TODO: Connect to authentication/user session backend
   const router = useRouter();
 
   const Divider = () => (

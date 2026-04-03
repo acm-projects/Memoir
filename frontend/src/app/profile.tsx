@@ -14,6 +14,7 @@ const boardContents = {
   notes: 18,
   templates: 12,
 };
+// TODO: Replace mock data with real backend response
 
 const cardsByMonth = [
   { created: 3, sent: 1 }, { created: 0, sent: 0 },
@@ -23,10 +24,13 @@ const cardsByMonth = [
   { created: 9, sent: 6 }, { created: 3, sent: 1 },
   { created: 7, sent: 3 }, { created: 2, sent: 1 },
 ];
+// TODO: Replace mock data with real backend response
 
 const BOARD_TOTAL = boardContents.photos + boardContents.stickers + boardContents.notes + boardContents.templates;
 
 export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount = 67, friendsCount = 45, foldersCount = 12 }) {
+  // TODO: Integrate with backend API here (endpoint: /profile, method: GET)
+  // TODO: Connect to authentication/user session backend
   const router = useRouter();
   const iconColor = '#7B1D1D';
   const tagColors = [
