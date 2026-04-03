@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,11 @@ import {
   Image,
   TextInput,
   ImageBackground,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  FlatList,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,6 +34,12 @@ type Item = {
   scale: number;
 };
 
+type Message = {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+};
+
 function seededRotation(id: string) {
   let hash = 0;
   for (let i = 0; i < id.length; i++) {
@@ -37,16 +48,211 @@ function seededRotation(id: string) {
   return (hash % 13) - 6;
 }
 
+// ─── AI Chat Modal ────────────────────────────────────────────────────────────
+
+function AIChatModal({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "0",
+      role: "assistant",
+      text: "Hey! I'm your card assistant ✨ Tell me about the card you want to make — who's it for, what's the occasion?",
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
+
+  const sendMessage = async () => {
+    const trimmed = input.trim();
+    if (!trimmed || loading) return;
+
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      text: trimmed,
+    };
+
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
+    setInput("");
+    setLoading(true);
+
+    try {
+      // Build conversation history for the API
+      const apiMessages = updatedMessages.map((m) => ({
+        role: m.role,
+        content: m.text,
+      }));
+      const response = await fetch("https://your-flask-url/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: apiMessages }),
+      });
+
+      const data = await response.json();
+      const replyText = data?.reply ?? "Sorry, I couldn't get a response.";
+
+      const assistantMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        text: replyText,
+      };
+
+      setMessages((prev) => [...prev, assistantMsg]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          text: "Oops, something went wrong. Try again!",
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderMessage = ({ item }: { item: Message }) => {
+    const isUser = item.role === "user";
+    return (
+      <View
+        style={[
+          styles.messageBubble,
+          isUser ? styles.userBubble : styles.assistantBubble,
+        ]}
+      >
+        {!isUser && (
+          <View style={styles.avatarDot}>
+            <Ionicons name="sparkles" size={12} color="#f5ede0" />
+          </View>
+        )}
+        <View
+          style={[
+            styles.bubbleContent,
+            isUser ? styles.userBubbleContent : styles.assistantBubbleContent,
+          ]}
+        >
+          <Text
+            style={[
+              styles.bubbleText,
+              isUser ? styles.userBubbleText : styles.assistantBubbleText,
+            ]}
+          >
+            {item.text}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalSheet}
+        >
+          {/* Handle bar */}
+          <View style={styles.handleBar} />
+
+          {/* Header */}
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderLeft}>
+              <View style={styles.sparkleIcon}>
+                <Ionicons name="sparkles" size={16} color="#f5ede0" />
+              </View>
+              <View>
+                <Text style={styles.modalTitle}>Card Assistant</Text>
+                <Text style={styles.modalSubtitle}>Powered by AI</Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <Ionicons name="close" size={20} color="#5A390E" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Messages */}
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={renderMessage}
+            contentContainerStyle={styles.messageList}
+            onContentSizeChange={() =>
+              flatListRef.current?.scrollToEnd({ animated: true })
+            }
+            showsVerticalScrollIndicator={false}
+          />
+
+          {/* Typing indicator */}
+          {loading && (
+            <View style={styles.typingRow}>
+              <View style={styles.avatarDot}>
+                <Ionicons name="sparkles" size={12} color="#f5ede0" />
+              </View>
+              <View style={styles.typingBubble}>
+                <ActivityIndicator size="small" color="#8B6A3E" />
+              </View>
+            </View>
+          )}
+
+          {/* Input */}
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.chatInput}
+              placeholder="Ask me anything about your card..."
+              placeholderTextColor="#9a7a60"
+              value={input}
+              onChangeText={setInput}
+              multiline
+              maxLength={500}
+              returnKeyType="send"
+              onSubmitEditing={sendMessage}
+            />
+            <TouchableOpacity
+              style={[
+                styles.sendIconBtn,
+                (!input.trim() || loading) && styles.sendIconBtnDisabled,
+              ]}
+              onPress={sendMessage}
+              disabled={!input.trim() || loading}
+            >
+              <Ionicons name="arrow-up" size={18} color="#f5ede0" />
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </View>
+    </Modal>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
 export default function CreateCard() {
   const [cardColor, setCardColor] = useState("#fffaf4");
   const [items, setItems] = useState<Item[]>([]);
-  // TODO: Replace mock data with real backend response
+   // TODO: Replace mock data with real backend response
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [gifs, setGifs] = useState<any[]>([]);
   const [gifSearch, setGifSearch] = useState("");
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
+  const [aiModalVisible, setAiModalVisible] = useState(false); // ← new
 
+
+  // BACKEND: replace hardcoded STICKERS array 
   const STICKERS = [
     { id: "star", image: require("../../assets/images/star-stamp.png") },
     { id: "heart", image: require("../../assets/images/costa-rica-stamp.png") },
@@ -130,6 +336,12 @@ export default function CreateCard() {
 
   return (
     <View style={styles.container}>
+      {/* AI Chat Modal */}
+      <AIChatModal
+        visible={aiModalVisible}
+        onClose={() => setAiModalVisible(false)}
+      />
+
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <BackButton color="#f5ede0" />
@@ -223,7 +435,10 @@ export default function CreateCard() {
                     contentContainerStyle={styles.stickerRow}
                   >
                     {STICKERS.map((s) => (
-                      <TouchableOpacity key={s.id} onPress={() => addSticker(s.id)}>
+                      <TouchableOpacity
+                        key={s.id}
+                        onPress={() => addSticker(s.id)}
+                      >
                         <Image source={s.image} style={styles.stickerThumb} />
                       </TouchableOpacity>
                     ))}
@@ -242,7 +457,10 @@ export default function CreateCard() {
                         searchGifs(text);
                       }}
                     />
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                    >
                       {gifs.map((gif: any) => (
                         <Pressable
                           key={gif.id}
@@ -289,7 +507,9 @@ export default function CreateCard() {
                     activeTool === "background" && styles.activeToolBtn,
                   ]}
                   onPress={() =>
-                    setActiveTool(activeTool === "background" ? null : "background")
+                    setActiveTool(
+                      activeTool === "background" ? null : "background"
+                    )
                   }
                 >
                   <Ionicons
@@ -337,10 +557,11 @@ export default function CreateCard() {
                 </Pressable>
               </View>
 
+              {/* Sparkle button now opens the AI modal */}
               <TouchableOpacity
                 style={styles.plusButton}
                 activeOpacity={0.8}
-                onPress={() => router.push("/send-card" as any)}
+                onPress={() => setAiModalVisible(true)}
               >
                 <Image
                   source={require("../../assets/images/sparkle-chat.png")}
@@ -379,22 +600,11 @@ export default function CreateCard() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#7a1a1a",
-  },
+  // ── existing styles (unchanged) ──────────────────────────────────────────
 
-  header: {
-    paddingTop: 56,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-  },
-
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
+  container: { flex: 1, backgroundColor: "#7a1a1a" },
+  header: { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 16 },
+  headerRow: { flexDirection: "row", alignItems: "center" },
   headerTitle: {
     flex: 1,
     marginLeft: -5,
@@ -404,25 +614,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "Calistoga",
   },
-
   paperArea: {
     flex: 1,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     overflow: "hidden",
   },
-
-  paperImage: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-  },
-
-  bgArea: {
-    flex: 1,
-    paddingTop: 20,
-    paddingHorizontal: 14,
-  },
-
+  paperImage: { borderTopLeftRadius: 32, borderTopRightRadius: 32 },
+  bgArea: { flex: 1, paddingTop: 20, paddingHorizontal: 14 },
   cardPreview: {
     width: "90%",
     height: 500,
@@ -436,12 +635,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
   },
-
-  previewText: {
-    fontSize: 18,
-    color: "#5A390E",
-  },
-
+  previewText: { fontSize: 18, color: "#5A390E" },
   footerWrapper: {
     position: "absolute",
     bottom: 80,
@@ -450,14 +644,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-
   toolbarRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     paddingHorizontal: 20,
   },
-
   toolbar: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -474,7 +666,6 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 5,
   },
-
   plusButton: {
     width: 40,
     height: 40,
@@ -488,16 +679,8 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 5,
   },
-
-  toolButton: {
-    padding: 10,
-    borderRadius: 20,
-  },
-
-  activeToolBtn: {
-    backgroundColor: "rgba(90, 57, 14, 0.1)",
-  },
-
+  toolButton: { padding: 10, borderRadius: 20 },
+  activeToolBtn: { backgroundColor: "rgba(90, 57, 14, 0.1)" },
   panel: {
     backgroundColor: "#ede0cc",
     width: "90%",
@@ -507,26 +690,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#d7c3ac",
   },
-
   panelHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 10,
   },
-
-  panelTitle: {
-    fontWeight: "bold",
-    fontSize: 12,
-    color: "#5A390E",
-  },
-
-  colorRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 15,
-  },
-
+  panelTitle: { fontWeight: "bold", fontSize: 12, color: "#5A390E" },
+  colorRow: { flexDirection: "row", justifyContent: "center", gap: 15 },
   colorDot: {
     width: 35,
     height: 35,
@@ -534,12 +705,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "white",
   },
-
-  activeColor: {
-    borderColor: "#5A390E",
-    transform: [{ scale: 1.1 }],
-  },
-
+  activeColor: { borderColor: "#5A390E", transform: [{ scale: 1.1 }] },
   addTextButton: {
     backgroundColor: "#6D1B12",
     flexDirection: "row",
@@ -551,14 +717,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
     elevation: 3,
   },
-
   buttonText: {
     color: "#F8E5CF",
     fontSize: 16,
     fontWeight: "600",
     marginLeft: 8,
   },
-
   stickerRow: {
     flexDirection: "row",
     gap: 12,
@@ -566,20 +730,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     alignItems: "center",
   },
-
-  stickerThumb: {
-    width: 55,
-    height: 55,
-    resizeMode: "contain",
-  },
-
+  stickerThumb: { width: 55, height: 55, resizeMode: "contain" },
   headerButtons: {
     flexDirection: "row",
     width: "85%",
     gap: 10,
     marginTop: 8,
   },
-
   cancelBtn: {
     flex: 1,
     paddingVertical: 10,
@@ -589,12 +746,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#ede0cc",
   },
-
-  cancelText: {
-    color: "#8b1a1a",
-    fontSize: 14,
-  },
-
+  cancelText: { color: "#8b1a1a", fontSize: 14 },
   sendBtn: {
     flex: 1,
     paddingVertical: 10,
@@ -602,12 +754,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#7a1a1a",
     alignItems: "center",
   },
-
-  sendText: {
-    color: "#f5ede0",
-    fontSize: 14,
-  },
-
+  sendText: { color: "#f5ede0", fontSize: 14 },
   gifInput: {
     backgroundColor: "#F5EEE1",
     borderWidth: 1,
@@ -617,5 +764,162 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#3a2010",
     marginBottom: 8,
+  },
+
+  // ── AI modal styles ───────────────────────────────────────────────────────
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.45)",
+    
+  },
+modalSheet: {
+  backgroundColor: "#fdf6ed",
+  borderTopLeftRadius: 28,
+  borderTopRightRadius: 28,
+  paddingBottom: Platform.OS === "ios" ? 34 : 16,
+  maxHeight: "95%",   
+},
+
+  handleBar: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#d7c3ac",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ede0cc",
+    marginBottom:5,
+  },
+  modalHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  sparkleIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#4A7568",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#3a2010",
+    fontFamily: "Calistoga",
+  },
+  modalSubtitle: {
+    fontSize: 11,
+    color: "#9a7a60",
+    marginTop: 1,
+  },
+  closeBtn: {
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: "#ede0cc",
+  },
+  messageList: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    gap: 10,
+    paddingBottom: 20,
+  },
+  messageBubble: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    marginBottom: 6,
+  },
+  userBubble: {
+    justifyContent: "flex-end",
+  },
+  assistantBubble: {
+    justifyContent: "flex-start",
+  },
+  avatarDot: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#4A7568",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  bubbleContent: {
+    maxWidth: "78%",
+    borderRadius: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 2,
+  },
+  userBubbleContent: {
+    backgroundColor: "#7a1a1a",
+    borderBottomRightRadius: 4,
+  },
+  assistantBubbleContent: {
+    backgroundColor: "#ede0cc",
+    borderBottomLeftRadius: 4,
+  },
+  bubbleText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  userBubbleText: { color: "#f5ede0" },
+  assistantBubbleText: { color: "#3a2010" },
+  typingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 6,
+  },
+  typingBubble: {
+    backgroundColor: "#ede0cc",
+    borderRadius: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#ede0cc",
+    paddingBottom: 30,
+  },
+  chatInput: {
+    flex: 1,
+    backgroundColor: "#ede0cc",
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: "#3a2010",
+    maxHeight: 100,
+  },
+  sendIconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#7a1a1a",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sendIconBtnDisabled: {
+    backgroundColor: "#c8b89a",
   },
 });
