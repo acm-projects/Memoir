@@ -62,13 +62,18 @@ export default function DraggableItem({
   const startRotation = useSharedValue(safeRotation);
   const startScale = useSharedValue(safeScale);
 
+
+  //BACKEND: replace with actual data from backend API
   const COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
+
+
+ //Backend: replace with actual data from backend API
   const STICKERS: { [key: string]: any } = {
     star: require("../../assets/images/star-stamp.png"),
     heart: require("../../assets/images/costa-rica-stamp.png"),
     flower: require("../../assets/images/Australia-Stamp.png"),
   };
-
+ //BACKEND: replace with actual data from backend API
   const TEXT_COLORS = [
     "#5A390E",
     "#6D1B12",
@@ -349,12 +354,16 @@ export default function DraggableItem({
         );
       }
 
+
+      {/*BACKEND: calls hardcoded array here in that source below */}
       return (
+        
         <Image
-          source={STICKERS[item.sticker]}
+          source={STICKERS[item.sticker]} 
           style={{ width: 80, height: 80 }}
           resizeMode="contain"
         />
+       
       );
     }
 

@@ -21,7 +21,7 @@ const { width } = Dimensions.get('window');
 const swirlyBg = require('../../assets/images/swirly-subtle.png');
 const paperTexture = require('../../assets/images/layered-vintage-paper.png');
 
-
+//BACKEND: replace with actual data from backend API
 const STAMP_DATA = [
   {
     id: 'all',
@@ -45,6 +45,8 @@ const STAMP_DATA = [
   },
 ];
 
+//BACKEND: replace with actual data from backend API
+
 const FOLDER_COLORS: Record<string, { color: string; stripColor: string }> = {
   all: { color: '#6B4E7D', stripColor: '#573D68' },
   prom: { color: '#4A6B7B', stripColor: '#3A5A6A' },
@@ -67,7 +69,7 @@ export default function SelectMemory() {
   const handleContinue = () => {
     router.push('/view-folder copy');
   };
-
+  //Backend: connect to the actual view folder screen for the selected memory
   const renderItem = ({ item }: { item: (typeof STAMP_DATA)[number] }) => {
     const { color, stripColor } = FOLDER_COLORS[item.id] || FOLDER_COLORS['all'];
     const isSelected = selectedId === item.id;
@@ -84,6 +86,7 @@ export default function SelectMemory() {
           <View style={[styles.card, { borderRadius: 18 }]}>
             {/* Top stamp area */}
             <View style={[styles.cardTop, { backgroundColor: color }]}>
+               {/*BACKEND: replace with actual image from backend */}
               <Image
                 source={item.image}
                 style={styles.stampImage}

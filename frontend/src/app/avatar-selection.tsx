@@ -81,6 +81,7 @@ export default function AvatarSelection() {
   const { top } = useSafeAreaInsets();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  //BACKEND:
   const selectedAvatar = AVATAR_DATA.find((avatar) => avatar.id === selectedId);
 
   const renderAvatar = ({ item }: { item: typeof AVATAR_DATA[0] }) => {
