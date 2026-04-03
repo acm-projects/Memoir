@@ -27,6 +27,7 @@ export default function UploadCard() {
   const fileInputRef = useRef<any>(null);
   const fileInputCameraRef = useRef<any>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  // TODO: Replace mock data with real backend response
   const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -102,6 +103,8 @@ export default function UploadCard() {
       folderId: selectedFolder,
     };
     console.log('Next (saved to temp)', card);
+    // TODO: Integrate with backend API here (endpoint: /upload-card, method: POST)
+    // TODO: Add backend integration logic (loading, error handling, response handling)
     router.push('/selectMemory' as any);
   };
 

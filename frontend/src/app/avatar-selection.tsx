@@ -1,4 +1,4 @@
- import React, { useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -76,7 +76,7 @@ const AVATAR_DATA = [
     tint: "#EBCFCF",
   },
 ];
-
+// TODO: Replace mock data with real backend response
 export default function AvatarSelection() {
   const { top } = useSafeAreaInsets();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -266,3 +266,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
+// TODO: Integrate with backend API here (endpoint: /avatar, method: GET/POST)
+// TODO: Add backend integration logic (loading, error handling, response handling)
+// TODO: Connect to authentication/user session backend

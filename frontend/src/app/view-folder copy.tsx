@@ -28,6 +28,10 @@ const folders = [
   { id: '5', title: 'College grad',      isAdd: false, image: require('../../assets/images/butterfly-stamp.png'),  color: '#4A6B7B', stripColor: '#3A5A6A', isWide: true  },
   { id: '6', title: 'Bestieee',          isAdd: false, image: require('../../assets/images/cat-stamp.png'),       color: '#7B2D2D', stripColor: '#621818', isWide: true  },
 ];
+// TODO: Replace mock data with real backend response
+// TODO: Integrate with backend API here (endpoint: /folders, method: GET)
+// TODO: Add backend integration logic (loading, error handling, response handling)
+
 
 // AFTER — 2 columns with 16px side padding and 12px gap between
 const CARD_MARGIN = 12; // gap between columns

@@ -8,6 +8,9 @@ export default function Login() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <View style={styles.container}>
+      {/* TODO: Integrate with backend API here (endpoint: /login, method: POST) */}
+      {/* TODO: Add backend integration logic (loading, error handling, response handling) */}
+      {/* TODO: Connect to authentication/user session backend */}
 
 
    

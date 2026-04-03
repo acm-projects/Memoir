@@ -14,6 +14,7 @@ const MOCK_MESSAGES = [
   { id: '2', text: 'I am good! How about you?', sent: true },
   { id: '3', text: 'Doing great, thanks!', sent: false },
 ];
+// TODO: Replace mock data with real backend response
 
 const MOCK_FOLDERS = [
   { id: 'all', name: 'All memories', image: require('../../assets/images/Australia-Stamp.png') },
@@ -21,6 +22,7 @@ const MOCK_FOLDERS = [
   { id: 'plain', name: 'Prom', image: require('../../assets/images/costa-rica-stamp.png') },
   { id: 'spring', name: 'Spring Break +', image: require('../../assets/images/star-stamp.png') },
 ];
+// TODO: Replace mock data with real backend response
 
 interface Message {
   id: string;
@@ -145,3 +147,5 @@ export default function ChatRoom() {
         </View>
     );
 }
+// TODO: Integrate with backend API here (endpoint: /messages, method: GET/POST)
+// TODO: Add backend integration logic (loading, error handling, response handling)

@@ -78,6 +78,9 @@ export default function BulletinBoard() {
       scale: 1,
     },
   ]);
+  // TODO: Replace mock data with real backend response
+  // TODO: Integrate with backend API here (endpoint: /bulletin-board, method: GET/POST)
+  // TODO: Add backend integration logic (loading, error handling, response handling)
 
   const [isEditing, setIsEditing] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);

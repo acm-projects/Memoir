@@ -23,6 +23,10 @@ const CONTACTS = [
   { id: 4, name: "Harleen", avatar: require("../../assets/images/origami-gorilla.png") },
   { id: 5, name: "Tammy", avatar: require("../../assets/images/default-avatar.png") },
 ];
+// TODO: Replace mock data with real backend response
+// TODO: Integrate with backend API here (endpoint: /contacts, method: GET)
+// TODO: Integrate with backend API here (endpoint: /send-card, method: POST)
+// TODO: Add backend integration logic (loading, error handling, response handling)
 
 export default function SendCard() {
   const { top } = useSafeAreaInsets();

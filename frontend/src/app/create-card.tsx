@@ -40,6 +40,7 @@ function seededRotation(id: string) {
 export default function CreateCard() {
   const [cardColor, setCardColor] = useState("#fffaf4");
   const [items, setItems] = useState<Item[]>([]);
+  // TODO: Replace mock data with real backend response
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [gifs, setGifs] = useState<any[]>([]);
