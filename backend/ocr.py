@@ -4,6 +4,14 @@ import requests
 import os
 from dotenv import load_dotenv
 
+import torchvision.models.vgg as vgg
+
+# This fixes the "cannot import name 'model_urls'" error
+if not hasattr(vgg, 'model_urls'):
+    vgg.model_urls = {
+        'vgg16_bn': 'https://download.pytorch.org/models/vgg16_bn-6c64b313.pth'
+    }
+
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -34,7 +42,7 @@ def process_ocr(image_url):
     
     # ============================================================
     # MOCK OCR - **TEJU** REPLACE THIS WITH REAL MODEL
-    # import TrOCR_Inference as trocr
-    # return trocr.ocr(image)
+    import TrOCR_Inference as trocr
+    return trocr.ocr(image)
     # ============================================================
-    return "Mock OCR text - image downloaded successfully!"
+    # return "Mock OCR text - image downloaded successfully!"
