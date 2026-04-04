@@ -3,6 +3,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from pillow_heif import register_heif_opener
 import requests
+from openai import OpenAI
 import os
 import json
 
@@ -310,6 +311,114 @@ def search_cards():
             'success': False,
             'error': str(e)
         }), 500
+# ================================================================
+# TEMPLATE RECOMMENDATION ENDPOINT
+# ================================================================
+# ================================================================
+# TEMPLATE RECOMMENDATION ENDPOINT
+# ================================================================
+def get_user_headers(token):
+    return {
+        'apikey': SUPABASE_KEY,
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json'
+    }
+
+@app.route('/recommend-template', methods=['POST'])
+def recommend_template():
+    try:
+        data = request.json
+        user_prompt = data['prompt']
+        user_id = data.get('user_id')
+        match_count = data.get('match_count', 5)
+
+        # grab the user's token from the request header
+        auth_header = request.headers.get('Authorization', '')
+        user_token = auth_header.replace('Bearer ', '') if auth_header else SUPABASE_KEY
+        user_headers = get_user_headers(user_token)
+
+        # ── Step 1: Ask OpenAI to structure the prompt into JSON ──
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": """You are a card design assistant. Convert the user's request into structured JSON.
+                    Return ONLY valid JSON, no extra text, in this exact format:
+                    {
+                        "occasion": "",
+                        "recipient": "",
+                        "age": null,
+                        "vibe": [],
+                        "color_preference": null,
+                        "avoid_colors": [],
+                        "sticker_preferences": [],
+                        "music_mood": "",
+                        "embedding_text": "one sentence summarizing the card vibe and purpose"
+                    }"""
+                },
+                {
+                    "role": "user",
+                    "content": user_prompt
+                }
+            ]
+        )
+
+        raw = completion.choices[0].message.content
+        card_json = json.loads(raw)
+
+        # ── Step 2: Store card request in Supabase ────────────────
+        insert_response = requests.post(
+            f"{SUPABASE_URL}/rest/v1/card_requests",
+            json={
+                "user_id": user_id,
+                "occasion": card_json.get("occasion"),
+                "recipient": card_json.get("recipient"),
+                "age": card_json.get("age"),
+                "vibe": card_json.get("vibe"),
+                "color_preference": card_json.get("color_preference"),
+                "avoid_colors": card_json.get("avoid_colors"),
+                "sticker_preferences": card_json.get("sticker_preferences"),
+                "music_mood": card_json.get("music_mood"),
+                "embedding_text": card_json.get("embedding_text")
+            },
+            headers={**user_headers, "Prefer": "return=representation"}
+        ).json()
+
+        card_request_id = insert_response[0]['id']
+
+        # ── Step 3: Generate embedding from embedding_text ────────
+        embedding = generate_embedding(card_json.get("embedding_text"))
+
+        # ── Step 4: Save embedding back to that row ───────────────
+        requests.patch(
+            f"{SUPABASE_URL}/rest/v1/card_requests?id=eq.{card_request_id}",
+            json={"embedding": embedding},
+            headers=user_headers
+        )
+
+        # ── Step 5: Run similarity search against templates ───────
+        matches = requests.post(
+            f"{SUPABASE_URL}/rest/v1/rpc/match_templates",
+            json={
+                "query_embedding": embedding,
+                "match_count": match_count
+            },
+            headers=user_headers
+        ).json()
+
+        return jsonify({
+            "success": True,
+            "card_request_id": card_request_id,
+            "design_intent": card_json,
+            "suggested_templates": matches
+        }), 200
+
+    except Exception as e:
+        print(f"Recommend template error: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
