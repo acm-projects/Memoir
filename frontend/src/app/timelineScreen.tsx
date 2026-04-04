@@ -27,7 +27,7 @@ const ILLUSTRATION_COLORS = [
 
 const MOCK_API = {
   data: [
-    { id: '1', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/deer-stamp.png') },
+    { id: '1', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/egyptia-stamp.png') },
     { id: '2', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/bird-stamp.png') },
     { id: '3', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/brasil-stamp.png') },
     { id: '4', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/blueFlower-stamp.png') },

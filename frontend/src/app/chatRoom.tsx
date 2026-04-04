@@ -17,7 +17,7 @@ const MOCK_MESSAGES = [
 // TODO: Replace mock data with real backend response
 
 const MOCK_FOLDERS = [
-  { id: 'all', name: 'All memories', image: require('../../assets/images/Australia-Stamp.png') },
+  { id: 'all', name: 'All memories', image: require('../../assets/images/orange-flower-stamp.png') },
   { id: 'prom', name: '16th Birthday', image: require('../../assets/images/star-stamp.png') },
   { id: 'plain', name: 'Prom', image: require('../../assets/images/costa-rica-stamp.png') },
   { id: 'spring', name: 'Spring Break +', image: require('../../assets/images/star-stamp.png') },

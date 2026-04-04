@@ -256,7 +256,7 @@ export default function CreateCard() {
   const STICKERS = [
     { id: "star", image: require("../../assets/images/star-stamp.png") },
     { id: "heart", image: require("../../assets/images/costa-rica-stamp.png") },
-    { id: "flower", image: require("../../assets/images/Australia-Stamp.png") },
+    { id: "flower", image: require('../../assets/images/orange-flower-stamp.png') },
   ];
 
   const COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];

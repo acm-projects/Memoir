@@ -71,7 +71,7 @@ export default function DraggableItem({
   const STICKERS: { [key: string]: any } = {
     star: require("../../assets/images/star-stamp.png"),
     heart: require("../../assets/images/costa-rica-stamp.png"),
-    flower: require("../../assets/images/Australia-Stamp.png"),
+    flower: require("../../assets/images/orange-flower-stamp.png"),
   };
  //BACKEND: replace with actual data from backend API
   const TEXT_COLORS = [
