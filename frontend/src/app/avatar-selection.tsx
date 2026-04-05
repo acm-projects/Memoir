@@ -11,6 +11,7 @@ import {
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// Mock avatar data - replace with real backend response
 const AVATAR_DATA = [
   {
     id: "1",

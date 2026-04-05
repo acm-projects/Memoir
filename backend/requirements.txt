@@ -1,0 +1,16 @@
+flask
+flask-cors
+python-dotenv
+requests
+Pillow
+pillow-heif
+openai
+supabase==2.3.4
+transformers
+opencv-python>=4.8.0
+craft-text-detector
+numpy>=2.0
+torch
+tqdm
+matplotlib
+google-generativeai
