@@ -1,32 +1,114 @@
-import React, { useState } from "react";
-import {
-  View, Text, TextInput, StyleSheet, Pressable, ScrollView,
-  Image, ImageBackground, Platform,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, TextInput, StyleSheet, Pressable, ScrollView, Image, ImageBackground, Platform, } from "react-native";
 import { useRouter } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import BottomNavbar from '../components/BottomNavbar';
+import { supabase } from '../lib/supabase';
+import { createFolder } from '@/services/folders.service';
 
-const STAMPS = [
-  { key: "usa", source: require("../../assets/images/usa-stamp.png"), label: "USA" },
-  { key: "cat", source: require("../../assets/images/cat-stamp.png"), label: "Cat" },
-  { key: "orange", source: require("../../assets/images/orange-flower-stamp.png"), label: "Orange" },
-  { key: "bird", source: require("../../assets/images/bird-stamp.png"), label: "Bird" },
-  { key: "brazil", source: require("../../assets/images/brasil-stamp.png"), label: "Brazil" },
-];
-// TODO: Replace mock data with real backend response
+interface Stamp {
+  id: string;
+  name: string;
+  image_url: string;
+}
 
 export default function CreateFolder() {
   const [title, setTitle] = useState("");
-  const [selectedStamp, setSelectedStamp] = useState<string | null>(null);
+  const [selectedStamp, setSelectedStamp] = useState<Stamp | null>(null);
+  const [stamps, setStamps] = useState<Stamp[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [date, setDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const router = useRouter();
+  const router = useRouter();     // <-- INTEGRATION: Router for navigation
+
+  useEffect(() => { 
+    fetchStamps(); 
+    return () => {
+      setTitle('');
+      setSelectedStamp(null);
+      setDate(new Date());
+      setShowDatePicker(false);
+    };
+  }, []);
+
+  async function fetchStamps() {
+    setLoading(true);
+    // <-- INTEGRATION: Supabase storage call to fetch stamps
+    const { data, error } = await supabase.storage.from('stamps').list();
+
+    if (error) {
+      console.error("Error fetching stamps:", error);
+      setLoading(false);
+      return;
+    }
+
+    if(data) {
+      const stampList = data.map((file) => ({
+        id: file.name,
+        name: file.name.replace('.png', '').replace('-stamp', '').replace('-', ' '),
+        image_url: `https://nlihdtztcytseukfelcc.supabase.co/storage/v1/object/public/stamps/${file.name}`,   // <-- INTEGRATION: Public Supabase URL
+      }));
+      setStamps(stampList);
+    }
+    setLoading(false);
+  }
+
+  async function handleCreate() {
+    if (!title.trim() || !selectedStamp) return;
+    
+    setCreating(true);
+
+    // <-- INTEGRATION: Get current user from Supabase Auth
+    const { data: { user }} = await supabase.auth.getUser();
+
+    if(!user) {
+      setCreating(false);
+      return;
+    }
+
+    // <-- INTEGRATION: Check if folder with same name exists
+    const { data: existingFolders, error: checkError } = await supabase
+      .from('folders')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('name', title.trim())
+      .single();
+
+    if (existingFolders) {
+      alert('You already have a folder with this name!');
+      setCreating(false);
+      return;
+    }
+    
+    // <-- INTEGRATION: Create folder using the service
+    const { data: folder, error } = await createFolder(user.id, {
+      name: title.trim(),
+      cover_image_url: selectedStamp.image_url,
+      is_default: false,
+    });
+
+    if (error) {
+      if (error.code === '23505') { // unique constraint violation
+        alert("You already have a folder with this name!");
+      } else {
+        console.error('Failed to create folder:', error);
+      }
+      setCreating(false);
+      return;
+    }
+
+    setCreating(false);
+
+    // <-- INTEGRATION: Routing to bulletin-board after folder creation
+    router.replace({
+      pathname: '/bulletin-board',
+      params: { id: folder.id, title: folder.name },
+    });
+  }
 
   const canCreate = title.trim().length > 0 && selectedStamp !== null;
-
-  const formatDate = (d: Date) =>
-    d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const formatDate = (d: Date) => d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
   return (
     <ImageBackground
@@ -36,7 +118,7 @@ export default function CreateFolder() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {/* Manual back button above the paperBack */}
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => router.replace('/bulletin-board')}   // <-- INTEGRATION: Routing back
           style={{
             alignSelf: 'flex-start',
             marginTop: 65,
@@ -122,15 +204,15 @@ export default function CreateFolder() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.stampsRow}
               >
-                {STAMPS.map((stamp) => {
-                  const isSelected = selectedStamp === stamp.key;
+                {stamps.map((stamp) => {
+                  const isSelected = selectedStamp?.id === stamp.id;
                   return (
                     <Pressable
-                      key={stamp.key}
+                      key={stamp.id}
                       style={[styles.stampBtn, isSelected && styles.stampBtnSelected]}
-                      onPress={() => setSelectedStamp(stamp.key)}
+                      onPress={() => setSelectedStamp(stamp)}   // <-- INTEGRATION: Select stamp
                     >
-                      <Image source={stamp.source} style={styles.stampImage} />
+                      <Image source={{ uri: stamp.image_url }} style={styles.stampImage} />
                       {isSelected && (
                         <View style={styles.stampCheckBadge}>
                           <Text style={styles.stampCheckText}>✓</Text>
@@ -144,20 +226,10 @@ export default function CreateFolder() {
               {/* Create button */}
               <Pressable
                 style={[styles.createBtn, !canCreate && styles.createBtnDisabled]}
-                disabled={!canCreate}
-                onPress={() =>
-                  router.push({
-                    pathname: "/bulletin-board",
-                    params: {
-                      id: Date.now().toString(),
-                      title: title.trim(),
-                      stamp: selectedStamp,
-                      date: formatDate(date),
-                    },
-                  })
-                }
+                disabled={!canCreate || creating}
+                onPress={handleCreate}    // <-- INTEGRATION: Create folder
               >
-                <Text style={styles.createBtnText}>Create folder</Text>
+                <Text style={styles.createBtnText}>{creating ? 'Creating...' : 'Create folder'}</Text>
               </Pressable>
             </View>
           </View>
@@ -288,5 +360,3 @@ const styles = StyleSheet.create({
   createBtnDisabled: { backgroundColor: "#c8a898" },
   createBtnText: { color: "#f5e6c8", fontSize: 16, fontFamily: "Calistoga", letterSpacing: 0.3, flexDirection: 'row', alignItems: 'center' },
 });
-// TODO: Integrate with backend API here (endpoint: /folders, method: POST)
-// TODO: Add backend integration logic (loading, error handling, response handling)
