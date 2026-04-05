@@ -58,6 +58,7 @@ def generate_embedding(text):
     )
     return response.data[0].embedding
 
+#just a commend check
 def save_embedding(card_id, embedding):
     requests.patch(
         f"{SUPABASE_URL}/rest/v1/cards?id=eq.{card_id}",
