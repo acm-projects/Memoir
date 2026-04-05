@@ -1,95 +1,83 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  Pressable,
-  Image,
-  ImageBackground,
-} from "react-native";
-import { router } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import React, { useState, useEffect, use } from "react"; // Importing React and the useState hook to manage state within the component, allowing us to track which avatar the user has selected.
+import { View, Text, FlatList, StyleSheet, Pressable, Image, ImageBackground, ActivityIndicator, Alert } from "react-native"; // Importing necessary components and hooks from React and React Native.
+import { router } from "expo-router"; // Importing the router from Expo Router to enable navigation between different screens in the app, allowing for programmatic navigation based on user actions such as selecting an avatar and continuing to the next screen.
+import { useSafeAreaInsets } from "react-native-safe-area-context"; // Importing the useSafeAreaInsets hook to get the safe area insets of the device, which helps in ensuring that the UI elements are not obscured by notches, status bars, or other screen cutouts, providing a better user experience across different devices.
+import { supabase } from "../lib/supabase"; // importing supabase client for database interactions
+import { AvatarOptions } from '../components/avatarOptions'; // importing AvatarOptions component for rendering avatar options
 
-const AVATAR_DATA = [
-  {
-    id: "1",
-    name: "Little Bear",
-    image: require("../../assets/images/origami-gorilla.png"),
-    color: "#A62D00",
-    tint: "#E8B8A6",
-  },
-  {
-    id: "2",
-    name: "Llama",
-    image: require("../../assets/images/default-avatar.png"),
-    color: "#7B5A9A",
-    tint: "#DDD0EA",
-  },
-  {
-    id: "3",
-    name: "Clever Fox",
-    image: require("../../assets/images/origami-fox.png"),
-    color: "#6D8A7A",
-    tint: "#D6E2DB",
-  },
-  {
-    id: "4",
-    name: "Purple Flower",
-    image: require("../../assets/images/origami-purpleflower.png"),
-    color: "#B32046",
-    tint: "#F0C7D2",
-  },
-  {
-    id: "5",
-    name: "Sunflower",
-    image: require("../../assets/images/origami-sunflower.png"),
-    color: "#5F84A2",
-    tint: "#D5E2EC",
-  },
-  {
-    id: "6",
-    name: "Hyacinth",
-    image: require("../../assets/images/origami-hyacinth.png"),
-    color: "#8B6A3E",
-    tint: "#E6D8C2",
-  },
-  {
-    id: "7",
-    name: "Pinwheel",
-    image: require("../../assets/images/origami-windmill.png"),
-    color: "#4A6741",
-    tint: "#D6E3D2",
-  },
-  {
-    id: "8",
-    name: "Dango",
-    image: require("../../assets/images/origami-snack.png"),
-    color: "#6B4F6B",
-    tint: "#E1D6E1",
-  },
-  {
-    id: "9",
-    name: "Paper Heart",
-    image: require("../../assets/images/origami-heart.png"),
-    color: "#7B1D1D",
-    tint: "#EBCFCF",
-  },
-];
-// TODO: Replace mock data with real backend response
+interface Avatar {
+  id: string;
+  name: string;
+  image_url: string;
+  color: string;
+  tint: string;
+}
+
 export default function AvatarSelection() {
-  const { top } = useSafeAreaInsets();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { top } = useSafeAreaInsets(); // Using the useSafeAreaInsets hook to get the top inset value, which will be used to add padding to the header area of the avatar selection screen, ensuring that it is displayed correctly on devices with notches or status bars.
+  const [avatars, setAvatars] = useState<Avatar[]>([]); // State variable to hold the list of avatars fetched from the database, allowing us to render them in the UI and manage the user's selection.
+  const [selectedAvatarUrl, setSelectedAvatarUrl] = useState<string | null>(null); // State variable to hold the URL of the currently selected avatar, which will be used to update the user's profile in the database and determine whether the continue button should be enabled.
+  const [fetching, setFetching] = useState(true); // State variable to indicate whether the avatars are currently being fetched from the database, which can be used to show a loading indicator or disable interactions until the data is ready.
+  const [loading, setLoading] = useState(false); // State variable to indicate whether the avatars are still being loaded from the database, which can be used to show a loading indicator or disable interactions until the data is ready.
 
-  //BACKEND:
-  const selectedAvatar = AVATAR_DATA.find((avatar) => avatar.id === selectedId);
+  //Fetch avatars from Supabase on component mount
+  useEffect(() => {
+    fetchAvatars();
+  }, []);
 
-  const renderAvatar = ({ item }: { item: typeof AVATAR_DATA[0] }) => {
-    const isSelected = item.id === selectedId;
+  async function fetchAvatars() {
+    setFetching(true); // Set fetching state to true to indicate that the app is currently fetching the list of avatars from the database, which can be used to show a loading indicator or disable interactions until the data is ready.
+    try {
+      const { data, error } = await supabase
+        .from('avatars')
+        .select('id, name, image_url, color, tint'); // Fetching all avatars from the 'avatars' table in the database, selecting the id, name, image_url, color, and tint fields for each avatar to be used in rendering the avatar options in the UI.
+      if (error) throw error;
+      if (data) { setAvatars(data); } // If the data is successfully fetched from the database, update the avatars state variable with the retrieved list of avatars, allowing the UI to render the avatar options for the user to select from.
+    } catch (error: any) {
+      console.error('Failed to fetch avatars:', error); // Logging any errors that occur during the fetch operation to the console for debugging purposes, allowing developers to identify and fix issues with the database query or connection.
+    } finally {
+      setFetching(false); // Set fetching state to false to indicate that the app has finished fetching the list of avatars from the database.
+    }
+  }
+
+  async function handleContinue() {
+    if(!selectedAvatarUrl) {
+      Alert.alert('Selection Required', 'Please select an avatar before continuing.'); // Show an alert if the user tries to continue without selecting an avatar, prompting them to make a selection before proceeding.
+      return;
+    }
+
+    setLoading(true); // Set loading state to true to indicate that the app is processing the avatar selection and preparing to navigate to the next screen, which can be used to show a loading indicator or disable the continue button to prevent multiple submissions.
+
+    try {
+      // Get the currently authenticated user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if(userError || !user) throw new Error("User session not found.");
+
+      // Update the user's profile with the selected avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: selectedAvatarUrl })
+        .eq('id', user.id); // Update the user's profile in the 'profiles' table with the selected avatar URL, matching the profile by the user's id to ensure that the correct profile is updated with the new avatar selection.
+
+      if(updateError) throw updateError;
+
+      //Success: Navigate to the next screen
+      router.push('/timelineScreen'); // Navigate to the timeline screen after successfully updating the avatar, allowing the user to proceed with their personalized experience in the app now that they have selected an avatar.
+    } catch (error: any) {
+      console.error('Update failed:', error.message);
+      Alert.alert("Error", error.message);
+    } finally {
+      setLoading(false); // Set loading to false after the update is complete, allowing the UI to re-enable interactions and hide any loading indicators that were shown while processing the avatar selection.
+    }
+  }
+
+  const renderAvatar = ({ item }: { item: Avatar }) => {
+    const isSelected = item.image_url === selectedAvatarUrl; // Determine if the current avatar item being rendered is the one that the user has selected by comparing its image URL to the selectedAvatarUrl state variable, which allows us to apply different styles to the selected avatar option in the UI for visual feedback.
 
     return (
       <Pressable
-        onPress={() => setSelectedId(item.id)}
+        onPress={() => setSelectedAvatarUrl(item.image_url)}
         style={styles.avatarContainer}
       >
         <View
@@ -108,7 +96,7 @@ export default function AvatarSelection() {
                 ]}
               >
                 <Image
-                  source={item.image}
+                  source={{ uri: item.image_url }}
                   style={styles.avatarImage}
                   resizeMode="contain"
                 />
@@ -119,7 +107,7 @@ export default function AvatarSelection() {
       </Pressable>
     );
   };
-
+  
   return (
     <View style={styles.root}>
       <View style={[styles.headerArea, { paddingTop: top + 20 }]}>
@@ -131,28 +119,38 @@ export default function AvatarSelection() {
         style={styles.sheetArea}
         imageStyle={styles.paperImageStyle}
       >
-        <FlatList
-          data={AVATAR_DATA}
-          renderItem={renderAvatar}
-          keyExtractor={(item) => item.id}
-          numColumns={3}
-          columnWrapperStyle={styles.columnWrapper}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          style={{ marginTop: 40 }}
-        />
+        {fetching ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#6D1B12" />
+            <Text style={styles.loadingText}>Fetching Avatars...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={avatars}
+            renderItem={renderAvatar}
+            keyExtractor={(item) => item.id}
+            numColumns={3}
+            columnWrapperStyle={styles.columnWrapper}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            style={{ marginTop: 40 }}
+          />
+        )}
 
         <View style={styles.buttonWrapper}>
           <Pressable
-            onPress={() => selectedId && router.push("/timelineScreen")}
+            onPress={handleContinue}
             style={[
               styles.loginButton,
-              selectedAvatar && { backgroundColor: selectedAvatar.color },
-              !selectedId && styles.loginButtonDisabled,
+              !selectedAvatarUrl ? styles.loginButtonDisabled : styles.loginButtonActive
             ]}
-            disabled={!selectedId}
+            disabled={loading || !selectedAvatarUrl}
           >
-            <Text style={styles.loginText}>Continue</Text>
+            {loading ? (
+              <ActivityIndicator color="#E8DCDC" />
+            ) : (
+              <Text style={styles.loginText}>Continue</Text>
+            )}
           </Pressable>
         </View>
       </ImageBackground>
@@ -241,6 +239,16 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
   },
+  center: { 
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: { 
+    marginTop: 10,
+    color: "#5A390E",
+    fontFamily: "Inter",
+  },
   buttonWrapper: {
     alignItems: "center",
     marginTop: 30,
@@ -255,6 +263,9 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginBottom: 130,
   },
+  loginButtonActive: {
+    backgroundColor: "#6D1B12",
+  },
   loginButtonDisabled: {
     opacity: 0.45,
     backgroundColor: "#6D1B12",
@@ -267,6 +278,3 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-// TODO: Integrate with backend API here (endpoint: /avatar, method: GET/POST)
-// TODO: Add backend integration logic (loading, error handling, response handling)
-// TODO: Connect to authentication/user session backend
