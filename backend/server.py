@@ -446,5 +446,6 @@ def recommend_template():
         print(f"Recommend template error: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+# for the endpoint
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
