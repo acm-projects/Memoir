@@ -11,7 +11,6 @@ import {
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Mock avatar data - replace with real backend response
 const AVATAR_DATA = [
   {
     id: "1",
@@ -82,6 +81,7 @@ export default function AvatarSelection() {
   const { top } = useSafeAreaInsets();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  //BACKEND:
   const selectedAvatar = AVATAR_DATA.find((avatar) => avatar.id === selectedId);
 
   const renderAvatar = ({ item }: { item: typeof AVATAR_DATA[0] }) => {

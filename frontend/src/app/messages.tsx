@@ -22,6 +22,8 @@ export default function Messages() {
   const { top } = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
 
+  
+  //BACKEND: replace  array with actual data from backend API 
   const [users] = useState([
     { id: 1, name: 'Teju', lastMessage: 'memoir the best project', avatar: require('../../assets/images/origami-gorilla.png'), unread: 2, timestamp: '2m ago' },
     { id: 2, name: 'Kasish', lastMessage: 'hi', avatar: require('../../assets/images/default-avatar.png'), unread: 100, timestamp: '2h ago' },
@@ -33,7 +35,7 @@ export default function Messages() {
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
+  //BACKEND: connect to the actual chat room screen for the selected user
   const openChatRoom = (user: any) => {
     router.push({ pathname: '/chatRoom', params: user });
   };
@@ -122,7 +124,7 @@ export default function Messages() {
                     >
                       <View style={styles.avatarWrapper}>
                         <View style={styles.avatarStampBorder}>
-                          <Image source={user.avatar} style={styles.avatarImg} />
+                          <Image source={user.avatar} style={styles.avatarImg} /> {/*BACKEND: replace with actual avatar from backend */}
                         </View>
                         {isUnread && <View style={styles.avatarDot} />}
                       </View>

@@ -29,7 +29,7 @@ export default function Signup() {
     setShow(false);
   }
 };
-
+//BACKEND: connect to the actual signup API endpoint and handle response
   const handleSignup = () => {
     if (!name || !email) {
       alert("Please fill in all fields");
@@ -343,6 +343,7 @@ confirmButtonText: {
    zIndex : 3,
   
  }
+});
 
 // TODO: Integrate with backend API here (endpoint: /signup, method: POST)
 // TODO: Add backend integration logic (loading, error handling, response handling)
