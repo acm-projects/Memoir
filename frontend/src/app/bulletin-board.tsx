@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -19,10 +20,21 @@ import Svg, { Path, Circle } from "react-native-svg";
 
 import DraggableItem from "../components/draggableItem";
 import BottomNavbar from "../components/BottomNavbar";
+import {
+  fetchBoardItems,
+  addNote as addNoteService,
+  addSticker as addStickerService,
+  addGif as addGifService,
+  addPhoto as addPhotoService,
+  updateItemPosition,
+  deleteItem as deleteItemService,
+  updateNoteContent,
+} from "@/services/bulletinBoard.services";
+import { supabase } from "@/lib/supabase";
 
 type Item = {
   id: string;
-  type: "note" | "sticker" | "card" | "photo";
+  type: "note" | "sticker" | "card" | "photo" | "gif";
   content: string;
   x: number;
   y: number;
@@ -42,52 +54,25 @@ function seededRotation(id: string) {
   return (hash % 13) - 6;
 }
 
+// simple debounce utility
+function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
+  let timer: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
 export default function BulletinBoard() {
   const router = useRouter();
-  const { title } = useLocalSearchParams();
+  const { title, folderId } = useLocalSearchParams<{ title: string; folderId: string }>();
 
-  const [items, setItems] = useState<Item[]>([
-    {
-      id: "2",
-      type: "card",
-      content: "card1",
-      x: 30,
-      y: 260,
-      image: require("../../assets/images/cards.jpg"),
-      rotation: seededRotation("2"),
-      scale: 1,
-    },
-    {
-      id: "3",
-      type: "card",
-      content: "card2",
-      x: 200,
-      y: 400,
-      image: require("../../assets/images/card2.jpg"),
-      rotation: seededRotation("3"),
-      scale: 1,
-    },
-    {
-      id: "4",
-      type: "card",
-      content: "card3",
-      x: 60,
-      y: 550,
-      image: require("../../assets/images/card3.jpg"),
-      rotation: seededRotation("4"),
-      scale: 1,
-    },
-  ]);
-  // TODO: Replace mock data with real backend response
-  // TODO: Integrate with backend API here (endpoint: /bulletin-board, method: GET/POST)
-  // TODO: Add backend integration logic (loading, error handling, response handling)
-
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
-  const [activeTool, setActiveTool] = useState<
-    "note" | "sticker" | "gif" | "photo" | null
-  >(null);
+  const [activeTool, setActiveTool] = useState<"note" | "sticker" | "gif" | "photo" | null>(null);
   const [gifs, setGifs] = useState<any[]>([]);
   const [gifSearch, setGifSearch] = useState("");
 
@@ -99,90 +84,188 @@ export default function BulletinBoard() {
   ];
   const ACCENT_COLORS = ["#557263", "#7B1D1D", "#8B6A3E", "#4A6741", "#6B4F6B"];
 
-  const addNote = (color: string) => {
-    const id = Date.now().toString();
-    setItems((prev) => [
-      ...prev,
-      {
-        id,
-        type: "note",
-        content: "New note",
-        x: 80,
-        y: 100,
-        color,
-        rotation: seededRotation(id),
-        scale: 1,
-      },
-    ]);
-    setActiveTool(null);
-  };
+  // ─── Fetch on mount ───────────────────────────────────────────────
+  useEffect(() => {
+    loadItems();
+  }, [folderId]);
 
-  const addSticker = (stickerKey: string) => {
-    const id = Date.now().toString();
-    setItems((prev) => [
-      ...prev,
-      {
-        id,
-        type: "sticker",
-        content: "",
-        x: 150,
-        y: 200,
-        sticker: stickerKey,
-        rotation: seededRotation(id),
-        scale: 1,
-      },
-    ]);
-    setActiveTool(null);
-  };
-
-  const deleteItem = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const handlePositionChange = (id: string, newX: number, newY: number) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, x: newX, y: newY } : item
-      )
-    );
-  };
-
-  const handleRotationChange = (id: string, newRotation: number) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, rotation: newRotation } : item
-      )
-    );
-  };
-
-  const handleScaleChange = (id: string, newScale: number) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, scale: newScale } : item
-      )
-    );
-  };
-
-  const onContentChange = (id: string, newContent: string) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, content: newContent } : item
-      )
-    );
-  };
-
-  async function searchGifs(query: string) {
-    const apiKey = process.env.EXPO_PUBLIC_GIPHY_KEY;
-    const url = query
-      ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${query}&limit=20`
-      : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=20`;
-
-    const res = await fetch(url);
-    const json = await res.json();
-    setGifs(json.data || []);
+  async function loadItems() {
+    try {
+      setLoading(true);
+      const data = await fetchBoardItems(folderId);
+      setItems(data as Item[]);
+    } catch (e) {
+      console.error("Failed to load board items:", e);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  async function pickImage() {
+  // ─── Real-time subscriptions ──────────────────────────────────────
+  useEffect(() => {
+    if (!folderId) return;
+
+    const channels = [
+      supabase
+        .channel(`notes:${folderId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'notes',
+          filter: `folder_id=eq.${folderId}`,
+        }, (payload) => handleRealtimeChange('note', payload))
+        .subscribe(),
+
+      supabase
+        .channel(`cards:${folderId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'cards',
+          filter: `folder_id=eq.${folderId}`,
+        }, (payload) => handleRealtimeChange('card', payload))
+        .subscribe(),
+
+      supabase
+        .channel(`folder_stickers:${folderId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'folder_stickers',
+          filter: `folder_id=eq.${folderId}`,
+        }, (payload) => handleRealtimeChange('sticker', payload))
+        .subscribe(),
+
+      supabase
+        .channel(`board_gifs:${folderId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'board_gifs',
+          filter: `folder_id=eq.${folderId}`,
+        }, (payload) => handleRealtimeChange('gif', payload))
+        .subscribe(),
+
+      supabase
+        .channel(`board_photos:${folderId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'board_photos',
+          filter: `folder_id=eq.${folderId}`,
+        }, (payload) => handleRealtimeChange('photo', payload))
+        .subscribe(),
+    ];
+
+    return () => {
+      channels.forEach((c) => supabase.removeChannel(c));
+    };
+  }, [folderId]);
+
+  function handleRealtimeChange(type: Item['type'], payload: any) {
+    const { eventType, new: newRow, old: oldRow } = payload;
+
+    if (eventType === 'DELETE') {
+      setItems((prev) => prev.filter((item) => item.id !== oldRow.id));
+      return;
+    }
+
+    const mapped = mapRowToItem(type, newRow);
+    if (!mapped) return;
+
+    if (eventType === 'INSERT') {
+      // avoid duplicates from our own optimistic inserts
+      setItems((prev) =>
+        prev.some((i) => i.id === mapped.id)
+          ? prev.map((i) => (i.id === mapped.id ? mapped : i))
+          : [...prev, mapped]
+      );
+    }
+
+    if (eventType === 'UPDATE') {
+      setItems((prev) =>
+        prev.map((i) => (i.id === mapped.id ? { ...i, ...mapped } : i))
+      );
+    }
+  }
+
+  function mapRowToItem(type: Item['type'], row: any): Item | null {
+    if (!row) return null;
+    switch (type) {
+      case 'note':
+        return {
+          id: row.id, type: 'note',
+          content: row.content, color: row.color,
+          x: row.x, y: row.y,
+          rotation: row.rotation, scale: row.scale,
+        };
+      case 'card':
+        return {
+          id: row.id, type: 'card',
+          content: row.content,
+          x: row.x, y: row.y,
+          rotation: row.rotation, scale: row.scale,
+          image: { uri: row.image_url },
+        };
+      case 'sticker':
+        return {
+          id: row.id, type: 'sticker', content: '',
+          x: row.x, y: row.y,
+          rotation: row.rotation, scale: row.scale,
+          sticker: row.image_url,
+        };
+      case 'gif':
+        return {
+          id: row.id, type: 'gif', content: '',
+          x: row.x, y: row.y,
+          rotation: row.rotation, scale: row.scale,
+          sticker: row.giphy_url,
+        };
+      case 'photo':
+        return {
+          id: row.id, type: 'photo', content: '',
+          x: row.x, y: row.y,
+          rotation: row.rotation, scale: row.scale,
+          sticker: row.image_url,
+        };
+      default:
+        return null;
+    }
+  }
+
+  // ─── Add items ────────────────────────────────────────────────────
+  const addNote = async (color: string) => {
+    try {
+      const newItem = await addNoteService(folderId, color);
+      // optimistic — realtime will also fire but deduped above
+      setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
+    } catch (e) {
+      console.error("Failed to add note:", e);
+    }
+    setActiveTool(null);
+  };
+
+  const addSticker = async (stickerKey: string) => {
+    try {
+      const newItem = await addStickerService(folderId, stickerKey);
+      setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
+    } catch (e) {
+      console.error("Failed to add sticker:", e);
+    }
+    setActiveTool(null);
+  };
+
+  const addGif = async (gifUrl: string) => {
+    try {
+      const newItem = await addGifService(folderId, gifUrl);
+      setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
+    } catch (e) {
+      console.error("Failed to add gif:", e);
+    }
+    setActiveTool(null);
+  };
+
+  const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       alert("Permission required.");
@@ -195,28 +278,104 @@ export default function BulletinBoard() {
     });
 
     if (!res.canceled && res.assets[0]?.uri) {
-      const id = Date.now().toString();
-      setItems((prev) => [
-        ...prev,
-        {
-          id,
-          type: "sticker",
-          content: "",
-          x: 100,
-          y: 150,
-          sticker: res.assets[0].uri,
-          rotation: seededRotation(id),
-          scale: 1,
-        },
-      ]);
+      try {
+        const newItem = await addPhotoService(folderId, res.assets[0].uri);
+        setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
+      } catch (e) {
+        console.error("Failed to add photo:", e);
+      }
       setActiveTool(null);
     }
+  };
+
+  // ─── Delete ───────────────────────────────────────────────────────
+  const deleteItem = async (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    setItems((prev) => prev.filter((i) => i.id !== id)); // optimistic
+    try {
+      await deleteItemService(item.type, id);
+    } catch (e) {
+      console.error("Failed to delete item:", e);
+      setItems((prev) => [...prev, item]); // revert on error
+    }
+  };
+
+  // ─── Position / rotation / scale (debounced saves) ────────────────
+  const debouncedSave = useCallback(
+    debounce((id: string, type: Item['type'], fields: Partial<Item>) => {
+      updateItemPosition(type, id, fields).catch((e) =>
+        console.error("Failed to save position:", e)
+      );
+    }, 600),
+    []
+  );
+
+  const handlePositionChange = (id: string, newX: number, newY: number) => {
+    setItems((prev) =>
+      prev.map((item) => item.id === id ? { ...item, x: newX, y: newY } : item)
+    );
+    const item = items.find((i) => i.id === id);
+    if (item) debouncedSave(id, item.type, { x: newX, y: newY });
+  };
+
+  const handleRotationChange = (id: string, newRotation: number) => {
+    setItems((prev) =>
+      prev.map((item) => item.id === id ? { ...item, rotation: newRotation } : item)
+    );
+    const item = items.find((i) => i.id === id);
+    if (item) debouncedSave(id, item.type, { rotation: newRotation });
+  };
+
+  const handleScaleChange = (id: string, newScale: number) => {
+    setItems((prev) =>
+      prev.map((item) => item.id === id ? { ...item, scale: newScale } : item)
+    );
+    const item = items.find((i) => i.id === id);
+    if (item) debouncedSave(id, item.type, { scale: newScale });
+  };
+
+  // ─── Note content (debounced save) ───────────────────────────────
+  const debouncedContentSave = useCallback(
+    debounce((id: string, content: string) => {
+      updateNoteContent(id, content).catch((e) =>
+        console.error("Failed to save note content:", e)
+      );
+    }, 800),
+    []
+  );
+
+  const onContentChange = (id: string, newContent: string) => {
+    setItems((prev) =>
+      prev.map((item) => item.id === id ? { ...item, content: newContent } : item)
+    );
+    debouncedContentSave(id, newContent);
+  };
+
+  // ─── GIF search ───────────────────────────────────────────────────
+  async function searchGifs(query: string) {
+    const apiKey = process.env.EXPO_PUBLIC_GIPHY_KEY;
+    const url = query
+      ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${query}&limit=20` // handle later
+      : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=20`;
+    const res = await fetch(url);
+    const json = await res.json();
+    setGifs(json.data || []);
   }
 
   const handleDone = () => {
     setIsEditing(false);
     setActiveTool(null);
   };
+
+  // ─── Render ───────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color="#6D1B12" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -228,16 +387,9 @@ export default function BulletinBoard() {
         <TouchableOpacity onPress={() => router.back()} style={styles.bannerBack}>
           <Text style={styles.bannerBackText}>←</Text>
         </TouchableOpacity>
-
-        <Text style={styles.bannerTitle} numberOfLines={1}>
-          {title}
-        </Text>
-
+        <Text style={styles.bannerTitle} numberOfLines={1}>{title}</Text>
         {!isEditing && (
-          <TouchableOpacity
-            style={styles.bannerEditButton}
-            onPress={() => setIsEditing(true)}
-          >
+          <TouchableOpacity style={styles.bannerEditButton} onPress={() => setIsEditing(true)}>
             <Text style={styles.bannerEditText}>Edit</Text>
           </TouchableOpacity>
         )}
@@ -256,12 +408,7 @@ export default function BulletinBoard() {
         source={require("../../assets/images/layered-vintage-paper.png")}
         style={styles.paperBackground}
       >
-        <TouchableWithoutFeedback
-          onPress={() => {
-            Keyboard.dismiss();
-            setActiveTool(null);
-          }}
-        >
+        <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setActiveTool(null); }}>
           <View
             style={styles.corkboardFrame}
             onLayout={(e) => setBoardSize(e.nativeEvent.layout)}
@@ -343,15 +490,8 @@ export default function BulletinBoard() {
                 )}
 
                 {activeTool === "photo" && (
-                  <TouchableOpacity
-                    style={styles.panelUploadArea}
-                    onPress={pickImage}
-                  >
-                    <Ionicons
-                      name="cloud-upload-outline"
-                      size={24}
-                      color="#8B7355"
-                    />
+                  <TouchableOpacity style={styles.panelUploadArea} onPress={pickImage}>
+                    <Ionicons name="cloud-upload-outline" size={24} color="#8B7355" />
                     <Text style={styles.uploadText}>Upload from Camera Roll</Text>
                   </TouchableOpacity>
                 )}
@@ -363,12 +503,8 @@ export default function BulletinBoard() {
                       placeholder="Search GIFs..."
                       placeholderTextColor="#9a7a60"
                       value={gifSearch}
-                      onChangeText={(t) => {
-                        setGifSearch(t);
-                        searchGifs(t);
-                      }}
+                      onChangeText={(t) => { setGifSearch(t); searchGifs(t); }}
                     />
-
                     <ScrollView
                       horizontal
                       showsHorizontalScrollIndicator={false}
@@ -377,23 +513,7 @@ export default function BulletinBoard() {
                       {gifs.map((gif) => (
                         <TouchableOpacity
                           key={gif.id}
-                          onPress={() => {
-                            const id = Date.now().toString();
-                            setItems((prev) => [
-                              ...prev,
-                              {
-                                id,
-                                type: "sticker",
-                                content: "",
-                                x: 100,
-                                y: 150,
-                                sticker: gif.images.fixed_height.url,
-                                rotation: seededRotation(id),
-                                scale: 1,
-                              },
-                            ]);
-                            setActiveTool(null);
-                          }}
+                          onPress={() => addGif(gif.images.fixed_height.url)}
                         >
                           <Image
                             source={{ uri: gif.images.fixed_height.url }}
@@ -409,50 +529,30 @@ export default function BulletinBoard() {
 
             <View style={styles.toolbar}>
               <Pressable
-                style={[
-                  styles.toolButton,
-                  activeTool === "note" && styles.activeToolBtn,
-                ]}
+                style={[styles.toolButton, activeTool === "note" && styles.activeToolBtn]}
                 onPress={() => setActiveTool("note")}
               >
                 <Ionicons name="document-text-outline" size={24} color="#5A390E" />
               </Pressable>
-
               <Pressable
-                style={[
-                  styles.toolButton,
-                  activeTool === "photo" && styles.activeToolBtn,
-                ]}
+                style={[styles.toolButton, activeTool === "photo" && styles.activeToolBtn]}
                 onPress={() => setActiveTool("photo")}
               >
                 <Ionicons name="image-outline" size={24} color="#5A390E" />
               </Pressable>
-
               <Pressable
-                style={[
-                  styles.toolButton,
-                  activeTool === "sticker" && styles.activeToolBtn,
-                ]}
+                style={[styles.toolButton, activeTool === "sticker" && styles.activeToolBtn]}
                 onPress={() => setActiveTool("sticker")}
               >
                 <Ionicons name="happy-outline" size={24} color="#5A390E" />
               </Pressable>
-
               <Pressable
-                style={[
-                  styles.toolButton,
-                  activeTool === "gif" && styles.activeToolBtn,
-                ]}
-                onPress={() => {
-                  setActiveTool("gif");
-                  searchGifs("");
-                }}
+                style={[styles.toolButton, activeTool === "gif" && styles.activeToolBtn]}
+                onPress={() => { setActiveTool("gif"); searchGifs(""); }}
               >
                 <Ionicons name="film-outline" size={24} color="#5A390E" />
               </Pressable>
-
               <View style={styles.toolbarDivider} />
-
               <Pressable style={styles.doneButton} onPress={handleDone}>
                 <Ionicons name="checkmark" size={22} color="#F6E5CD" />
               </Pressable>
@@ -465,7 +565,6 @@ export default function BulletinBoard() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F3EE" },
 

@@ -5,7 +5,7 @@ import { Entypo } from '@expo/vector-icons';
 import { Image } from "react-native";
 import { heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
-export default function ChatRoomHeader({ user, router }) {
+export default function ChatRoomHeader({ name, avatar, router }) {
   return (
     <Stack.Screen
       options={{
@@ -26,7 +26,7 @@ export default function ChatRoomHeader({ user, router }) {
                     source={require('../../assets/images/origami-gorilla.png')}
                     style={{ height: hp(5), width: hp(5)}}
                 />
-                <Text style={{ fontSize: 16, fontWeight: '500', alignItems: 'center', color: 'white'}}>Teju</Text>
+                <Text style={{ fontSize: 16, fontWeight: '500', alignItems: 'center', color: 'white'}}>name</Text>
                 </View>
             </View>
         )
