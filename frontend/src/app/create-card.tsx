@@ -324,6 +324,8 @@ export default function CreateCard() {
     setItems((prev) => prev.filter((i) => i.id !== id));
   };
 
+
+
   async function searchGifs(query: string) {
     const apiKey = process.env.EXPO_PUBLIC_GIPHY_KEY;
     const url = query
@@ -364,7 +366,7 @@ export default function CreateCard() {
             )}
 
             {items.map((item) => (
-              <DraggableItem
+             <DraggableItem
                 key={item.id}
                 item={item}
                 isEditing={true}
@@ -376,10 +378,8 @@ export default function CreateCard() {
                 onRotationChange={handleRotationChange}
                 onScaleChange={handleScaleChange}
                 onContentChange={handleContentChange}
-                boardWidth={boardSize.width}
-                boardHeight={boardSize.height}
                 accentColor="#8B6A3E"
-              />
+/>
             ))}
           </View>
 

@@ -6,17 +6,9 @@ import {
   TextInput,
   Image,
   TouchableOpacity,
-  Keyboard,
   ImageBackground,
-  Alert,
+  PanResponder,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  runOnJS,
-} from "react-native-reanimated";
 
 export default function DraggableItem({
   item,
@@ -26,54 +18,24 @@ export default function DraggableItem({
   setSelectedId,
   onColorChange,
   onPositionChange,
-  onRotationChange,
-  onScaleChange,
-  accentColor,
-  caption,
-  onCaptionChange,
   onContentChange,
-  boardWidth = 0,
-  boardHeight = 0,
+  onScaleChange,
+  onRotationChange,
+  accentColor,
 }: any) {
-  const router = useRouter();
-  const [isDragging, setIsDragging] = useState(false);
+  const [position, setPosition] = useState({
+    x: item.x ?? 0,
+    y: item.y ?? 0,
+  });
 
-  const isThumbtack = parseInt(item.id) % 2 === 0;
-  const pinSize = 14;
-  const pinColor = accentColor;
+  const isSelected = selectedId === item.id;
 
-  const safeX = typeof item.x === "number" && !isNaN(item.x) ? item.x : 0;
-  const safeY = typeof item.y === "number" && !isNaN(item.y) ? item.y : 0;
-  const safeId = item.id != null ? item.id : "0";
-  const safeRotation =
-    typeof item.rotation === "number" && !isNaN(item.rotation)
-      ? item.rotation
-      : 0;
-  const safeScale =
-    typeof item.scale === "number" && !isNaN(item.scale) ? item.scale : 1;
-
-  const x = useSharedValue(safeX);
-  const y = useSharedValue(safeY);
-  const scale = useSharedValue(safeScale);
-  const rotation = useSharedValue(safeRotation);
-
-  const startX = useSharedValue(0);
-  const startY = useSharedValue(0);
-  const startRotation = useSharedValue(safeRotation);
-  const startScale = useSharedValue(safeScale);
-
-
-  //BACKEND: replace with actual data from backend API
-  const COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
-
-
- //Backend: replace with actual data from backend API
   const STICKERS: { [key: string]: any } = {
     star: require("../../assets/images/star-stamp.png"),
     heart: require("../../assets/images/costa-rica-stamp.png"),
     flower: require("../../assets/images/orange-flower-stamp.png"),
   };
- //BACKEND: replace with actual data from backend API
+
   const TEXT_COLORS = [
     "#5A390E",
     "#6D1B12",
@@ -83,266 +45,88 @@ export default function DraggableItem({
     "#000000",
   ];
 
-  const isSelected = selectedId === item.id;
+  const currentScale = item.scale ?? 1;
+  const currentRotation = item.rotation ?? 0;
 
-  const ITEM_WIDTH = 160;
-  const ITEM_HEIGHT = 160;
-  const MIN_SCALE = 0.5;
-  const MAX_SCALE = 2.5;
-
-  const clamp = (value: number, min: number, max: number) =>
-    Math.max(min, Math.min(value, max));
-
-  const pan = Gesture.Pan()
-    .enabled(!!isEditing)
-    .onBegin(() => {
-      if (!isEditing) return;
-      runOnJS(setIsDragging)(true);
-      startX.value = x.value;
-      startY.value = y.value;
-    })
-    .onUpdate((event) => {
-      if (!isEditing) return;
-
-      let newX = startX.value + event.translationX;
-      let newY = startY.value + event.translationY;
-
-      const scaledWidth = ITEM_WIDTH * scale.value;
-      const scaledHeight = ITEM_HEIGHT * scale.value;
-
-      if (boardWidth && boardHeight) {
-        newX = clamp(newX, 0, Math.max(0, boardWidth - scaledWidth));
-        newY = clamp(newY, 0, Math.max(0, boardHeight - scaledHeight));
-      }
-
-      x.value = newX;
-      y.value = newY;
-
-      if (onPositionChange) {
-        runOnJS(onPositionChange)(safeId, newX, newY);
-      }
-    })
-    .onEnd(() => {
-      if (!isEditing) return;
-      runOnJS(setIsDragging)(false);
-
-      if (onPositionChange) {
-        runOnJS(onPositionChange)(safeId, x.value, y.value);
-      }
-    });
-
-  const rotationGesture = Gesture.Rotation()
-    .enabled(!!isEditing)
-    .onBegin(() => {
-      if (!isEditing) return;
-      startRotation.value = rotation.value;
-    })
-    .onUpdate((event) => {
-      if (!isEditing) return;
-
-      const newDeg = startRotation.value + (event.rotation * 180) / Math.PI;
-      rotation.value = newDeg;
-
-      if (onRotationChange) {
-        runOnJS(onRotationChange)(safeId, newDeg);
-      }
-
-      if (onPositionChange) {
-        runOnJS(onPositionChange)(safeId, x.value, y.value);
-      }
-    })
-    .onEnd(() => {
-      if (!isEditing) return;
-
-      if (onRotationChange) {
-        runOnJS(onRotationChange)(safeId, rotation.value);
-      }
-
-      if (onPositionChange) {
-        runOnJS(onPositionChange)(safeId, x.value, y.value);
-      }
-    });
-
-  const pinchGesture = Gesture.Pinch()
-    .enabled(!!isEditing)
-    .onBegin(() => {
-      if (!isEditing) return;
-      startScale.value = scale.value;
-    })
-    .onUpdate((event) => {
-      if (!isEditing) return;
-
-      const nextScale = clamp(startScale.value * event.scale, MIN_SCALE, MAX_SCALE);
-      scale.value = nextScale;
-
-      const scaledWidth = ITEM_WIDTH * nextScale;
-      const scaledHeight = ITEM_HEIGHT * nextScale;
-
-      let newX = x.value;
-      let newY = y.value;
-
-      if (boardWidth && boardHeight) {
-        newX = clamp(newX, 0, Math.max(0, boardWidth - scaledWidth));
-        newY = clamp(newY, 0, Math.max(0, boardHeight - scaledHeight));
-      }
-
-      x.value = newX;
-      y.value = newY;
-
-      if (onScaleChange) {
-        runOnJS(onScaleChange)(safeId, nextScale);
-      }
-
-      if (onPositionChange) {
-        runOnJS(onPositionChange)(safeId, newX, newY);
-      }
-    })
-    .onEnd(() => {
-      if (!isEditing) return;
-
-      if (onScaleChange) {
-        runOnJS(onScaleChange)(safeId, scale.value);
-      }
-
-      if (onPositionChange) {
-        runOnJS(onPositionChange)(safeId, x.value, y.value);
-      }
-    });
-
-  const tap = Gesture.Tap().onEnd(() => {
-    runOnJS(setSelectedId)(selectedId === item.id ? null : item.id);
+  const panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => false,
+    onMoveShouldSetPanResponder: () => !!isEditing && item.type !== "text",
+    onPanResponderMove: (_, gestureState) => {
+      const newX = (item.x ?? 0) + gestureState.dx;
+      const newY = (item.y ?? 0) + gestureState.dy;
+      setPosition({ x: newX, y: newY });
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      const newX = (item.x ?? 0) + gestureState.dx;
+      const newY = (item.y ?? 0) + gestureState.dy;
+      setPosition({ x: newX, y: newY });
+      onPositionChange?.(item.id, newX, newY);
+    },
   });
 
-  const gesture = Gesture.Simultaneous(
-    pan,
-    rotationGesture,
-    pinchGesture,
-    tap
-  );
-
-  let zIndex = 1,
-    shadowOpacity = 0.35,
-    shadowRadius = 8,
-    elevation = 8,
-    scaleBoost = 1;
-
-  if (isDragging) {
-    zIndex = 100;
-    shadowOpacity = 0.55;
-    shadowRadius = 16;
-    elevation = 16;
-    scaleBoost = 1.04;
-  } else if (selectedId === item.id) {
-    zIndex = 50;
-    shadowOpacity = 0.4;
-    shadowRadius = 10;
-    elevation = 10;
-  }
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    position: "absolute",
-    transform: [
-      { translateX: x.value },
-      { translateY: y.value },
-      { scale: scale.value * scaleBoost },
-      { rotate: `${rotation.value}deg` },
-    ],
-  }));
-
-  function renderPin() {
-    if (!isThumbtack) {
-      return (
-        <View style={{ position: "absolute", top: -10, alignSelf: "center", zIndex: 12 }}>
-          <View
-            style={{
-              width: pinSize,
-              height: pinSize,
-              borderRadius: pinSize / 2,
-              backgroundColor: pinColor,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <View
-              style={{
-                width: 5,
-                height: 5,
-                borderRadius: 999,
-                backgroundColor: "rgba(255,255,255,0.7)",
-              }}
-            />
-          </View>
-        </View>
-      );
-    }
+  function renderControls() {
+    if (!isSelected || !isEditing) return null;
 
     return (
-      <View
-        style={{
-          position: "absolute",
-          top: -10,
-          alignSelf: "center",
-          zIndex: 12,
-          alignItems: "center",
-        }}
-      >
-        <View
-          style={{
-            width: pinSize,
-            height: pinSize,
-            borderRadius: pinSize / 2,
-            backgroundColor: pinColor,
-          }}
-        />
-        <View
-          style={{
-            width: 3,
-            height: 8,
-            borderRadius: 2,
-            backgroundColor: pinColor,
-            marginTop: -2,
-          }}
-        />
+      <View style={styles.controlsWrapper}>
+        {item.type === "text" && (
+          <View style={styles.colorPicker}>
+            {TEXT_COLORS.map((color) => (
+              <TouchableOpacity
+                key={color}
+                onPress={() => onColorChange(item.id, color)}
+                style={[
+                  styles.colorDot,
+                  { backgroundColor: color },
+                  item.color === color && styles.activeColor,
+                ]}
+              />
+            ))}
+          </View>
+        )}
+
+        <View style={styles.transformRow}>
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={() =>
+              onScaleChange?.(item.id, Math.max(0.5, currentScale - 0.1))
+            }
+          >
+            <Text style={styles.controlButtonText}>−</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={() =>
+              onScaleChange?.(item.id, Math.min(2.5, currentScale + 0.1))
+            }
+          >
+            <Text style={styles.controlButtonText}>+</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={() => onRotationChange?.(item.id, currentRotation - 10)}
+          >
+            <Text style={styles.controlButtonText}>↺</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={() => onRotationChange?.(item.id, currentRotation + 10)}
+          >
+            <Text style={styles.controlButtonText}>↻</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
   function renderContent() {
-    if (item.type === "card") {
-      if (item.image) {
-        return (
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => {
-              router.push({
-                pathname: "/one-specific-card" as any,
-                params: {
-                  image: item.content,
-                  title: item.content,
-                  caption: "",
-                },
-              });
-            }}
-          >
-            <Image
-              source={item.image}
-              style={{ width: 120, height: 160, borderRadius: 8 }}
-              resizeMode="cover"
-            />
-          </TouchableOpacity>
-        );
-      }
-
-      return (
-        <View style={styles.card}>
-          <Text>{item.content}</Text>
-        </View>
-      );
-    }
-
     if (item.type === "sticker") {
       const isPhoto =
-        item.sticker?.startsWith("file") || item.sticker?.startsWith("http");
+        typeof item.sticker === "string" &&
+        (item.sticker.startsWith("file") || item.sticker.startsWith("http"));
 
       if (isPhoto) {
         return (
@@ -354,16 +138,33 @@ export default function DraggableItem({
         );
       }
 
+      const stickerSource = STICKERS[item.sticker];
+      if (!stickerSource) return null;
 
-      {/*BACKEND: calls hardcoded array here in that source below */}
       return (
-        
         <Image
-          source={STICKERS[item.sticker]} 
+          source={stickerSource}
           style={{ width: 80, height: 80 }}
           resizeMode="contain"
         />
-       
+      );
+    }
+
+    if (item.type === "text") {
+      return (
+        <View style={styles.textContainer}>
+          <TextInput
+            value={item.content}
+            multiline
+            style={[
+              styles.draggableText,
+              { color: item.color || "#5A390E" },
+            ]}
+            placeholder="Type here..."
+            onFocus={() => setSelectedId(item.id)}
+            onChangeText={(text) => onContentChange(item.id, text)}
+          />
+        </View>
       );
     }
 
@@ -377,8 +178,9 @@ export default function DraggableItem({
               backgroundColor: item.noteBackground
                 ? "transparent"
                 : item.color || "#FFF6A3",
+              borderColor: accentColor,
+              borderWidth: 1.5,
             },
-            { borderColor: accentColor, borderWidth: 1.5 },
           ]}
           imageStyle={{ borderRadius: 10 }}
         >
@@ -386,8 +188,6 @@ export default function DraggableItem({
             value={item.content}
             onChangeText={(text) => onContentChange(item.id, text)}
             multiline
-            returnKeyType="done"
-            onSubmitEditing={Keyboard.dismiss}
             style={styles.noteInput}
             placeholder="Write here..."
             placeholderTextColor="rgba(0,0,0,0.3)"
@@ -396,73 +196,49 @@ export default function DraggableItem({
       );
     }
 
-    if (item.type === "text") {
-      return (
-        <View>
-          <View style={styles.textContainer}>
-            <TextInput
-              value={item.content}
-              multiline
-              style={[styles.draggableText, { color: item.color || "#5A390E" }]}
-              placeholder="Type here..."
-              onChangeText={(text) => onContentChange(item.id, text)}
-            />
-          </View>
-
-          {isSelected && (
-            <View style={styles.colorPicker}>
-              {TEXT_COLORS.map((color) => (
-                <TouchableOpacity
-                  key={color}
-                  onPress={() => onColorChange(item.id, color)}
-                  style={[
-                    styles.colorDot,
-                    { backgroundColor: color },
-                    item.color === color && styles.activeColor,
-                  ]}
-                />
-              ))}
-            </View>
-          )}
-        </View>
-      );
-    }
-
     return null;
   }
 
   return (
-    <GestureDetector gesture={gesture}>
-      <Animated.View
-        style={[
-          animatedStyle,
-          {
-            zIndex,
-            shadowColor: "#000",
-            shadowOpacity,
-            shadowRadius,
-            elevation,
-          },
-        ]}
+    <View
+      style={[
+        styles.wrapper,
+        {
+          left: position.x,
+          top: position.y,
+          transform: [
+            { scale: currentScale },
+            { rotate: `${currentRotation}deg` },
+          ],
+        },
+      ]}
+      {...(item.type !== "text" ? panResponder.panHandlers : {})}
+    >
+      {isEditing && (
+        <TouchableOpacity
+          style={styles.deleteBtnStyle}
+          onPress={() => deleteItem(item.id)}
+        >
+          <Text style={styles.deleteText}>✕</Text>
+        </TouchableOpacity>
+      )}
+
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={() => setSelectedId(isSelected ? null : item.id)}
       >
-        {renderPin()}
-
-        {isEditing && (
-          <TouchableOpacity
-            style={styles.deleteBtnStyle}
-            onPress={() => deleteItem(item.id)}
-          >
-            <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 14 }}>✕</Text>
-          </TouchableOpacity>
-        )}
-
         {renderContent()}
-      </Animated.View>
-    </GestureDetector>
+      </TouchableOpacity>
+
+      {renderControls()}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    position: "absolute",
+  },
   note: {
     width: 140,
     minHeight: 100,
@@ -474,21 +250,7 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 13,
     color: "#3a2010",
-    fontFamily: "Inter",
     minHeight: 100,
-  },
-  sticker: {
-    fontSize: 40,
-  },
-  card: {
-    width: 160,
-    height: 120,
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
   },
   textContainer: {
     padding: 10,
@@ -499,7 +261,6 @@ const styles = StyleSheet.create({
   },
   draggableText: {
     fontSize: 24,
-    fontFamily: "Calistoga",
     textAlign: "center",
     minHeight: 40,
     padding: 5,
@@ -530,6 +291,33 @@ const styles = StyleSheet.create({
     borderColor: "#5A390E",
     transform: [{ scale: 1.2 }],
   },
+  controlsWrapper: {
+    marginTop: 6,
+    alignItems: "center",
+  },
+  transformRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 6,
+    backgroundColor: "#F8E5CF",
+    padding: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#d7c3ac",
+  },
+  controlButton: {
+    backgroundColor: "#fffaf4",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#d7c3ac",
+  },
+  controlButtonText: {
+    fontSize: 18,
+    color: "#5A390E",
+    fontWeight: "600",
+  },
   deleteBtnStyle: {
     position: "absolute",
     top: -8,
@@ -543,9 +331,10 @@ const styles = StyleSheet.create({
     zIndex: 20,
     borderWidth: 2,
     borderColor: "#fff",
-    shadowColor: "#000",
-    shadowOpacity: 0.18,
-    shadowRadius: 2,
-    elevation: 2,
+  },
+  deleteText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });
