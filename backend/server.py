@@ -16,6 +16,10 @@ np.array = patched_array
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 from pillow_heif import register_heif_opener
 import requests
 from openai import OpenAI
@@ -443,7 +447,39 @@ def recommend_template():
     except Exception as e:
         print(f"Recommend template error: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
+# ================================================================
+# SEED TEMPLATE EMBEDDINGS (temporary - remove after testing)
+# ================================================================
+@app.route('/seed-template-embeddings', methods=['POST'])
+def seed_template_embeddings():
+    try:
+        # fetch all templates without embeddings
+        templates = requests.get(
+            f"{SUPABASE_URL}/rest/v1/templates?embedding=is.null&select=id,style_description",
+            headers=HEADERS
+        ).json()
 
+        if not templates:
+            return jsonify({'message': 'No templates need embedding'}), 200
+
+        updated = []
+        for template in templates:
+            embedding = generate_embedding(template['style_description'])
+            requests.patch(
+                f"{SUPABASE_URL}/rest/v1/templates?id=eq.{template['id']}",
+                json={'embedding': embedding},
+                headers=HEADERS
+            )
+            updated.append(template['id'])
+
+        return jsonify({
+            'success': True,
+            'templates_embedded': len(updated)
+        }), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
 # for the endpoint
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
