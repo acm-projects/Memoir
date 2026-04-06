@@ -31,9 +31,10 @@ export default function DraggableItem({
   const isSelected = selectedId === item.id;
 
   const STICKERS: { [key: string]: any } = {
-    star: require("../../assets/images/star-stamp.png"),
-    heart: require("../../assets/images/costa-rica-stamp.png"),
+    star: require("../../assets/images/cat-stamp.png"),
+    heart: require("../../assets/images/brasil-stamp.png"),
     flower: require("../../assets/images/orange-flower-stamp.png"),
+    strip: require("../../assets/images/photo-strip.png"),
   };
 
   const TEXT_COLORS = [
@@ -74,7 +75,7 @@ export default function DraggableItem({
             {TEXT_COLORS.map((color) => (
               <TouchableOpacity
                 key={color}
-                onPress={() => onColorChange(item.id, color)}
+                onPress={() => onColorChange?.(item.id, color)}
                 style={[
                   styles.colorDot,
                   { backgroundColor: color },
@@ -98,7 +99,7 @@ export default function DraggableItem({
           <TouchableOpacity
             style={styles.controlButton}
             onPress={() =>
-              onScaleChange?.(item.id, Math.min(2.5, currentScale + 0.1))
+              onScaleChange?.(item.id, Math.min(5, currentScale + 0.1))
             }
           >
             <Text style={styles.controlButtonText}>+</Text>
@@ -106,14 +107,14 @@ export default function DraggableItem({
 
           <TouchableOpacity
             style={styles.controlButton}
-            onPress={() => onRotationChange?.(item.id, currentRotation - 10)}
+            onPress={() => onRotationChange?.(item.id, currentRotation - 1)}
           >
             <Text style={styles.controlButtonText}>↺</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.controlButton}
-            onPress={() => onRotationChange?.(item.id, currentRotation + 10)}
+            onPress={() => onRotationChange?.(item.id, currentRotation + 1)}
           >
             <Text style={styles.controlButtonText}>↻</Text>
           </TouchableOpacity>
@@ -156,10 +157,7 @@ export default function DraggableItem({
           <TextInput
             value={item.content}
             multiline
-            style={[
-              styles.draggableText,
-              { color: item.color || "#5A390E" },
-            ]}
+            style={[styles.draggableText, { color: item.color || "#5A390E" }]}
             placeholder="Type here..."
             onFocus={() => setSelectedId(item.id)}
             onChangeText={(text) => onContentChange(item.id, text)}
@@ -200,39 +198,47 @@ export default function DraggableItem({
   }
 
   return (
+  <View style={{ position: "absolute", left: position.x, top: position.y }}>
+    
+    {/* Delete button — outside scale so stays same size */}
+    {isEditing && (
+  <TouchableOpacity
+    style={[
+      styles.deleteBtnStyle,
+      {
+        top: -8,
+        right: -8,
+        transform: [{ translateX: (currentScale - 1) * 40 }, { translateY: -(currentScale - 1) * 40 }],
+      },
+    ]}
+    onPress={() => deleteItem(item.id)}
+  >
+    <Text style={styles.deleteText}>✕</Text>
+  </TouchableOpacity>
+)}
+
+    {/* Scaled/rotated content */}
     <View
-      style={[
-        styles.wrapper,
-        {
-          left: position.x,
-          top: position.y,
-          transform: [
-            { scale: currentScale },
-            { rotate: `${currentRotation}deg` },
-          ],
-        },
-      ]}
+      style={{
+        transform: [
+          { scale: currentScale },
+          { rotate: `${currentRotation}deg` },
+        ],
+      }}
       {...(item.type !== "text" ? panResponder.panHandlers : {})}
     >
-      {isEditing && (
-        <TouchableOpacity
-          style={styles.deleteBtnStyle}
-          onPress={() => deleteItem(item.id)}
-        >
-          <Text style={styles.deleteText}>✕</Text>
-        </TouchableOpacity>
-      )}
-
       <TouchableOpacity
         activeOpacity={1}
         onPress={() => setSelectedId(isSelected ? null : item.id)}
       >
         {renderContent()}
       </TouchableOpacity>
-
-      {renderControls()}
     </View>
-  );
+
+    {/* Controls */}
+    {renderControls()}
+  </View>
+);
 }
 
 const styles = StyleSheet.create({

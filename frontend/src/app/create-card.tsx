@@ -242,7 +242,9 @@ function AIChatModal({
 
 export default function CreateCard() {
   const [cardColor, setCardColor] = useState("#fffaf4");
-  const [items, setItems] = useState<Item[]>([]);
+ const [items, setItems] = useState<Item[]>([
+  
+  ]);
    // TODO: Replace mock data with real backend response
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -254,9 +256,11 @@ export default function CreateCard() {
 
   // BACKEND: replace hardcoded STICKERS array 
   const STICKERS = [
-    { id: "star", image: require("../../assets/images/star-stamp.png") },
-    { id: "heart", image: require("../../assets/images/costa-rica-stamp.png") },
+    { id: "star", image: require("../../assets/images/brasil-stamp.png") },
+    { id: "heart", image: require("../../assets/images/cat-stamp.png") },
     { id: "flower", image: require('../../assets/images/orange-flower-stamp.png') },
+    { id: "strip", image: require('../../assets/images/photo-strip.png') }
+
   ];
 
   const COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
@@ -496,6 +500,42 @@ export default function CreateCard() {
                     </ScrollView>
                   </View>
                 )}
+
+                {activeTool === "photo" && (
+              <View style={{ alignItems: "center" }}>
+                <TouchableOpacity
+                  style={styles.addTextButton}
+                  onPress={async () => {
+                    const { launchImageLibraryAsync } = await import("expo-image-picker");
+                    const result = await launchImageLibraryAsync({
+                      mediaTypes: ["images"],
+                      allowsEditing: true,
+                      quality: 1,
+                    });
+                    if (!result.canceled) {
+                      const id = Date.now().toString();
+                      setItems((prev) => [
+                        ...prev,
+                        {
+                          id,
+                          type: "sticker",
+                          content: "",
+                          x: 30,
+                          y: 30,
+                          sticker: result.assets[0].uri,
+                          rotation: seededRotation(id),
+                          scale: 1,
+                        },
+                      ]);
+                      setActiveTool(null);
+                    }
+                  }}
+                >
+                  <Ionicons name="image-outline" size={20} color="#F8E5CF" />
+                  <Text style={styles.buttonText}>Choose Photo</Text>
+                </TouchableOpacity>
+              </View>
+            )}
               </View>
             )}
 
@@ -555,8 +595,20 @@ export default function CreateCard() {
                 >
                   <Ionicons name="film-outline" size={24} color="#5A390E" />
                 </Pressable>
-              </View>
+              
 
+              <Pressable
+                style={[
+                  styles.toolButton,
+                  activeTool === "photo" && styles.activeToolBtn,
+                ]}
+                onPress={() =>
+                  setActiveTool(activeTool === "photo" ? null : "photo")
+                }
+              >
+                <Ionicons name="image-outline" size={24} color="#5A390E" />
+              </Pressable>
+             </View>
               {/* Sparkle button now opens the AI modal */}
               <TouchableOpacity
                 style={styles.plusButton}
@@ -623,15 +675,15 @@ const styles = StyleSheet.create({
   paperImage: { borderTopLeftRadius: 32, borderTopRightRadius: 32 },
   bgArea: { flex: 1, paddingTop: 20, paddingHorizontal: 14 },
   cardPreview: {
-    width: "90%",
-    height: 500,
+    width: "105%",
+    height: '75%',
     alignSelf: "center",
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
     borderColor: "rgba(139,26,26,0.15)",
-    marginTop: 20,
+    marginTop: -10,
     overflow: "hidden",
     position: "relative",
   },

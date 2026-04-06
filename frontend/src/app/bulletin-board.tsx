@@ -93,8 +93,8 @@ export default function BulletinBoard() {
 
   const NOTE_COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
   const STICKERS = [
-    { key: "star", source: require("../../assets/images/star-stamp.png") },
-    { key: "heart", source: require("../../assets/images/costa-rica-stamp.png") },
+    { key: "star", source: require("../../assets/images/cat-stamp.png") },
+    { key: "heart", source: require("../../assets/images/brasil-stamp.png") },
     { key: "flower", source: require('../../assets/images/orange-flower-stamp.png') },
   ];
   const ACCENT_COLORS = ["#557263", "#7B1D1D", "#8B6A3E", "#4A6741", "#6B4F6B"];
