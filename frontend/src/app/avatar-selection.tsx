@@ -1,3 +1,4 @@
+//INTEGRATED
 import React, { useState, useEffect, use } from "react"; // Importing React and the useState hook to manage state within the component, allowing us to track which avatar the user has selected.
 import { View, Text, FlatList, StyleSheet, Pressable, Image, ImageBackground, ActivityIndicator, Alert } from "react-native"; // Importing necessary components and hooks from React and React Native.
 import { router } from "expo-router"; // Importing the router from Expo Router to enable navigation between different screens in the app, allowing for programmatic navigation based on user actions such as selecting an avatar and continuing to the next screen.
