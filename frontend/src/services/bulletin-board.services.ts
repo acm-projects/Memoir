@@ -1,4 +1,3 @@
-// @/services/bulletinBoard.service.ts
 import { supabase } from '@/lib/supabase';
 
 export async function fetchBoardItems(folderId: string) {
@@ -8,12 +7,16 @@ export async function fetchBoardItems(folderId: string) {
     { data: stickers },
     { data: gifs },
     { data: photos },
+    { data: customCards },
   ] = await Promise.all([
     supabase.from('cards').select('*').eq('folder_id', folderId),
     supabase.from('notes').select('*').eq('folder_id', folderId),
     supabase.from('folder_stickers').select('*, stickers(*)').eq('folder_id', folderId),
     supabase.from('board_gifs').select('*').eq('folder_id', folderId),
     supabase.from('board_photos').select('*').eq('folder_id', folderId),
+    supabase.from('board_custom_cards')
+      .select('*, custom_cards(card_color, card_items)')
+      .eq('folder_id', folderId),
   ]);
 
   return [
@@ -46,7 +49,7 @@ export async function fetchBoardItems(folderId: string) {
     })),
     ...(gifs || []).map((g) => ({
       id: g.id,
-      type: 'sticker' as const,
+      type: 'gif' as const,
       content: '',
       x: g.x, y: g.y,
       rotation: g.rotation,
@@ -55,14 +58,59 @@ export async function fetchBoardItems(folderId: string) {
     })),
     ...(photos || []).map((p) => ({
       id: p.id,
-      type: 'sticker' as const,
+      type: 'photo' as const,
       content: '',
       x: p.x, y: p.y,
       rotation: p.rotation,
       scale: p.scale,
       sticker: p.image_url,
     })),
+    ...(customCards || []).map((bc) => ({
+      id: bc.id,
+      type: 'custom_card' as const,
+      content: '',
+      x: bc.x, y: bc.y,
+      rotation: bc.rotation,
+      scale: bc.scale,
+      cardColor: bc.custom_cards?.card_color,
+      cardItems: bc.custom_cards?.card_items,
+    })),
   ];
+}
+
+export async function pinCustomCard(cardId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('No user');
+
+  const { data: board, error: boardError } = await supabase
+    .from('bulletin_board')
+    .select('id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (boardError || !board) throw new Error('No bulletin board found');
+
+  const { data, error } = await supabase
+    .from('board_custom_cards')
+    .insert({
+      folder_id: board.id,
+      card_id: cardId,
+      x: 100, y: 150,
+      rotation: 0, scale: 1,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return {
+    id: data.id,
+    type: 'custom_card' as const,
+    content: '',
+    x: data.x, y: data.y,
+    rotation: data.rotation,
+    scale: data.scale,
+    cardId: data.card_id,
+  };
 }
 
 export async function addNote(folderId: string, color: string) {
@@ -83,7 +131,6 @@ export async function addNote(folderId: string, color: string) {
 }
 
 export async function addSticker(folderId: string, stickerKey: string) {
-  // find the sticker id from the key
   const { data: sticker, error: stickerError } = await supabase
     .from('stickers')
     .select('*')
@@ -130,7 +177,7 @@ export async function addGif(folderId: string, gifUrl: string) {
   if (error) throw error;
   return {
     id: data.id,
-    type: 'sticker' as const,
+    type: 'gif' as const,
     content: '',
     x: data.x, y: data.y,
     rotation: data.rotation,
@@ -140,7 +187,6 @@ export async function addGif(folderId: string, gifUrl: string) {
 }
 
 export async function addPhoto(folderId: string, uri: string) {
-  // upload to storage first
   const fileName = `${folderId}/${Date.now()}.jpg`;
   const response = await fetch(uri);
   const blob = await response.blob();
@@ -169,7 +215,7 @@ export async function addPhoto(folderId: string, uri: string) {
   if (error) throw error;
   return {
     id: data.id,
-    type: 'sticker' as const,
+    type: 'photo' as const,
     content: '',
     x: data.x, y: data.y,
     rotation: data.rotation,
@@ -179,14 +225,17 @@ export async function addPhoto(folderId: string, uri: string) {
 }
 
 export async function updateItemPosition(
-  itemType: 'note' | 'card' | 'sticker' | string,
+  itemType: 'note' | 'card' | 'sticker' | 'gif' | 'photo' | 'custom_card' | string,
   id: string,
   fields: { x?: number; y?: number; rotation?: number; scale?: number }
 ) {
   const table =
     itemType === 'note' ? 'notes' :
     itemType === 'card' ? 'cards' :
-    'folder_stickers'; // stickers, gifs, photos all need their own table
+    itemType === 'gif' ? 'board_gifs' :
+    itemType === 'photo' ? 'board_photos' :
+    itemType === 'custom_card' ? 'board_custom_cards' :
+    'folder_stickers';
 
   const { error } = await supabase.from(table).update(fields).eq('id', id);
   if (error) throw error;
@@ -198,6 +247,7 @@ export async function deleteItem(itemType: string, id: string) {
     itemType === 'card' ? 'cards' :
     itemType === 'gif' ? 'board_gifs' :
     itemType === 'photo' ? 'board_photos' :
+    itemType === 'custom_card' ? 'board_custom_cards' :
     'folder_stickers';
 
   const { error } = await supabase.from(table).delete().eq('id', id);

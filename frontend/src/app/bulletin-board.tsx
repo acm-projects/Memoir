@@ -29,12 +29,12 @@ import {
   updateItemPosition,
   deleteItem as deleteItemService,
   updateNoteContent,
-} from "@/services/bulletinBoard.services";
+} from "@/services/bulletin-board.services";
 import { supabase } from "@/lib/supabase";
 
 type Item = {
   id: string;
-  type: "note" | "sticker" | "card" | "photo" | "gif";
+  type: "note" | "sticker" | "card" | "photo" | "gif" | "custom_card";
   content: string;
   x: number;
   y: number;
@@ -44,6 +44,9 @@ type Item = {
   noteBackground?: any;
   rotation: number;
   scale: number;
+  cardColor?: string;
+  cardItems?: string;
+  cardId?: string;
 };
 
 function seededRotation(id: string) {
@@ -54,7 +57,6 @@ function seededRotation(id: string) {
   return (hash % 13) - 6;
 }
 
-// simple debounce utility
 function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
   let timer: ReturnType<typeof setTimeout>;
   return (...args: Parameters<T>) => {
@@ -84,7 +86,6 @@ export default function BulletinBoard() {
   ];
   const ACCENT_COLORS = ["#557263", "#7B1D1D", "#8B6A3E", "#4A6741", "#6B4F6B"];
 
-  // ─── Fetch on mount ───────────────────────────────────────────────
   useEffect(() => {
     loadItems();
   }, [folderId]);
@@ -101,7 +102,6 @@ export default function BulletinBoard() {
     }
   }
 
-  // ─── Real-time subscriptions ──────────────────────────────────────
   useEffect(() => {
     if (!folderId) return;
 
@@ -109,9 +109,7 @@ export default function BulletinBoard() {
       supabase
         .channel(`notes:${folderId}`)
         .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'notes',
+          event: '*', schema: 'public', table: 'notes',
           filter: `folder_id=eq.${folderId}`,
         }, (payload) => handleRealtimeChange('note', payload))
         .subscribe(),
@@ -119,9 +117,7 @@ export default function BulletinBoard() {
       supabase
         .channel(`cards:${folderId}`)
         .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'cards',
+          event: '*', schema: 'public', table: 'cards',
           filter: `folder_id=eq.${folderId}`,
         }, (payload) => handleRealtimeChange('card', payload))
         .subscribe(),
@@ -129,9 +125,7 @@ export default function BulletinBoard() {
       supabase
         .channel(`folder_stickers:${folderId}`)
         .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'folder_stickers',
+          event: '*', schema: 'public', table: 'folder_stickers',
           filter: `folder_id=eq.${folderId}`,
         }, (payload) => handleRealtimeChange('sticker', payload))
         .subscribe(),
@@ -139,9 +133,7 @@ export default function BulletinBoard() {
       supabase
         .channel(`board_gifs:${folderId}`)
         .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'board_gifs',
+          event: '*', schema: 'public', table: 'board_gifs',
           filter: `folder_id=eq.${folderId}`,
         }, (payload) => handleRealtimeChange('gif', payload))
         .subscribe(),
@@ -149,9 +141,7 @@ export default function BulletinBoard() {
       supabase
         .channel(`board_photos:${folderId}`)
         .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'board_photos',
+          event: '*', schema: 'public', table: 'board_photos',
           filter: `folder_id=eq.${folderId}`,
         }, (payload) => handleRealtimeChange('photo', payload))
         .subscribe(),
@@ -174,7 +164,6 @@ export default function BulletinBoard() {
     if (!mapped) return;
 
     if (eventType === 'INSERT') {
-      // avoid duplicates from our own optimistic inserts
       setItems((prev) =>
         prev.some((i) => i.id === mapped.id)
           ? prev.map((i) => (i.id === mapped.id ? mapped : i))
@@ -228,16 +217,23 @@ export default function BulletinBoard() {
           rotation: row.rotation, scale: row.scale,
           sticker: row.image_url,
         };
+      case 'custom_card':
+        return {
+          id: row.id, type: 'custom_card', content: '',
+          x: row.x, y: row.y,
+          rotation: row.rotation, scale: row.scale,
+          cardColor: row.custom_cards?.card_color,
+          cardItems: row.custom_cards?.card_items,
+          cardId: row.card_id,
+        };
       default:
         return null;
     }
   }
 
-  // ─── Add items ────────────────────────────────────────────────────
   const addNote = async (color: string) => {
     try {
       const newItem = await addNoteService(folderId, color);
-      // optimistic — realtime will also fire but deduped above
       setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
     } catch (e) {
       console.error("Failed to add note:", e);
@@ -288,20 +284,18 @@ export default function BulletinBoard() {
     }
   };
 
-  // ─── Delete ───────────────────────────────────────────────────────
   const deleteItem = async (id: string) => {
     const item = items.find((i) => i.id === id);
     if (!item) return;
-    setItems((prev) => prev.filter((i) => i.id !== id)); // optimistic
+    setItems((prev) => prev.filter((i) => i.id !== id));
     try {
       await deleteItemService(item.type, id);
     } catch (e) {
       console.error("Failed to delete item:", e);
-      setItems((prev) => [...prev, item]); // revert on error
+      setItems((prev) => [...prev, item]);
     }
   };
 
-  // ─── Position / rotation / scale (debounced saves) ────────────────
   const debouncedSave = useCallback(
     debounce((id: string, type: Item['type'], fields: Partial<Item>) => {
       updateItemPosition(type, id, fields).catch((e) =>
@@ -335,7 +329,6 @@ export default function BulletinBoard() {
     if (item) debouncedSave(id, item.type, { scale: newScale });
   };
 
-  // ─── Note content (debounced save) ───────────────────────────────
   const debouncedContentSave = useCallback(
     debounce((id: string, content: string) => {
       updateNoteContent(id, content).catch((e) =>
@@ -352,11 +345,10 @@ export default function BulletinBoard() {
     debouncedContentSave(id, newContent);
   };
 
-  // ─── GIF search ───────────────────────────────────────────────────
   async function searchGifs(query: string) {
     const apiKey = process.env.EXPO_PUBLIC_GIPHY_KEY;
     const url = query
-      ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${query}&limit=20` // handle later
+      ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${query}&limit=20`
       : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=20`;
     const res = await fetch(url);
     const json = await res.json();
@@ -368,7 +360,6 @@ export default function BulletinBoard() {
     setActiveTool(null);
   };
 
-  // ─── Render ───────────────────────────────────────────────────────
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
@@ -565,9 +556,9 @@ export default function BulletinBoard() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F3EE" },
-
   topBanner: {
     height: 150,
     width: "105%",
@@ -577,7 +568,6 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     paddingHorizontal: 16,
   },
-
   bannerBack: {
     width: 36,
     height: 36,
@@ -588,12 +578,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginBottom: 8,
   },
-
-  bannerBackText: {
-    fontSize: 20,
-    color: "#F6E5CD",
-  },
-
+  bannerBackText: { fontSize: 20, color: "#F6E5CD" },
   bannerTitle: {
     flex: 1,
     fontSize: 24,
@@ -602,7 +587,6 @@ const styles = StyleSheet.create({
     fontFamily: "Calistoga",
     marginBottom: 8,
   },
-
   bannerEditButton: {
     backgroundColor: "rgba(246,229,205,0.25)",
     borderRadius: 12,
@@ -613,23 +597,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 20,
   },
-
-  bannerEditText: {
-    color: "#F6E5CD",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-
-  tornEdgeContainer: {
-    marginTop: -18,
-    zIndex: 10,
-  },
-
-  paperBackground: {
-    flex: 1,
-    width: "100%",
-  },
-
+  bannerEditText: { color: "#F6E5CD", fontSize: 13, fontWeight: "600" },
+  tornEdgeContainer: { marginTop: -18, zIndex: 10 },
+  paperBackground: { flex: 1, width: "100%" },
   corkboardFrame: {
     flex: 1,
     borderWidth: 12,
@@ -640,22 +610,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(139,106,62,0.04)",
     marginTop: 16,
   },
-
-  board: {
-    flex: 1,
-  },
-
-  boardContent: {
-    height: 1500,
-    paddingTop: 20,
-  },
-
-  absoluteFull: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-  },
-
+  board: { flex: 1 },
+  boardContent: { height: 1500, paddingTop: 20 },
+  absoluteFull: { position: "absolute", top: 0, left: 0 },
   footerWrapper: {
     position: "absolute",
     bottom: 100,
@@ -665,7 +622,6 @@ const styles = StyleSheet.create({
     gap: 10,
     zIndex: 100,
   },
-
   toolbar: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -681,23 +637,14 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     paddingHorizontal: 8,
   },
-
-  toolButton: {
-    padding: 12,
-    borderRadius: 25,
-  },
-
-  activeToolBtn: {
-    backgroundColor: "rgba(90, 57, 14, 0.15)",
-  },
-
+  toolButton: { padding: 12, borderRadius: 25 },
+  activeToolBtn: { backgroundColor: "rgba(90, 57, 14, 0.15)" },
   toolbarDivider: {
     width: 1,
     height: 28,
     backgroundColor: "rgba(109,27,18,0.25)",
     marginHorizontal: 4,
   },
-
   doneButton: {
     backgroundColor: "#6D1B12",
     width: 38,
@@ -706,7 +653,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
   panel: {
     backgroundColor: "#ede0cc",
     width: "92%",
@@ -715,44 +661,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#d7c3ac",
   },
-
   panelHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
   },
-
-  panelTitle: {
-    fontWeight: "bold",
-    fontSize: 12,
-    color: "#5A390E",
-    letterSpacing: 1,
-  },
-
-  colorRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 12,
-  },
-
-  colorDot: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-  },
-
-  stickerRow: {
-    gap: 15,
-    paddingVertical: 5,
-  },
-
-  stickerThumb: {
-    width: 60,
-    height: 60,
-    resizeMode: "contain",
-  },
-
+  panelTitle: { fontWeight: "bold", fontSize: 12, color: "#5A390E", letterSpacing: 1 },
+  colorRow: { flexDirection: "row", justifyContent: "center", gap: 12 },
+  colorDot: { width: 36, height: 36, borderRadius: 18 },
+  stickerRow: { gap: 15, paddingVertical: 5 },
+  stickerThumb: { width: 60, height: 60, resizeMode: "contain" },
   panelUploadArea: {
     borderWidth: 1.5,
     borderColor: "#C8B89A",
@@ -762,12 +681,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-
-  uploadText: {
-    fontSize: 13,
-    color: "#8B7355",
-  },
-
+  uploadText: { fontSize: 13, color: "#8B7355" },
   gifInput: {
     backgroundColor: "#F5EEE1",
     borderWidth: 1,
@@ -776,10 +690,5 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
-
-  gifThumb: {
-    width: 90,
-    height: 90,
-    borderRadius: 8,
-  },
+  gifThumb: { width: 90, height: 90, borderRadius: 8 },
 });

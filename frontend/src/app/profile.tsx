@@ -1,43 +1,42 @@
 import { useRouter } from 'expo-router';
 import { Settings } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, Easing, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, Easing, ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import BottomNavbar from '../components/BottomNavbar';
-import { supabase } from '@/lib/supabase';     
-import { getMostFrequentTags, TagFrequency, getBoardContents, BoardContents } from '@/services/analytics.services'; 
+import { supabase } from '@/lib/supabase';
+import {
+  getMostFrequentTags, TagFrequency,
+  getBoardContents, BoardContents,
+  getCardsByMonth, MonthlyCardData,
+  getProfileStats, ProfileStats,
+  getUserPersona, Persona, getUserProfile
+} from '@/services/analytics.services';
 
 const { width } = Dimensions.get('window');
 
 type SettingsIconProps = React.ComponentProps<typeof Settings>;
 
-const cardsByMonth = [
-  { created: 3, sent: 1 }, { created: 0, sent: 0 },
-  { created: 5, sent: 3 }, { created: 2, sent: 2 },
-  { created: 8, sent: 4 }, { created: 1, sent: 0 },
-  { created: 6, sent: 5 }, { created: 4, sent: 2 },
-  { created: 9, sent: 6 }, { created: 3, sent: 1 },
-  { created: 7, sent: 3 }, { created: 2, sent: 1 },
-];
-
-export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount = 67, friendsCount = 45, foldersCount = 12 }) {
+export default function ProfilePage({ name = 'Tejasvi Annamaraju' }) {
 
   const [topTags, setTopTags] = useState<TagFrequency[]>([]);
   const [boardContents, setBoardContents] = useState<BoardContents>({
-    stickers: 0,
-    photos: 0,
-    notes: 0,
-    templates: 0,
+    stickers: 0, photos: 0, notes: 0, templates: 0,
   });
+  const [cardsByMonth, setCardsByMonth] = useState<MonthlyCardData[]>(
+    Array.from({ length: 12 }, (_, i) => ({ month: i + 1, created: 0 }))
+  );
+  const [profileStats, setProfileStats] = useState<ProfileStats>({
+    entries: 0, friends: 0, folders: 0,
+  });
+  const [persona, setPersona] = useState<Persona>({
+    title: 'Loading...', bio: '', emoji: '🕯️',
+  });
+const [username, setUsername] = useState('');
+const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const router = useRouter();
   const iconColor = '#7B1D1D';
-  const tagColors = [
-    '#557263',
-    '#7B1D1D',
-    '#8B6A3E',
-    '#4A6741',
-    '#6B4F6B',
-  ];
+  const tagColors = ['#557263', '#7B1D1D', '#8B6A3E', '#4A6741', '#6B4F6B'];
 
   const barAnimPhotos = useRef(new Animated.Value(0)).current;
   const barAnimStickers = useRef(new Animated.Value(0)).current;
@@ -45,8 +44,7 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
   const barAnimTemplates = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    fetchTags();
-    fetchBoardContents();
+    fetchAll();
   }, []);
 
   useEffect(() => {
@@ -55,7 +53,7 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'card_tags' },
-        () => { fetchTags(); }
+        () => { fetchAll(); }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -63,47 +61,43 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
 
   useEffect(() => {
     Animated.stagger(80, [
-      Animated.timing(barAnimPhotos, {
-        toValue: 1,
-        duration: 600,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }),
-      Animated.timing(barAnimStickers, {
-        toValue: 1,
-        duration: 600,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }),
-      Animated.timing(barAnimNotes, {
-        toValue: 1,
-        duration: 600,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }),
-      Animated.timing(barAnimTemplates, {
-        toValue: 1,
-        duration: 600,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }),
+      Animated.timing(barAnimPhotos, { toValue: 1, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+      Animated.timing(barAnimStickers, { toValue: 1, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+      Animated.timing(barAnimNotes, { toValue: 1, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+      Animated.timing(barAnimTemplates, { toValue: 1, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: false }),
     ]).start();
   }, [barAnimPhotos, barAnimStickers, barAnimNotes, barAnimTemplates]);
 
-  async function fetchTags() {
+  async function fetchAll() {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data, error } = await getMostFrequentTags(user.id, 5);
-    if (error) console.error('Error fetching tags:', error);
-    else if (data) setTopTags(data);
-  }
+      if (!user) return;
+    
+    const { data: profile } = await getUserProfile(user.id);
+    if (profile) {
+  setUsername(profile.username);
+  setAvatarUrl(profile.avatar_url);
+}
 
-  async function fetchBoardContents() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data, error } = await getBoardContents(user.id);
-    if (error) console.error('Error fetching board contents:', error);
-    else if (data) setBoardContents(data);
+    const [tagsRes, boardRes, cardsRes, statsRes] = await Promise.all([
+      getMostFrequentTags(user.id, 5),
+      getBoardContents(user.id),
+      getCardsByMonth(user.id),
+      getProfileStats(user.id),
+    ]);
+
+    const tags = tagsRes.data ?? [];
+    const board = boardRes.data ?? { stickers: 0, photos: 0, notes: 0, templates: 0 };
+    const cards = cardsRes.data ?? Array.from({ length: 12 }, (_, i) => ({ month: i + 1, created: 0 }));
+    const stats = statsRes.data ?? { entries: 0, friends: 0, folders: 0 };
+
+    setTopTags(tags);
+    setBoardContents(board);
+    setCardsByMonth(cards);
+    setProfileStats(stats);
+
+    // call persona after all data is ready
+    const { data: personaData } = await getUserPersona(tags, board, cards);
+    if (personaData) setPersona(personaData);
   }
 
   const BOARD_TOTAL = boardContents.photos + boardContents.stickers + boardContents.notes + boardContents.templates || 1;
@@ -136,18 +130,22 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
         <View style={styles.outerCard}>
           <View style={styles.innerCard}>
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarEmoji}>🌷</Text>
-            </View>
-            <Text style={styles.name}>{name}</Text>
+        {avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={{ width: 72, height: 72, borderRadius: 36 }} />
+         ) : (
+          <Text style={styles.avatarEmoji}>🌷</Text>
+             )}
+          </View>
+            <Text style={styles.name}>{username || name}</Text>
             <View style={styles.statsRow}>
               <Text style={styles.statsText}>
-                <Text style={styles.statsNumber}>{entriesCount}</Text> Entries
+                <Text style={styles.statsNumber}>{profileStats.entries}</Text> Entries
               </Text>
               <Text style={styles.statsText}>
-                <Text style={styles.statsNumber}>{friendsCount}</Text> Friends
+                <Text style={styles.statsNumber}>{profileStats.friends}</Text> Friends
               </Text>
               <Text style={styles.statsText}>
-                <Text style={styles.statsNumber}>{foldersCount}</Text> Folders
+                <Text style={styles.statsNumber}>{profileStats.folders}</Text> Folders
               </Text>
             </View>
           </View>
@@ -164,16 +162,18 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
           contentContainerStyle={styles.analyticsScrollContent}
           showsVerticalScrollIndicator={false}
         >
+          {/* Persona card */}
           <View style={styles.userCard}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
               <View style={{ backgroundColor: '#F2E8D0', borderRadius: 8, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 20 }}>🕯️</Text>
+                <Text style={{ fontSize: 20 }}>{persona.emoji}</Text>
               </View>
-              <Text style={styles.userName}>The Nostalgic Curator</Text>
+              <Text style={styles.userName}>{persona.title}</Text>
             </View>
-            <Text style={styles.userMessage}>Lover of vintage aesthetics, journaling, and all things cozy. Sharing my thoughts and memories one entry at a time.</Text>
+            <Text style={styles.userMessage}>{persona.bio}</Text>
           </View>
 
+          {/* YOUR MEMORY THEMES */}
           <Text style={[styles.sectionLabel, { marginTop: 8, marginHorizontal: 20 }]}>YOUR MEMORY THEMES</Text>
           <View style={styles.statsCard}>
             <View style={styles.tagsRow}>
@@ -194,20 +194,16 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
             </View>
           </View>
 
+          {/* WHAT FILLS YOUR BOARDS */}
           <Text style={[styles.sectionLabel, { marginTop: 12 }]}>WHAT FILLS YOUR BOARDS</Text>
           <View style={styles.analyticsCard}>
             <View style={styles.barRow}>
               <Text style={styles.barLabel}>Photos</Text>
               <View style={styles.barTrack}>
-                <Animated.View
-                  style={[styles.barFill, {
-                    backgroundColor: '#4A7568',
-                    width: barAnimPhotos.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, trackWidth * (photoPercent / 100)],
-                    }),
-                  }]}
-                />
+                <Animated.View style={[styles.barFill, {
+                  backgroundColor: '#4A7568',
+                  width: barAnimPhotos.interpolate({ inputRange: [0, 1], outputRange: [0, trackWidth * (photoPercent / 100)] }),
+                }]} />
               </View>
               <Text style={styles.barPercent}>{photoPercent}%</Text>
             </View>
@@ -215,15 +211,10 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
             <View style={styles.barRow}>
               <Text style={styles.barLabel}>Stickers</Text>
               <View style={styles.barTrack}>
-                <Animated.View
-                  style={[styles.barFill, {
-                    backgroundColor: '#7B1D1D',
-                    width: barAnimStickers.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, trackWidth * (stickerPercent / 100)],
-                    }),
-                  }]}
-                />
+                <Animated.View style={[styles.barFill, {
+                  backgroundColor: '#7B1D1D',
+                  width: barAnimStickers.interpolate({ inputRange: [0, 1], outputRange: [0, trackWidth * (stickerPercent / 100)] }),
+                }]} />
               </View>
               <Text style={styles.barPercent}>{stickerPercent}%</Text>
             </View>
@@ -231,15 +222,10 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
             <View style={styles.barRow}>
               <Text style={styles.barLabel}>Notes</Text>
               <View style={styles.barTrack}>
-                <Animated.View
-                  style={[styles.barFill, {
-                    backgroundColor: '#8B6914',
-                    width: barAnimNotes.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, trackWidth * (notesPercent / 100)],
-                    }),
-                  }]}
-                />
+                <Animated.View style={[styles.barFill, {
+                  backgroundColor: '#8B6914',
+                  width: barAnimNotes.interpolate({ inputRange: [0, 1], outputRange: [0, trackWidth * (notesPercent / 100)] }),
+                }]} />
               </View>
               <Text style={styles.barPercent}>{notesPercent}%</Text>
             </View>
@@ -247,20 +233,16 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
             <View style={styles.barRow}>
               <Text style={styles.barLabel}>Templates</Text>
               <View style={styles.barTrack}>
-                <Animated.View
-                  style={[styles.barFill, {
-                    backgroundColor: '#6B5B45',
-                    width: barAnimTemplates.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, trackWidth * (templatesPercent / 100)],
-                    }),
-                  }]}
-                />
+                <Animated.View style={[styles.barFill, {
+                  backgroundColor: '#6B5B45',
+                  width: barAnimTemplates.interpolate({ inputRange: [0, 1], outputRange: [0, trackWidth * (templatesPercent / 100)] }),
+                }]} />
               </View>
               <Text style={styles.barPercent}>{templatesPercent}%</Text>
             </View>
           </View>
 
+          {/* CARDS BY MONTH */}
           <Text style={[styles.sectionLabel, { marginTop: 8 }]}>CARDS BY MONTH</Text>
           <View style={[styles.analyticsCard, { marginTop: 8 }]}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.heatmapScrollContent}>
@@ -275,12 +257,6 @@ export default function ProfilePage({ name = 'Tejasvi Annamaraju', entriesCount 
                     <Text style={styles.heatmapRowLabel}>created</Text>
                     {cardsByMonth.map((month, idx) => (
                       <View key={`c-${idx}`} style={{ width: 18, height: 18, borderRadius: 3, margin: 1, backgroundColor: getMonthColor(month.created) }} />
-                    ))}
-                  </View>
-                  <View style={styles.heatmapRow}>
-                    <Text style={styles.heatmapRowLabel}>sent</Text>
-                    {cardsByMonth.map((month, idx) => (
-                      <View key={`s-${idx}`} style={{ width: 18, height: 18, borderRadius: 3, margin: 1, backgroundColor: getMonthColor(month.sent) }} />
                     ))}
                   </View>
                 </View>

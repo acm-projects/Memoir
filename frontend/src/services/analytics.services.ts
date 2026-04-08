@@ -13,82 +13,155 @@ export interface BoardContents {
   templates: number;
 }
 
+export interface MonthlyCardData {
+  month: number;
+  created: number;
+}
+
+export interface ProfileStats {
+  entries: number;
+  friends: number;
+  folders: number;
+}
+
+export interface Persona {
+  title: string;
+  bio: string;
+  emoji: string;
+}
+export async function getUserProfile(
+  userId: string
+): Promise<{ data: { username: string; avatar_url: string | null } | null; error: any }> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('username, avatar_url')
+    .eq('id', userId)
+    .single();
+
+  if (error || !data) return { data: null, error };
+  return { data, error: null };
+}
+
 export async function getMostFrequentTags(
   userId: string,
   limit = 5
 ): Promise<{ data: TagFrequency[] | null; error: any }> {
 
-  // Go to the card_tags table, find all rows where user_id matches,
-  // and also pull in the tag name from the tags table via the foreign key
   const { data, error } = await supabase
     .from('card_tags')
-    .select('tag_id, tags(name)') // gets the tag id, also the name of the tag
-    .eq('user_id', userId); // if user_id == user, so current user 
+    .select('tag_id, tags(name)')
+    .eq('user_id', userId);
 
-  if (error || !data) return { data: null, error }; // error catching for tags
-
-  // At this point data looks like:
-  // [
-  //   { tag_id: 'abc', tags: { name: 'family' } },
-  //   { tag_id: 'abc', tags: { name: 'family' } },
-  //   { tag_id: 'xyz', tags: { name: 'birthday' } },
-  // ]
-  // So we count how many times each tag_id appears
+  if (error || !data) return { data: null, error };
 
   const countMap = new Map<string, { name: string; count: number }>();
 
   for (const row of data as any[]) {
     const id = row.tag_id;
-    const name = row.tags?.name ?? 'Unknown'; 
+    const name = row.tags?.name ?? 'Unknown';
     if (countMap.has(id)) {
-      countMap.get(id)!.count += 1;  // seen this tag before, increment
+      countMap.get(id)!.count += 1;
     } else {
-      countMap.set(id, { name, count: 1 });  // first time seeing this tag
+      countMap.set(id, { name, count: 1 });
     }
   }
 
-  // Sort highest count first, take top N
-  const sorted: TagFrequency[] = Array.from(countMap.entries()) 
-    .map(([tag_id, { name, count }]) => ({ tag_id, name, count })) // maps tag id to the interface variables
+  const sorted: TagFrequency[] = Array.from(countMap.entries())
+    .map(([tag_id, { name, count }]) => ({ tag_id, name, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, limit);
 
-  return { data: sorted, error: null }; 
+  return { data: sorted, error: null };
+}
+
+export async function getCardsByMonth(
+  userId: string,
+  year: number = new Date().getFullYear()
+): Promise<{ data: MonthlyCardData[] | null; error: any }> {
+
+  const { data, error } = await supabase
+    .from('cards')
+    .select('created_at')
+    .eq('user_id', userId)
+    .gte('created_at', `${year}-01-01`)
+    .lte('created_at', `${year}-12-31`);
+
+  if (error || !data) return { data: null, error };
+
+  const monthCounts = Array.from({ length: 12 }, (_, i) => ({
+    month: i + 1,
+    created: 0,
+  }));
+
+  for (const row of data as any[]) {
+    const month = new Date(row.created_at).getMonth();
+    monthCounts[month].created += 1;
+  }
+
+  return { data: monthCounts, error: null };
+}
+
+export async function getProfileStats(
+  userId: string
+): Promise<{ data: ProfileStats | null; error: any }> {
+
+  const [entriesRes, friendsRes, foldersRes] = await Promise.all([
+    supabase
+      .from('cards')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId),
+
+    supabase
+      .from('friendships')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'accepted')
+      .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`),
+
+    supabase
+      .from('folders')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId),
+  ]);
+
+  const error = entriesRes.error || friendsRes.error || foldersRes.error;
+  if (error) return { data: null, error };
+
+  return {
+    data: {
+      entries: entriesRes.count ?? 0,
+      friends: friendsRes.count ?? 0,
+      folders: foldersRes.count ?? 0,
+    },
+    error: null,
+  };
 }
 
 export async function getBoardContents(
   userId: string
 ): Promise<{ data: BoardContents | null; error: any }> {
 
-  // Run all four counts in parallel
   const [stickersRes, photosRes, notesRes, templatesRes] = await Promise.all([
-
-    // Stickers — has user_id directly
     supabase
       .from('stickers')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId),
 
-    // Photos — card_images has no user_id, join through cards
     supabase
       .from('board_photos')
       .select('id, cards!inner(user_id)', { count: 'exact', head: true })
       .eq('cards.user_id', userId),
 
-    // Notes — has user_id directly
     supabase
       .from('notes')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId),
 
-    // Templates — now has user_id
     supabase
       .from('templates')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId),
   ]);
 
-  // If any query errored, return the first error
   const error = stickersRes.error || photosRes.error || notesRes.error || templatesRes.error;
   if (error) return { data: null, error };
 
@@ -101,4 +174,55 @@ export async function getBoardContents(
     },
     error: null,
   };
+}
+
+export async function getUserPersona(
+  topTags: TagFrequency[],
+  boardContents: BoardContents,
+  cardsByMonth: MonthlyCardData[]
+): Promise<{ data: Persona | null; error: any }> {
+
+  const totalCards = cardsByMonth.reduce((sum, m) => sum + m.created, 0);
+  const busiestMonth = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][
+    cardsByMonth.reduce((maxIdx, m, i, arr) => m.created > arr[maxIdx].created ? i : maxIdx, 0)
+  ];
+
+  const prompt = `
+You are analyzing a memory/scrapbook app user's activity. Based on their data, give them a creative persona.
+
+Their data:
+- Top tags: ${topTags.map(t => t.name).join(', ') || 'none yet'}
+- Board contents: ${boardContents.photos} photos, ${boardContents.stickers} stickers, ${boardContents.notes} notes, ${boardContents.templates} templates
+- Total cards created this year: ${totalCards}
+- Most active month: ${busiestMonth}
+
+Respond ONLY with a JSON object, no markdown, no explanation:
+{
+  "title": "short 3-4 word creative persona title",
+  "bio": "1-2 sentence description of this person's style",
+  "emoji": "single emoji that fits their vibe"
+}
+  `.trim();
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.EXPO_PUBLIC_OPENAI_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 150,
+      }),
+    });
+
+    const json = await response.json();
+    const raw = json.choices?.[0]?.message?.content ?? '';
+    const parsed: Persona = JSON.parse(raw);
+    return { data: parsed, error: null };
+  } catch (err) {
+    return { data: null, error: err };
+  }
 }

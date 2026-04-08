@@ -16,13 +16,19 @@ import BottomNavbar from '../components/BottomNavbar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '@/lib/supabase';                                               // FIX: use @/ alias, matching your folder screen pattern
-import { getConversations, markConversationAsRead, ConversationUser} from '@/services/messages.service'; // FIX: make sure this service file exists (see below)
+import { supabase } from '@/lib/supabase';                                               
+import { getConversations, markConversationAsRead} from '@/services/messages.service'; 
 
 const ios = Platform.OS === 'ios';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
+interface ConversationUser {
+  id: string;
+  name: string;
+  avatar: any;
+  lastMessage: string;
+  unread: number;
+  timestamp: string; // variables for the user
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -79,7 +85,6 @@ export default function Messages() {
       setLoading(false);
       return;
     }
-
     setCurrentUserId(user.id);
 
     // BACKEND: calls getConversations() from messages.service.ts
