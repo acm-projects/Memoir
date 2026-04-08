@@ -1,19 +1,9 @@
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Text,
-  Image,
-  ActivityIndicator,
-  Pressable,
-  ImageBackground,
-  SafeAreaView,
-  Dimensions,
-} from 'react-native';
-import React, { useState, useEffect } from 'react';
-import { router } from 'expo-router';
-import Svg, { Path, Circle, Rect, Ellipse, Line, G, Text as SvgText, Polygon } from 'react-native-svg';
-import BottomNavbar from '../components/BottomNavbar';
+import { View, StyleSheet, FlatList, Text, Image, ActivityIndicator, Pressable, ImageBackground, SafeAreaView, Dimensions, } from 'react-native'; // Importing necessary components from React Native
+import React, { useState, useEffect, useCallback } from 'react'; // Importing React and its hooks
+import { router } from 'expo-router'; // Importing router from expo-router for navigation
+import Svg, { Path, Circle, Rect, Ellipse, Line, G, Text as SvgText, Polygon } from 'react-native-svg'; // Importing SVG components for custom illustrations
+import BottomNavbar from '../components/BottomNavbar'; // Importing a custom BottomNavbar component
+import { supabase } from '@/lib/supabase'; // Importing supabase client for backend interactions
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -25,34 +15,18 @@ const ILLUSTRATION_COLORS = [
   '#7B1D1D',
 ];
 
-const MOCK_API = {
-  data: [
-    { id: '1', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/deer-stamp.png') },
-    { id: '2', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/bird-stamp.png') },
-    { id: '3', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/brasil-stamp.png') },
-    { id: '4', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/blueFlower-stamp.png') },
-    { id: '5', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/butterfly-stamp.png') },
-    { id: '6', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/cat-stamp.png') },
-    { id: '7', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/egyptia-stamp.png') },
-    { id: '8', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/purple-flower-stamp.png') },
-    { id: '9', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/hello-kitty-stamp.png') },
-    { id: '10', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/animal-stamp.png') },
-    { id: '11', title: '19th Birthday', date: 'March 18, 2026', side: 'left', image: require('../../assets/images/orange-flower-stamp.png') },
-    { id: '12', title: 'Trip to Prague', date: 'March 24, 2026', side: 'right', image: require('../../assets/images/deer-stamp.png') },
-    { id: '13', title: 'Garden Log', date: 'April 2, 2026', side: 'left', image: require('../../assets/images/bird-stamp.png') },
-    { id: '14', title: 'Prom', date: 'April 6, 2026', side: 'left', image: require('../../assets/images/blueFlower-stamp.png') },
-    { id: '15', title: "Mom's 50th", date: 'April 6, 2026', side: 'left', image: require('../../assets/images/egyptia-stamp.png') },
-  ],
-  metadata: { currentPage: 1, hasNextPage: true, totalPages: 5 },
-};
-// TODO: Replace mock data with real backend response
-
-interface Stamp {
+interface Folder {
   id: string;
-  title: string;
-  date: string;
-  side: string;
-  image: any;
+  name: string;
+  event_date: string | null;
+  cover_image_url: string | null;
+  created_at: string;
+  side?: string;
+}
+
+interface Profile {
+  full_name: string | null;
+  birthday: string | null;
 }
 
 const CurvedTimelinePath = ({ isEven }: { isEven: boolean }) => (
@@ -708,6 +682,43 @@ function HikingScene() {
   );
 }
 
+function MovieScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Main board */}
+      <Rect x={15} y={30} width={70} height={55} rx={4} fill="#3B2C1A" />
+      {/* White stripe */}
+      <Rect x={15} y={30} width={70} height={15} fill="#F6E5CD" />
+      {/* Diagonal stripes */}
+      {[0,1,2,3,4].map(i => (
+        <Path key={i} d={`M${15+14*i} 30 L${15+14*i+10} 45`} stroke="#3B2C1A" strokeWidth={4} />
+      ))}
+      {/* Hinge */}
+      <Circle cx={20} cy={37} r={4} fill="#C4A34A" />
+      {/* Holes */}
+      <Circle cx={75} cy={40} r={2} fill="#F6E5CD" />
+      <Circle cx={85} cy={40} r={2} fill="#F6E5CD" />
+    </Svg>
+  );
+}
+
+function SpaScene() {
+  return (
+    <Svg width={100} height={100} viewBox="0 0 100 100">
+      {/* Candle */}
+      <Rect x={44} y={38} width={12} height={32} rx={4} fill="#F6E5CD" stroke="#C8B89A" strokeWidth={2} />
+      {/* Flame */}
+      <Ellipse cx={50} cy={36} rx={2.5} ry={5} fill="#F9D06A" />
+      {/* Glow */}
+      <Circle cx={50} cy={36} r={10} fill="#F9D06A" opacity={0.3} />
+      {/* Leaves */}
+      <Ellipse cx={38} cy={70} rx={10} ry={22} fill="#557263" transform="rotate(-18 38 70)" />
+      <Ellipse cx={62} cy={74} rx={10} ry={22} fill="#557263" transform="rotate(18 62 74)" />
+      <Ellipse cx={50} cy={82} rx={12} ry={8} fill="#557263" />
+    </Svg>
+  );
+}
+
 function DefaultScene() {
   return (
     <Svg width={100} height={100} viewBox="0 0 100 100">
@@ -752,72 +763,148 @@ function getSceneObjects(title: string) {
 }
 
 export default function TimelineScreen() {
-  const [items, setItems] = useState<Stamp[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [monthOpen, setMonthOpen] = useState(false);
   const [yearOpen, setYearOpen] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState('March');
-  const [selectedYear, setSelectedYear] = useState('2026');
-  const [selectedStamp, setSelectedStamp] = useState<Stamp | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(true);
+
+  const PAGE_SIZE = 5;
+
 
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',
   ];
   const years = ['2023', '2024', '2025', '2026'];
 
-  useEffect(() => {
-    const firstBatch = MOCK_API.data.slice(0, 5);
-    setItems(firstBatch);
-    // TODO: Integrate with backend API here (endpoint: /timeline, method: GET)
-  }, []);
 
-  const fetchNextPage = async () => {
-    if (loading || items.length >= MOCK_API.data.length) return;
+  // Profile fetch on mount 
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+ 
+  async function fetchProfile() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('full_name, birthday')
+      .eq('id', user.id)
+      .single();
+    if (error) console.error('Profile fetch error:', error);
+    else if (data) setProfile(data);
+  }
+
+  useEffect(() => {
+    setFolders([]);
+    setCurrentPage(0);
+    setHasNextPage(true);
+    fetchFolders(0, false);
+  }, [selectedMonth, selectedYear]);
+
+  const fetchFolders = useCallback(async (page: number, append: boolean) => {
+    if (loading) return;
     setLoading(true);
-    setTimeout(() => {
-      const start = items.length;
-      const end = start + 5;
-      const nextBatch = MOCK_API.data.slice(start, end);
-      setItems((existingItems) => [...existingItems, ...nextBatch]);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+ 
+      let query = supabase
+        .from('folders')
+        .select('id, name, event_date, cover_image_url, created_at')
+        .eq('user_id', user.id)
+        .eq('is_default', false)
+        .order('event_date', { ascending: true })
+        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+ 
+      if (selectedMonth && selectedYear) {
+        const monthIndex = months.indexOf(selectedMonth) + 1;
+        const paddedMonth = monthIndex.toString().padStart(2, '0');
+        query = query
+          .gte('event_date', `${selectedYear}-${paddedMonth}-01`)
+          .lte('event_date', `${selectedYear}-${paddedMonth}-31`);
+      }
+ 
+      const { data, error } = await query;
+      if (error) {
+        console.error('Failed to fetch folders:', error);
+        return;
+      }
+ 
+      if (data) {
+        setFolders(prev => append ? [...prev, ...data] : data);
+        setCurrentPage(page + 1);
+        setHasNextPage(data.length === PAGE_SIZE);
+      }
+    } catch (err) {
+      console.error('Error fetching folders:', err);
+    } finally {
       setLoading(false);
-      // TODO: Integrate with backend API for pagination (endpoint: /timeline?page=, method: GET)
-    }, 100);
+    }
+  }, [selectedMonth, selectedYear, loading]);
+
+  // Called by FlastList's onEndReached
+  const fetchNextPage = () => {
+    if (loading || !hasNextPage) return;
+    fetchFolders(currentPage, true);
+  };
+ 
+  const getBirthYear = () => {
+    if (!profile?.birthday) return '?';
+    return new Date(profile.birthday).getFullYear();
+  };
+ 
+  const getDisplayDate = (folder: Folder) => {
+    const dateStr = folder.event_date || folder.created_at;
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
 
-  const renderTimelineItem = ({ item, index }: { item: Stamp; index: number }) => {
+  const renderTimelineItem = ({ item, index }: { item: Folder; index: number }) => {
     const isEven = index % 2 === 0;
     const stampWidth = SCREEN_WIDTH * 0.38;
-    const isSelected = selectedStamp?.id === item.id;
+    const isSelected = selectedFolder?.id === item.id;
     const accentColor = ILLUSTRATION_COLORS[index % ILLUSTRATION_COLORS.length];
-    const lineartImage = getLineartImage(item.title);
+    const lineartImage = getLineartImage(item.name); // CHANGED: item.title → item.name
     return (
       <View style={styles.row}>
         <CurvedTimelinePath isEven={isEven} />
-        <View style={[styles.stampGroup, { alignSelf: isEven ? 'flex-start' : 'flex-end' }]}> 
-          <View style={[styles.stampCard, { width: stampWidth, borderLeftWidth: 5, borderLeftColor: accentColor }]}> 
-            <Pressable onPress={() => setSelectedStamp(isSelected ? null : item)}>
+        <View style={[styles.stampGroup, { alignSelf: isEven ? 'flex-start' : 'flex-end' }]}>
+          <View style={[styles.stampCard, { width: stampWidth, borderLeftWidth: 5, borderLeftColor: accentColor }]}>
+            <Pressable onPress={() => setSelectedFolder(isSelected ? null : item)}>
               <View style={{ borderStyle: 'dashed', borderColor: '#C8B89A', borderWidth: 2, margin: 4, borderRadius: 4 }}>
                 <View style={styles.stampImageWrapper}>
-                  <Image source={item.image} style={[styles.stampImage, { height: 110 }]} />
+                  <Image
+                    source={item.cover_image_url ? { uri: item.cover_image_url } : require('../../assets/images/star-stamp.png')}
+                    style={[styles.stampImage, { height: 110 }]}
+                  />
                 </View>
               </View>
-              <View style={[styles.labelBar, { backgroundColor: accentColor, borderBottomWidth: 2, borderBottomColor: accentColor }]}> 
-                <Text style={styles.labelTitle} numberOfLines={1}>{item.title}</Text>
+              <View style={[styles.labelBar, { backgroundColor: accentColor, borderBottomWidth: 2, borderBottomColor: accentColor }]}>
+                <Text style={styles.labelTitle} numberOfLines={1}>{item.name}</Text>
               </View>
             </Pressable>
           </View>
-          <Text style={{ fontStyle: 'italic', color: accentColor, fontSize: 11, marginTop: 6, textAlign: 'center' }}>{item.date}</Text>
+          <Text style={{ fontStyle: 'italic', color: accentColor, fontSize: 11, marginTop: 6, textAlign: 'center' }}>
+            {getDisplayDate(item)}
+          </Text>
           {isSelected && (
             <View style={styles.infoPopup}>
-              <Text style={styles.infoTitle}>{item.title}</Text>
-              <Text style={styles.infoDate}>{item.date}</Text>
-              <Pressable style={styles.infoButton} onPress={() => router.push({ pathname: '/bulletin-board', params: { id: item.id, title: item.title } })}>
+              <Text style={styles.infoTitle}>{item.name}</Text>
+              <Text style={styles.infoDate}>{getDisplayDate(item)}</Text>
+              <Pressable
+                style={styles.infoButton}
+                onPress={() => router.push({ pathname: '/bulletin-board', params: { id: item.id, title: item.name } })}
+              >
                 <Text style={styles.infoButtonText}>Open Folder</Text>
               </Pressable>
             </View>
           )}
         </View>
-        {/* Lineart image on opposite side */}
         {lineartImage && (
           <View
             style={{
@@ -855,13 +942,14 @@ export default function TimelineScreen() {
           <Pressable style={{ flex: 1 }} onPress={closeAllDropdowns} pointerEvents="box-none" accessible={false}>
             <View style={{ flex: 1 }}>
               <View style={styles.header}>
-                <Text style={styles.welcomeBackHeader}>Welcome Back, Name</Text>
-                {/* TODO: Connect to authentication/user session backend */}
+                <Text style={styles.welcomeBackHeader}>
+                  Welcome Back, {profile?.full_name ?? 'Friend'}!
+                </Text>
                 <View style={styles.dropdownRow}>
                   <View style={styles.dropdownWrapper}>
                     <Pressable style={styles.dropdownButton} onPress={() => { setMonthOpen(!monthOpen); if (yearOpen) setYearOpen(false); }}>
                       <View style={styles.dropdownInner}>
-                        <Text style={styles.dropdownText}>{selectedMonth}</Text>
+                        <Text style={styles.dropdownText}>{selectedMonth || 'Month'}</Text>
                         <Text style={styles.dropdownArrow}>▾</Text>
                       </View>
                     </Pressable>
@@ -878,7 +966,7 @@ export default function TimelineScreen() {
                   <View style={styles.dropdownWrapper}>
                     <Pressable style={styles.dropdownButton} onPress={() => { setYearOpen(!yearOpen); if (monthOpen) setMonthOpen(false); }}>
                       <View style={styles.dropdownInner}>
-                        <Text style={styles.dropdownText}>{selectedYear}</Text>
+                        <Text style={styles.dropdownText}>{selectedYear || 'Year'}</Text>
                         <Text style={styles.dropdownArrow}>▾</Text>
                       </View>
                     </Pressable>
@@ -900,8 +988,8 @@ export default function TimelineScreen() {
                     <BackgroundIllustrations />
                     <FlatList
                       style={{ flex: 1 }}
-                      data={items}
-                      keyExtractor={(item, index) => item.id + index}
+                      data={folders}
+                      keyExtractor={(item) => item.id}
                       renderItem={renderTimelineItem}
                       onEndReached={fetchNextPage}
                       onEndReachedThreshold={0.5}
@@ -913,7 +1001,7 @@ export default function TimelineScreen() {
                             <ActivityIndicator size="large" color="#7B1D1D" />
                           ) : (
                             <Text style={styles.footerText}>
-                              {items.length >= MOCK_API.data.length ? 'Making Memories since *Birth Year* ' : 'Scroll for more'}
+                              Making Memories since {getBirthYear()}
                             </Text>
                           )}
                         </View>
@@ -985,40 +1073,3 @@ const garden = require('../../assets/images/garden.png');
 const gift = require('../../assets/images/gift.png');
 const house = require('../../assets/images/house.png');
 const travel = require('../../assets/images/travel.png');
-
-function MovieScene() {
-  return (
-    <Svg width={100} height={100} viewBox="0 0 100 100">
-      {/* Main board */}
-      <Rect x={15} y={30} width={70} height={55} rx={4} fill="#3B2C1A" />
-      {/* White stripe */}
-      <Rect x={15} y={30} width={70} height={15} fill="#F6E5CD" />
-      {/* Diagonal stripes */}
-      {[0,1,2,3,4].map(i => (
-        <Path key={i} d={`M${15+14*i} 30 L${15+14*i+10} 45`} stroke="#3B2C1A" strokeWidth={4} />
-      ))}
-      {/* Hinge */}
-      <Circle cx={20} cy={37} r={4} fill="#C4A34A" />
-      {/* Holes */}
-      <Circle cx={75} cy={40} r={2} fill="#F6E5CD" />
-      <Circle cx={85} cy={40} r={2} fill="#F6E5CD" />
-    </Svg>
-  );
-}
-
-function SpaScene() {
-  return (
-    <Svg width={100} height={100} viewBox="0 0 100 100">
-      {/* Candle */}
-      <Rect x={44} y={38} width={12} height={32} rx={4} fill="#F6E5CD" stroke="#C8B89A" strokeWidth={2} />
-      {/* Flame */}
-      <Ellipse cx={50} cy={36} rx={2.5} ry={5} fill="#F9D06A" />
-      {/* Glow */}
-      <Circle cx={50} cy={36} r={10} fill="#F9D06A" opacity={0.3} />
-      {/* Leaves */}
-      <Ellipse cx={38} cy={70} rx={10} ry={22} fill="#557263" transform="rotate(-18 38 70)" />
-      <Ellipse cx={62} cy={74} rx={10} ry={22} fill="#557263" transform="rotate(18 62 74)" />
-      <Ellipse cx={50} cy={82} rx={12} ry={8} fill="#557263" />
-    </Svg>
-  );
-}
