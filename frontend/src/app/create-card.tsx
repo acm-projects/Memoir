@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -29,21 +29,7 @@ import {
 import BottomNavbar from "../components/BottomNavbar";
 import BackButton from "../components/back-Button";
 import DraggableItem from "../components/draggableItem";
-import { supabase } from "../lib/supabase";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type TemplateMatch = {
-  id: string;
-  name: string;
-  card_color: string;
-  text_1?: string; text_2?: string; text_3?: string; text_4?: string; text_5?: string;
-  sticker_1?: string; sticker_2?: string; sticker_3?: string; sticker_4?: string; sticker_5?: string;
-  gif_1?: string; gif_2?: string;
-  similarity?: number;
-};
-
-// FIX 3: Added `font` field to Item type
 type Item = {
   id: string;
   type: "text" | "sticker" | "photo";
@@ -62,10 +48,7 @@ type Message = {
   id: string;
   role: "user" | "assistant";
   text: string;
-  templatePreview?: TemplateMatch | null;
 };
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function seededRotation(id: string) {
   let hash = 0;
@@ -75,105 +58,14 @@ function seededRotation(id: string) {
   return (hash % 13) - 6;
 }
 
-function templateToItems(template: TemplateMatch): Item[] {
-  const items: Item[] = [];
-  const texts = [template.text_1, template.text_2, template.text_3, template.text_4, template.text_5].filter(Boolean) as string[];
-  const stickers = [template.sticker_1, template.sticker_2, template.sticker_3, template.sticker_4, template.sticker_5, template.gif_1, template.gif_2].filter(Boolean) as string[];
-
-  texts.forEach((content, i) => {
-    const id = `tpl-text-${i}-${Date.now()}`;
-    items.push({
-      id,
-      type: "text",
-      content,
-      x: 20 + (i % 2) * 120,
-      y: 30 + Math.floor(i / 2) * 80,
-      color: "#5A390E",
-      rotation: seededRotation(id),
-      scale: 1,
-    });
-  });
-
-  stickers.forEach((sticker, i) => {
-    const id = `tpl-sticker-${i}-${Date.now()}`;
-    items.push({
-      id,
-      type: "sticker",
-      content: sticker,
-      sticker,
-      x: 40 + (i % 3) * 90,
-      y: 160 + Math.floor(i / 3) * 90,
-      rotation: seededRotation(id),
-      scale: 1,
-    });
-  });
-
-  return items;
-}
-
-async function saveCardToSupabase(userId: string, title: string): Promise<string | null> {
-  try {
-    const { data, error } = await supabase
-      .from("custom_cards")
-      .insert({ user_id: userId, title, caption: "Created from template" })
-      .select("id")
-      .single();
-    if (error) { console.error("Supabase insert error:", error.message); return null; }
-    return data?.id ?? null;
-  } catch (e) {
-    console.error(e);
-    return null;
-  }
-}
-
-// ─── TemplateCard Component ───────────────────────────────────────────────────
-
-function TemplateCard({ template, onApply }: { template: TemplateMatch; onApply: (t: TemplateMatch) => void }) {
-  const previewTexts = [template.text_1, template.text_2, template.text_3].filter(Boolean);
-  const previewStickers = [template.sticker_1, template.sticker_2, template.sticker_3].filter(Boolean);
-  return (
-    <View style={{ backgroundColor: "#fdf6ed", borderRadius: 16, borderWidth: 1, borderColor: "#d7c3ac", overflow: "hidden", marginTop: 8, width: 240 }}>
-      <View style={[{ padding: 12, minHeight: 90, justifyContent: "center", alignItems: "center", gap: 4 }, { backgroundColor: template.card_color || "#fffaf4" }]}>
-        {previewTexts.slice(0, 2).map((t, i) => (
-          <Text key={i} style={{ fontSize: 11, color: "#5A390E", fontStyle: "italic", textAlign: "center" }} numberOfLines={1}>{t}</Text>
-        ))}
-        <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>
-          {previewStickers.slice(0, 3).map((s, i) => (
-            <Image key={i} source={{ uri: s }} style={{ width: 28, height: 28 }} resizeMode="contain" />
-          ))}
-        </View>
-      </View>
-      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: "#ede0cc", gap: 8 }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: "#3a2010" }}>{template.name}</Text>
-          {template.similarity !== undefined && (
-            <Text style={{ fontSize: 10, color: "#9a7a60", marginTop: 1 }}>{Math.round(template.similarity * 100)}% match</Text>
-          )}
-        </View>
-        <TouchableOpacity onPress={() => onApply(template)} style={{ backgroundColor: "#7a1a1a", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
-          <Text style={{ color: "#f5ede0", fontSize: 12, fontWeight: "600" }}>Use this</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const FLASK_URL = process.env.EXPO_PUBLIC_FLASK_URL ?? "https://your-flask-url";
-
 // ─── AI Chat Modal ────────────────────────────────────────────────────────────
 
 function AIChatModal({
   visible,
   onClose,
-  onApplyTemplate,
-  userId,
 }: {
   visible: boolean;
   onClose: () => void;
-  onApplyTemplate: (template: TemplateMatch) => void;
-  userId: string;
 }) {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -186,74 +78,84 @@ function AIChatModal({
   const [loading, setLoading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  const handleApplyTemplate = (template: TemplateMatch) => {
-    onApplyTemplate(template);
-    onClose();
-  };
-
   const sendMessage = async () => {
     const trimmed = input.trim();
     if (!trimmed || loading) return;
-    const userMsg: Message = { id: Date.now().toString(), role: "user", text: trimmed };
-    setMessages((prev) => [...prev, userMsg]);
+
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      text: trimmed,
+    };
+
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setInput("");
     setLoading(true);
+
     try {
-      const response = await fetch(`${FLASK_URL}/recommend-template`, {
+      const apiMessages = updatedMessages.map((m) => ({
+        role: m.role,
+        content: m.text,
+      }));
+      const response = await fetch("https://your-flask-url/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: trimmed, user_id: userId, match_count: 3 }),
+        body: JSON.stringify({ messages: apiMessages }),
       });
+
       const data = await response.json();
-      if (!data.success) throw new Error(data.error ?? "Backend error");
-      const suggestions: TemplateMatch[] = data.suggested_templates ?? [];
-      const intent = data.design_intent ?? {};
-      if (suggestions.length === 0) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            role: "assistant",
-            text: "I couldn't find a matching template, but you can still build your card from scratch using the tools below! 🎨",
-          },
-        ]);
-      } else {
-        const occasionNote = intent.occasion ? ` for a ${intent.occasion}` : "";
-        const recipientNote = intent.recipient ? ` for ${intent.recipient}` : "";
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            role: "assistant",
-            text: `Here's a template that fits${occasionNote}${recipientNote} — tap "Use this" to load it onto your card!`,
-            templatePreview: suggestions[0],
-          },
-        ]);
-      }
+      const replyText = data?.reply ?? "Sorry, I couldn't get a response.";
+
+      const assistantMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        text: replyText,
+      };
+
+      setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { id: (Date.now() + 1).toString(), role: "assistant", text: "Oops, something went wrong. Try again!" },
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          text: "Oops, something went wrong. Try again!",
+        },
       ]);
     } finally {
       setLoading(false);
     }
   };
 
-  // FIX 2: Added outer messageBubble wrapper so user messages align right
   const renderMessage = ({ item }: { item: Message }) => {
     const isUser = item.role === "user";
     return (
-      <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.assistantBubble]}>
-        <View style={{ maxWidth: "78%" }}>
-          <View style={[styles.bubbleContent, isUser ? styles.userBubbleContent : styles.assistantBubbleContent]}>
-            <Text style={[styles.bubbleText, isUser ? styles.userBubbleText : styles.assistantBubbleText]}>
-              {item.text}
-            </Text>
+      <View
+        style={[
+          styles.messageBubble,
+          isUser ? styles.userBubble : styles.assistantBubble,
+        ]}
+      >
+        {!isUser && (
+          <View style={styles.avatarDot}>
+            <Ionicons name="sparkles" size={12} color="#f5ede0" />
           </View>
-          {!isUser && item.templatePreview && (
-            <TemplateCard template={item.templatePreview} onApply={handleApplyTemplate} />
-          )}
+        )}
+        <View
+          style={[
+            styles.bubbleContent,
+            isUser ? styles.userBubbleContent : styles.assistantBubbleContent,
+          ]}
+        >
+          <Text
+            style={[
+              styles.bubbleText,
+              isUser ? styles.userBubbleText : styles.assistantBubbleText,
+            ]}
+          >
+            {item.text}
+          </Text>
         </View>
       </View>
     );
@@ -351,8 +253,9 @@ export default function CreateCard() {
   });
 
   const [cardColor, setCardColor] = useState("#fffaf4");
-  const [items, setItems] = useState<Item[]>([]);
-  const [cardId, setCardId] = useState<string | null>(null);
+  const [items, setItems] = useState<Item[]>([
+    
+  ]);
 
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -360,16 +263,6 @@ export default function CreateCard() {
   const [gifSearch, setGifSearch] = useState("");
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
   const [aiModalVisible, setAiModalVisible] = useState(false);
-
-  // FIX 1: Correctly fetch userId via supabase.auth.getSession()
-  const [userId, setUserId] = useState<string>("guest");
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user?.id) {
-        setUserId(data.session.user.id);
-      }
-    });
-  }, []);
 
   const STICKERS = [
     { id: "star", image: require("../../assets/images/star-sticker.png") },
@@ -382,9 +275,10 @@ export default function CreateCard() {
     { id: "butterfly", image: require("../../assets/images/butterfly-sticker.png") },
     { id: "balloon", image: require("../../assets/images/balloon-sticker.png") },
     { id: "banner", image: require("../../assets/images/banner-sticker.png") },
-    { id: "gradguy", image: require("../../assets/images/gradguy-sticker.png") },
-    { id: "snowman", image: require("../../assets/images/snowman-sticker.png") },
-    { id: "snowflake", image: require("../../assets/images/snowflake-sticker.png") },
+    {id: "gradguy", image: require("../../assets/images/gradguy-sticker.png")},
+    {id: "snowman", image: require("../../assets/images/snowman-sticker.png") },
+    {id:"snowflake", image: require("../../assets/images/snowflake-sticker.png") }
+    
   ];
 
   const COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
@@ -466,13 +360,6 @@ export default function CreateCard() {
     setGifs(json.data || []);
   }
 
-  const handleApplyTemplate = async (template: TemplateMatch) => {
-    if (template.card_color) setCardColor(template.card_color);
-    setItems(templateToItems(template));
-    const newCardId = await saveCardToSupabase(userId, template.name ?? "My Card");
-    if (newCardId) setCardId(newCardId);
-  };
-
   if (!fontsLoaded) return null;
 
   return (
@@ -480,8 +367,6 @@ export default function CreateCard() {
       <AIChatModal
         visible={aiModalVisible}
         onClose={() => setAiModalVisible(false)}
-        onApplyTemplate={handleApplyTemplate}
-        userId={userId}
       />
 
       <View style={styles.header}>
@@ -719,7 +604,7 @@ export default function CreateCard() {
                     style={styles.toolButton}
                     onPress={() => {
                       const item = items.find((i) => i.id === selectedId);
-                      if (item) handleRotationChange(selectedId, (item.rotation ?? 0) - 3);
+                      if (item) handleRotationChange(selectedId, (item.rotation ?? 0) -3);
                     }}
                   >
                     <Text style={styles.selBtnText}>↺</Text>
@@ -844,7 +729,7 @@ export default function CreateCard() {
 
               <TouchableOpacity
                 style={styles.sendBtn}
-                onPress={() => router.push({ pathname: "/send-card", params: { cardId: cardId ?? "" } } as any)}
+                onPress={() => router.push("/send-card" as any)}
               >
                 <Text style={styles.sendText}>Send</Text>
               </TouchableOpacity>

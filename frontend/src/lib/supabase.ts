@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import * as SecureStore from 'expo-secure-store'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Platform } from 'react-native'
+import Constants from 'expo-constants'
 
 const ExpoSecureStoreAdapter = {
   getItem: (key: string) => {
@@ -30,9 +31,14 @@ const ExpoSecureStoreAdapter = {
   },
 }
 
+const supabaseUrl =
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_URL ?? ''
+const supabaseAnonKey =
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? ''
+
 export const supabase = createClient(
-  process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+  supabaseUrl,
+  supabaseAnonKey,
   {
     auth: {
       storage: ExpoSecureStoreAdapter as any,
@@ -42,8 +48,4 @@ export const supabase = createClient(
     },
   }
 )
-
-
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
