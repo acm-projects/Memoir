@@ -1,0 +1,12 @@
+# local env files
+.env*.local
+
+#env
+.env
+.env.*s
+
+server.txt
+requirements.txt
+__pycache__/
+*.pyc
+TrOCR_Inference.py

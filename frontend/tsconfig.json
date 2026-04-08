@@ -13,6 +13,8 @@
     }
   },
   "include": [
+    "**/*.ts",
+    "**/*.tsx",
     "src/**/*",
     "expo-env.d.ts",
     "nativewind-env.d.ts",

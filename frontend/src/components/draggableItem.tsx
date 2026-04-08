@@ -316,8 +316,8 @@ export default function DraggableItem({
             onPress={() => {
               router.push({
                 pathname: "/one-specific-card" as any,
-                params: {
-                  image: item.content,
+                params: { // **CHNAGED**
+                  id: item.cardId || item.id, // CHANGED: use real card id
                   title: item.content,
                   caption: "",
                 },
