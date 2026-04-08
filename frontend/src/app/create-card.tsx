@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -17,10 +17,33 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useFonts } from "expo-font";
+import {
+  DancingScript_400Regular,
+} from "@expo-google-fonts/dancing-script";
+import { Pacifico_400Regular } from "@expo-google-fonts/pacifico";
+import { Caveat_400Regular } from "@expo-google-fonts/caveat";
+import {
+  PlayfairDisplay_400Regular,
+} from "@expo-google-fonts/playfair-display";
 import BottomNavbar from "../components/BottomNavbar";
 import BackButton from "../components/back-Button";
 import DraggableItem from "../components/draggableItem";
+import { supabase } from "../lib/supabase";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type TemplateMatch = {
+  id: string;
+  name: string;
+  card_color: string;
+  text_1?: string; text_2?: string; text_3?: string; text_4?: string; text_5?: string;
+  sticker_1?: string; sticker_2?: string; sticker_3?: string; sticker_4?: string; sticker_5?: string;
+  gif_1?: string; gif_2?: string;
+  similarity?: number;
+};
+
+// FIX 3: Added `font` field to Item type
 type Item = {
   id: string;
   type: "text" | "sticker" | "photo";
@@ -30,6 +53,7 @@ type Item = {
   sticker?: string;
   image?: any;
   color?: string;
+  font?: string;
   rotation: number;
   scale: number;
 };
@@ -38,7 +62,10 @@ type Message = {
   id: string;
   role: "user" | "assistant";
   text: string;
+  templatePreview?: TemplateMatch | null;
 };
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function seededRotation(id: string) {
   let hash = 0;
@@ -48,14 +75,105 @@ function seededRotation(id: string) {
   return (hash % 13) - 6;
 }
 
+function templateToItems(template: TemplateMatch): Item[] {
+  const items: Item[] = [];
+  const texts = [template.text_1, template.text_2, template.text_3, template.text_4, template.text_5].filter(Boolean) as string[];
+  const stickers = [template.sticker_1, template.sticker_2, template.sticker_3, template.sticker_4, template.sticker_5, template.gif_1, template.gif_2].filter(Boolean) as string[];
+
+  texts.forEach((content, i) => {
+    const id = `tpl-text-${i}-${Date.now()}`;
+    items.push({
+      id,
+      type: "text",
+      content,
+      x: 20 + (i % 2) * 120,
+      y: 30 + Math.floor(i / 2) * 80,
+      color: "#5A390E",
+      rotation: seededRotation(id),
+      scale: 1,
+    });
+  });
+
+  stickers.forEach((sticker, i) => {
+    const id = `tpl-sticker-${i}-${Date.now()}`;
+    items.push({
+      id,
+      type: "sticker",
+      content: sticker,
+      sticker,
+      x: 40 + (i % 3) * 90,
+      y: 160 + Math.floor(i / 3) * 90,
+      rotation: seededRotation(id),
+      scale: 1,
+    });
+  });
+
+  return items;
+}
+
+async function saveCardToSupabase(userId: string, title: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from("custom_cards")
+      .insert({ user_id: userId, title, caption: "Created from template" })
+      .select("id")
+      .single();
+    if (error) { console.error("Supabase insert error:", error.message); return null; }
+    return data?.id ?? null;
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+// ─── TemplateCard Component ───────────────────────────────────────────────────
+
+function TemplateCard({ template, onApply }: { template: TemplateMatch; onApply: (t: TemplateMatch) => void }) {
+  const previewTexts = [template.text_1, template.text_2, template.text_3].filter(Boolean);
+  const previewStickers = [template.sticker_1, template.sticker_2, template.sticker_3].filter(Boolean);
+  return (
+    <View style={{ backgroundColor: "#fdf6ed", borderRadius: 16, borderWidth: 1, borderColor: "#d7c3ac", overflow: "hidden", marginTop: 8, width: 240 }}>
+      <View style={[{ padding: 12, minHeight: 90, justifyContent: "center", alignItems: "center", gap: 4 }, { backgroundColor: template.card_color || "#fffaf4" }]}>
+        {previewTexts.slice(0, 2).map((t, i) => (
+          <Text key={i} style={{ fontSize: 11, color: "#5A390E", fontStyle: "italic", textAlign: "center" }} numberOfLines={1}>{t}</Text>
+        ))}
+        <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>
+          {previewStickers.slice(0, 3).map((s, i) => (
+            <Image key={i} source={{ uri: s }} style={{ width: 28, height: 28 }} resizeMode="contain" />
+          ))}
+        </View>
+      </View>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: "#ede0cc", gap: 8 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: "#3a2010" }}>{template.name}</Text>
+          {template.similarity !== undefined && (
+            <Text style={{ fontSize: 10, color: "#9a7a60", marginTop: 1 }}>{Math.round(template.similarity * 100)}% match</Text>
+          )}
+        </View>
+        <TouchableOpacity onPress={() => onApply(template)} style={{ backgroundColor: "#7a1a1a", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
+          <Text style={{ color: "#f5ede0", fontSize: 12, fontWeight: "600" }}>Use this</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const FLASK_URL = process.env.EXPO_PUBLIC_FLASK_URL ?? "https://your-flask-url";
+
 // ─── AI Chat Modal ────────────────────────────────────────────────────────────
 
 function AIChatModal({
   visible,
   onClose,
+  onApplyTemplate,
+  userId,
 }: {
   visible: boolean;
   onClose: () => void;
+  onApplyTemplate: (template: TemplateMatch) => void;
+  userId: string;
 }) {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -68,85 +186,74 @@ function AIChatModal({
   const [loading, setLoading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
+  const handleApplyTemplate = (template: TemplateMatch) => {
+    onApplyTemplate(template);
+    onClose();
+  };
+
   const sendMessage = async () => {
     const trimmed = input.trim();
     if (!trimmed || loading) return;
-
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      text: trimmed,
-    };
-
-    const updatedMessages = [...messages, userMsg];
-    setMessages(updatedMessages);
+    const userMsg: Message = { id: Date.now().toString(), role: "user", text: trimmed };
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
-
     try {
-      // Build conversation history for the API
-      const apiMessages = updatedMessages.map((m) => ({
-        role: m.role,
-        content: m.text,
-      }));
-      const response = await fetch("https://your-flask-url/api/chat", {
+      const response = await fetch(`${FLASK_URL}/recommend-template`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ prompt: trimmed, user_id: userId, match_count: 3 }),
       });
-
       const data = await response.json();
-      const replyText = data?.reply ?? "Sorry, I couldn't get a response.";
-
-      const assistantMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        text: replyText,
-      };
-
-      setMessages((prev) => [...prev, assistantMsg]);
+      if (!data.success) throw new Error(data.error ?? "Backend error");
+      const suggestions: TemplateMatch[] = data.suggested_templates ?? [];
+      const intent = data.design_intent ?? {};
+      if (suggestions.length === 0) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            text: "I couldn't find a matching template, but you can still build your card from scratch using the tools below! 🎨",
+          },
+        ]);
+      } else {
+        const occasionNote = intent.occasion ? ` for a ${intent.occasion}` : "";
+        const recipientNote = intent.recipient ? ` for ${intent.recipient}` : "";
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            text: `Here's a template that fits${occasionNote}${recipientNote} — tap "Use this" to load it onto your card!`,
+            templatePreview: suggestions[0],
+          },
+        ]);
+      }
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          text: "Oops, something went wrong. Try again!",
-        },
+        { id: (Date.now() + 1).toString(), role: "assistant", text: "Oops, something went wrong. Try again!" },
       ]);
     } finally {
       setLoading(false);
     }
   };
 
+  // FIX 2: Added outer messageBubble wrapper so user messages align right
   const renderMessage = ({ item }: { item: Message }) => {
     const isUser = item.role === "user";
     return (
-      <View
-        style={[
-          styles.messageBubble,
-          isUser ? styles.userBubble : styles.assistantBubble,
-        ]}
-      >
-        {!isUser && (
-          <View style={styles.avatarDot}>
-            <Ionicons name="sparkles" size={12} color="#f5ede0" />
+      <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.assistantBubble]}>
+        <View style={{ maxWidth: "78%" }}>
+          <View style={[styles.bubbleContent, isUser ? styles.userBubbleContent : styles.assistantBubbleContent]}>
+            <Text style={[styles.bubbleText, isUser ? styles.userBubbleText : styles.assistantBubbleText]}>
+              {item.text}
+            </Text>
           </View>
-        )}
-        <View
-          style={[
-            styles.bubbleContent,
-            isUser ? styles.userBubbleContent : styles.assistantBubbleContent,
-          ]}
-        >
-          <Text
-            style={[
-              styles.bubbleText,
-              isUser ? styles.userBubbleText : styles.assistantBubbleText,
-            ]}
-          >
-            {item.text}
-          </Text>
+          {!isUser && item.templatePreview && (
+            <TemplateCard template={item.templatePreview} onApply={handleApplyTemplate} />
+          )}
         </View>
       </View>
     );
@@ -164,10 +271,8 @@ function AIChatModal({
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalSheet}
         >
-          {/* Handle bar */}
           <View style={styles.handleBar} />
 
-          {/* Header */}
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderLeft}>
               <View style={styles.sparkleIcon}>
@@ -183,7 +288,6 @@ function AIChatModal({
             </TouchableOpacity>
           </View>
 
-          {/* Messages */}
           <FlatList
             ref={flatListRef}
             data={messages}
@@ -196,7 +300,6 @@ function AIChatModal({
             showsVerticalScrollIndicator={false}
           />
 
-          {/* Typing indicator */}
           {loading && (
             <View style={styles.typingRow}>
               <View style={styles.avatarDot}>
@@ -208,7 +311,6 @@ function AIChatModal({
             </View>
           )}
 
-          {/* Input */}
           <View style={styles.inputRow}>
             <TextInput
               style={styles.chatInput}
@@ -241,22 +343,48 @@ function AIChatModal({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function CreateCard() {
+  const [fontsLoaded] = useFonts({
+    DancingScript_400Regular,
+    Pacifico_400Regular,
+    Caveat_400Regular,
+    PlayfairDisplay_400Regular,
+  });
+
   const [cardColor, setCardColor] = useState("#fffaf4");
   const [items, setItems] = useState<Item[]>([]);
-   // TODO: Replace mock data with real backend response
+  const [cardId, setCardId] = useState<string | null>(null);
+
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [gifs, setGifs] = useState<any[]>([]);
   const [gifSearch, setGifSearch] = useState("");
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
-  const [aiModalVisible, setAiModalVisible] = useState(false); // ← new
+  const [aiModalVisible, setAiModalVisible] = useState(false);
 
+  // FIX 1: Correctly fetch userId via supabase.auth.getSession()
+  const [userId, setUserId] = useState<string>("guest");
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user?.id) {
+        setUserId(data.session.user.id);
+      }
+    });
+  }, []);
 
-  // BACKEND: replace hardcoded STICKERS array 
   const STICKERS = [
-    { id: "star", image: require("../../assets/images/star-stamp.png") },
-    { id: "heart", image: require("../../assets/images/costa-rica-stamp.png") },
-    { id: "flower", image: require("../../assets/images/Australia-Stamp.png") },
+    { id: "star", image: require("../../assets/images/star-sticker.png") },
+    { id: "heart", image: require("../../assets/images/heart-sticker.png") },
+    { id: "flower", image: require("../../assets/images/orange-flower-stamp.png") },
+    { id: "strip", image: require("../../assets/images/photo-strip.png") },
+    { id: "cake", image: require("../../assets/images/cake-sticker.png") },
+    { id: "sun", image: require("../../assets/images/sun-sticker.png") },
+    { id: "grass", image: require("../../assets/images/grass-sticker.png") },
+    { id: "butterfly", image: require("../../assets/images/butterfly-sticker.png") },
+    { id: "balloon", image: require("../../assets/images/balloon-sticker.png") },
+    { id: "banner", image: require("../../assets/images/banner-sticker.png") },
+    { id: "gradguy", image: require("../../assets/images/gradguy-sticker.png") },
+    { id: "snowman", image: require("../../assets/images/snowman-sticker.png") },
+    { id: "snowflake", image: require("../../assets/images/snowflake-sticker.png") },
   ];
 
   const COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
@@ -287,6 +415,10 @@ export default function CreateCard() {
     setItems((prev) =>
       prev.map((i) => (i.id === id ? { ...i, content: newContent } : i))
     );
+  };
+
+  const handleFontChange = (id: string, font: string) => {
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, font } : i)));
   };
 
   const addText = () => {
@@ -334,12 +466,22 @@ export default function CreateCard() {
     setGifs(json.data || []);
   }
 
+  const handleApplyTemplate = async (template: TemplateMatch) => {
+    if (template.card_color) setCardColor(template.card_color);
+    setItems(templateToItems(template));
+    const newCardId = await saveCardToSupabase(userId, template.name ?? "My Card");
+    if (newCardId) setCardId(newCardId);
+  };
+
+  if (!fontsLoaded) return null;
+
   return (
     <View style={styles.container}>
-      {/* AI Chat Modal */}
       <AIChatModal
         visible={aiModalVisible}
         onClose={() => setAiModalVisible(false)}
+        onApplyTemplate={handleApplyTemplate}
+        userId={userId}
       />
 
       <View style={styles.header}>
@@ -358,6 +500,12 @@ export default function CreateCard() {
           <View
             style={[styles.cardPreview, { backgroundColor: cardColor }]}
             onLayout={(e) => setBoardSize(e.nativeEvent.layout)}
+            onStartShouldSetResponder={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedId(null);
+              }
+              return false;
+            }}
           >
             {items.length === 0 && (
               <Text style={styles.previewText}>Card preview</Text>
@@ -376,8 +524,7 @@ export default function CreateCard() {
                 onRotationChange={handleRotationChange}
                 onScaleChange={handleScaleChange}
                 onContentChange={handleContentChange}
-                boardWidth={boardSize.width}
-                boardHeight={boardSize.height}
+                onFontChange={handleFontChange}
                 accentColor="#8B6A3E"
               />
             ))}
@@ -432,14 +579,15 @@ export default function CreateCard() {
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.stickerRow}
+                    contentContainerStyle={styles.compactStrip}
                   >
                     {STICKERS.map((s) => (
                       <TouchableOpacity
                         key={s.id}
+                        style={styles.stickerChip}
                         onPress={() => addSticker(s.id)}
                       >
-                        <Image source={s.image} style={styles.stickerThumb} />
+                        <Image source={s.image} style={styles.stickerThumbSmall} />
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -496,68 +644,184 @@ export default function CreateCard() {
                     </ScrollView>
                   </View>
                 )}
+
+                {activeTool === "photo" && (
+                  <View style={{ alignItems: "center" }}>
+                    <TouchableOpacity
+                      style={styles.addTextButton}
+                      onPress={async () => {
+                        const { launchImageLibraryAsync } = await import(
+                          "expo-image-picker"
+                        );
+                        const result = await launchImageLibraryAsync({
+                          mediaTypes: ["images"],
+                          allowsEditing: true,
+                          quality: 1,
+                        });
+                        if (!result.canceled) {
+                          const id = Date.now().toString();
+                          setItems((prev) => [
+                            ...prev,
+                            {
+                              id,
+                              type: "sticker",
+                              content: "",
+                              x: 30,
+                              y: 30,
+                              sticker: result.assets[0].uri,
+                              rotation: seededRotation(id),
+                              scale: 1,
+                            },
+                          ]);
+                          setActiveTool(null);
+                        }
+                      }}
+                    >
+                      <Ionicons
+                        name="image-outline"
+                        size={20}
+                        color="#F8E5CF"
+                      />
+                      <Text style={styles.buttonText}>Choose Photo</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             )}
 
             <View style={styles.toolbarRow}>
-              <View style={styles.toolbar}>
-                <Pressable
-                  style={[
-                    styles.toolButton,
-                    activeTool === "background" && styles.activeToolBtn,
-                  ]}
-                  onPress={() =>
-                    setActiveTool(
-                      activeTool === "background" ? null : "background"
-                    )
-                  }
-                >
-                  <Ionicons
-                    name="color-palette-outline"
-                    size={24}
-                    color="#5A390E"
-                  />
-                </Pressable>
+              {selectedId ? (
+                /* ── Selection toolbar ── */
+                <View style={styles.toolbar}>
+                  <TouchableOpacity
+                    style={styles.toolButton}
+                    onPress={() => {
+                      const item = items.find((i) => i.id === selectedId);
+                      if (item) handleScaleChange(selectedId, Math.max(0.5, (item.scale ?? 1) - 0.1));
+                    }}
+                  >
+                    <Text style={styles.selBtnText}>−</Text>
+                  </TouchableOpacity>
 
-                <Pressable
-                  style={[
-                    styles.toolButton,
-                    activeTool === "text" && styles.activeToolBtn,
-                  ]}
-                  onPress={() =>
-                    setActiveTool(activeTool === "text" ? null : "text")
-                  }
-                >
-                  <Ionicons name="text-outline" size={24} color="#5A390E" />
-                </Pressable>
+                  <TouchableOpacity
+                    style={styles.toolButton}
+                    onPress={() => {
+                      const item = items.find((i) => i.id === selectedId);
+                      if (item) handleScaleChange(selectedId, Math.min(5, (item.scale ?? 1) + 0.1));
+                    }}
+                  >
+                    <Text style={styles.selBtnText}>+</Text>
+                  </TouchableOpacity>
 
-                <Pressable
-                  style={[
-                    styles.toolButton,
-                    activeTool === "sticker" && styles.activeToolBtn,
-                  ]}
-                  onPress={() =>
-                    setActiveTool(activeTool === "sticker" ? null : "sticker")
-                  }
-                >
-                  <Ionicons name="happy-outline" size={24} color="#5A390E" />
-                </Pressable>
+                  <View style={styles.selDivider} />
 
-                <Pressable
-                  style={[
-                    styles.toolButton,
-                    activeTool === "gif" && styles.activeToolBtn,
-                  ]}
-                  onPress={() => {
-                    setActiveTool(activeTool === "gif" ? null : "gif");
-                    searchGifs("");
-                  }}
-                >
-                  <Ionicons name="film-outline" size={24} color="#5A390E" />
-                </Pressable>
-              </View>
+                  <TouchableOpacity
+                    style={styles.toolButton}
+                    onPress={() => {
+                      const item = items.find((i) => i.id === selectedId);
+                      if (item) handleRotationChange(selectedId, (item.rotation ?? 0) - 3);
+                    }}
+                  >
+                    <Text style={styles.selBtnText}>↺</Text>
+                  </TouchableOpacity>
 
-              {/* Sparkle button now opens the AI modal */}
+                  <TouchableOpacity
+                    style={styles.toolButton}
+                    onPress={() => {
+                      const item = items.find((i) => i.id === selectedId);
+                      if (item) handleRotationChange(selectedId, (item.rotation ?? 0) + 3);
+                    }}
+                  >
+                    <Text style={styles.selBtnText}>↻</Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.selDivider} />
+
+                  <TouchableOpacity
+                    style={styles.toolButton}
+                    onPress={() => {
+                      deleteItem(selectedId);
+                      setSelectedId(null);
+                    }}
+                  >
+                    <Ionicons name="trash-outline" size={22} color="#7B1D1D" />
+                  </TouchableOpacity>
+
+                  <View style={styles.selDivider} />
+
+                  <TouchableOpacity
+                    style={styles.toolButton}
+                    onPress={() => setSelectedId(null)}
+                  >
+                    <Ionicons name="checkmark" size={24} color="#2C5F2E" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                /* ── Normal tool toolbar ── */
+                <View style={styles.toolbar}>
+                  <Pressable
+                    style={[
+                      styles.toolButton,
+                      activeTool === "background" && styles.activeToolBtn,
+                    ]}
+                    onPress={() =>
+                      setActiveTool(activeTool === "background" ? null : "background")
+                    }
+                  >
+                    <Ionicons name="color-palette-outline" size={24} color="#5A390E" />
+                  </Pressable>
+
+                  <Pressable
+                    style={[
+                      styles.toolButton,
+                      activeTool === "text" && styles.activeToolBtn,
+                    ]}
+                    onPress={() =>
+                      setActiveTool(activeTool === "text" ? null : "text")
+                    }
+                  >
+                    <Ionicons name="text-outline" size={24} color="#5A390E" />
+                  </Pressable>
+
+                  <Pressable
+                    style={[
+                      styles.toolButton,
+                      activeTool === "sticker" && styles.activeToolBtn,
+                    ]}
+                    onPress={() =>
+                      setActiveTool(activeTool === "sticker" ? null : "sticker")
+                    }
+                  >
+                    <Ionicons name="happy-outline" size={24} color="#5A390E" />
+                  </Pressable>
+
+                  <Pressable
+                    style={[
+                      styles.toolButton,
+                      activeTool === "gif" && styles.activeToolBtn,
+                    ]}
+                    onPress={() => {
+                      setActiveTool(activeTool === "gif" ? null : "gif");
+                      searchGifs("");
+                    }}
+                  >
+                    <Ionicons name="film-outline" size={24} color="#5A390E" />
+                  </Pressable>
+
+                  <Pressable
+                    style={[
+                      styles.toolButton,
+                      activeTool === "photo" && styles.activeToolBtn,
+                    ]}
+                    onPress={() =>
+                      setActiveTool(activeTool === "photo" ? null : "photo")
+                    }
+                  >
+                    <Ionicons name="image-outline" size={24} color="#5A390E" />
+                  </Pressable>
+                </View>
+              )}
+
               <TouchableOpacity
                 style={styles.plusButton}
                 activeOpacity={0.8}
@@ -565,12 +829,7 @@ export default function CreateCard() {
               >
                 <Image
                   source={require("../../assets/images/sparkle-chat.png")}
-                  style={{
-                    marginLeft: 2,
-                    width: 45,
-                    height: 45,
-                    resizeMode: "contain",
-                  }}
+                  style={{ marginLeft: 2, width: 45, height: 45, resizeMode: "contain" }}
                 />
               </TouchableOpacity>
             </View>
@@ -585,7 +844,7 @@ export default function CreateCard() {
 
               <TouchableOpacity
                 style={styles.sendBtn}
-                onPress={() => router.push("/send-card" as any)}
+                onPress={() => router.push({ pathname: "/send-card", params: { cardId: cardId ?? "" } } as any)}
               >
                 <Text style={styles.sendText}>Send</Text>
               </TouchableOpacity>
@@ -600,8 +859,6 @@ export default function CreateCard() {
 }
 
 const styles = StyleSheet.create({
-  // ── existing styles (unchanged) ──────────────────────────────────────────
-
   container: { flex: 1, backgroundColor: "#7a1a1a" },
   header: { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 16 },
   headerRow: { flexDirection: "row", alignItems: "center" },
@@ -623,15 +880,15 @@ const styles = StyleSheet.create({
   paperImage: { borderTopLeftRadius: 32, borderTopRightRadius: 32 },
   bgArea: { flex: 1, paddingTop: 20, paddingHorizontal: 14 },
   cardPreview: {
-    width: "90%",
-    height: 500,
+    width: "105%",
+    height: "75%",
     alignSelf: "center",
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
     borderColor: "rgba(139,26,26,0.15)",
-    marginTop: 20,
+    marginTop: -10,
     overflow: "hidden",
     position: "relative",
   },
@@ -681,6 +938,18 @@ const styles = StyleSheet.create({
   },
   toolButton: { padding: 10, borderRadius: 20 },
   activeToolBtn: { backgroundColor: "rgba(90, 57, 14, 0.1)" },
+  selBtnText: {
+    fontSize: 22,
+    color: "#5A390E",
+    fontWeight: "700",
+    lineHeight: 26,
+  },
+  selDivider: {
+    width: 1,
+    height: 22,
+    backgroundColor: "#d7c3ac",
+    marginHorizontal: 2,
+  },
   panel: {
     backgroundColor: "#ede0cc",
     width: "90%",
@@ -731,6 +1000,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   stickerThumb: { width: 55, height: 55, resizeMode: "contain" },
+  compactStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  stickerChip: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#fffaf4",
+    borderWidth: 1,
+    borderColor: "#d7c3ac",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stickerThumbSmall: { width: 34, height: 34, resizeMode: "contain" },
   headerButtons: {
     flexDirection: "row",
     width: "85%",
@@ -772,16 +1059,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-end",
     backgroundColor: "rgba(0,0,0,0.45)",
-    
   },
-modalSheet: {
-  backgroundColor: "#fdf6ed",
-  borderTopLeftRadius: 28,
-  borderTopRightRadius: 28,
-  paddingBottom: Platform.OS === "ios" ? 34 : 16,
-  maxHeight: "95%",   
-},
-
+  modalSheet: {
+    backgroundColor: "#fdf6ed",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingBottom: Platform.OS === "ios" ? 34 : 16,
+    maxHeight: "95%",
+  },
   handleBar: {
     width: 40,
     height: 4,
@@ -799,7 +1084,7 @@ modalSheet: {
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#ede0cc",
-    marginBottom:5,
+    marginBottom: 5,
   },
   modalHeaderLeft: {
     flexDirection: "row",
@@ -842,12 +1127,8 @@ modalSheet: {
     gap: 8,
     marginBottom: 6,
   },
-  userBubble: {
-    justifyContent: "flex-end",
-  },
-  assistantBubble: {
-    justifyContent: "flex-start",
-  },
+  userBubble: { justifyContent: "flex-end" },
+  assistantBubble: { justifyContent: "flex-start" },
   avatarDot: {
     width: 26,
     height: 26,
@@ -872,10 +1153,7 @@ modalSheet: {
     backgroundColor: "#ede0cc",
     borderBottomLeftRadius: 4,
   },
-  bubbleText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
+  bubbleText: { fontSize: 14, lineHeight: 20 },
   userBubbleText: { color: "#f5ede0" },
   assistantBubbleText: { color: "#3a2010" },
   typingRow: {
@@ -919,7 +1197,5 @@ modalSheet: {
     alignItems: "center",
     justifyContent: "center",
   },
-  sendIconBtnDisabled: {
-    backgroundColor: "#c8b89a",
-  },
+  sendIconBtnDisabled: { backgroundColor: "#c8b89a" },
 });
