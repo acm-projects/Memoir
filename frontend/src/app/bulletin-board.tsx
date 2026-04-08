@@ -16,13 +16,13 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Svg, { Path, Circle } from "react-native-svg";
-
+import * as Crypto from 'expo-crypto';
 import DraggableItem from "../components/draggableItem";
 import BottomNavbar from "../components/BottomNavbar";
 
 type Item = {
   id: string;
-  type: "note" | "sticker" | "card" | "photo";
+  type: "note" | "sticker" | "card" | "photo" | "music";
   content: string;
   x: number;
   y: number;
@@ -85,8 +85,10 @@ export default function BulletinBoard() {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
+  const [tracks, setTracks] = useState<any[]>([]);
+  const [musicSearch, setMusicSearch] = useState("");
   const [activeTool, setActiveTool] = useState<
-    "note" | "sticker" | "gif" | "photo" | null
+    "note" | "sticker" | "gif" | "photo" | "music" | null
   >(null);
   const [gifs, setGifs] = useState<any[]>([]);
   const [gifSearch, setGifSearch] = useState("");
@@ -181,6 +183,60 @@ export default function BulletinBoard() {
     const json = await res.json();
     setGifs(json.data || []);
   }
+
+  async function searchSpotify(query: string) {
+  if (!query) return;
+
+  const clientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_SECRET;
+
+  console.log('ID:', clientId);
+  console.log('SECRET:', clientSecret);
+
+  try {
+    const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': 'Basic ' + btoa(`${clientId}:${clientSecret}`),
+      },
+      body: 'grant_type=client_credentials',
+    });
+
+    const rawText = await tokenRes.text();
+    console.log('Raw response:', rawText);
+
+    const tokenData = JSON.parse(rawText);
+
+    const res = await fetch(
+  `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`,
+  { headers: { Authorization: `Bearer ${tokenData.access_token}` } }
+);
+
+const searchText = await res.text();
+console.log('Search response:', searchText); // ← add this
+
+const data = JSON.parse(searchText);
+setTracks(data.tracks?.items ?? []);
+  } catch (err) {
+    console.log('Spotify error:', err);
+  }
+}
+function addMusicItem(track: any) {
+  const id = Date.now().toString();
+  setItems((prev) => [...prev, {
+    id,
+    type: "music",
+    content: track.name,
+    x: 100,
+    y: 150,
+    sticker: track.external_urls.spotify,
+    image: { uri: track.album.images[0].url },
+    rotation: seededRotation(id),
+    scale: 1,
+  }]);
+  setActiveTool(null);
+}
 
   async function pickImage() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -404,6 +460,32 @@ export default function BulletinBoard() {
                     </ScrollView>
                   </View>
                 )}
+
+                {activeTool === "music" && (
+            <View>
+              <TextInput
+                style={styles.gifInput}
+                placeholder="Search a song..."
+                placeholderTextColor="#9a7a60"
+                value={musicSearch}
+                onChangeText={(t) => {
+                  setMusicSearch(t);
+                  searchSpotify(t);
+                }}
+              />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {tracks.map((track) => (
+                  <TouchableOpacity
+                    key={track.id}
+                    onPress={() => addMusicItem(track)}
+                  >
+                    <Image source={{ uri: track.album.images[0].url }} style={{ width: 60, height: 60 }} />
+                    <Text>{track.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
               </View>
             )}
 
@@ -449,6 +531,13 @@ export default function BulletinBoard() {
                 }}
               >
                 <Ionicons name="film-outline" size={24} color="#5A390E" />
+              </Pressable>
+
+              <Pressable
+                style={[styles.toolButton, activeTool === "music" && styles.activeToolBtn]}
+                onPress={() => setActiveTool("music")}
+              >
+                <Ionicons name="musical-notes-outline" size={24} color="#5A390E" />
               </Pressable>
 
               <View style={styles.toolbarDivider} />

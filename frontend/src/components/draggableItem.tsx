@@ -8,7 +8,9 @@ import {
   TouchableOpacity,
   ImageBackground,
   PanResponder,
+  Linking,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function DraggableItem({
   item,
@@ -21,20 +23,31 @@ export default function DraggableItem({
   onContentChange,
   onScaleChange,
   onRotationChange,
+  onFontChange,
   accentColor,
 }: any) {
   const [position, setPosition] = useState({
     x: item.x ?? 0,
     y: item.y ?? 0,
   });
+  const [activeTab, setActiveTab] = useState<"color" | "font">("color");
 
   const isSelected = selectedId === item.id;
 
   const STICKERS: { [key: string]: any } = {
-    star: require("../../assets/images/cat-stamp.png"),
-    heart: require("../../assets/images/brasil-stamp.png"),
-    flower: require("../../assets/images/orange-flower-stamp.png"),
     strip: require("../../assets/images/photo-strip.png"),
+    cake: require("../../assets/images/cake-sticker.png"),
+    sun: require("../../assets/images/sun-sticker.png"),
+    grass: require("../../assets/images/grass-sticker.png"),
+    butterfly: require("../../assets/images/butterfly-sticker.png"),
+    balloon: require("../../assets/images/balloon-sticker.png"),
+    banner: require("../../assets/images/banner-sticker.png"),
+    gradguy: require("../../assets/images/gradguy-sticker.png"),
+    heart: require("../../assets/images/heart-sticker.png"),
+    star: require("../../assets/images/star-sticker.png"),
+    snowman: require("../../assets/images/snowman-sticker.png"),
+    snowflake: require("../../assets/images/snowflake-sticker.png"),
+
   };
 
   const TEXT_COLORS = [
@@ -46,12 +59,20 @@ export default function DraggableItem({
     "#000000",
   ];
 
+  const FONTS = [
+    { label: "Aa", value: "System" },
+    { label: "Dc", value: "DancingScript_400Regular" },
+    { label: "Pac", value: "Pacifico_400Regular" },
+    { label: "Cav", value: "Caveat_400Regular" },
+    { label: "Plf", value: "PlayfairDisplay_400Regular" },
+  ];
+
   const currentScale = item.scale ?? 1;
   const currentRotation = item.rotation ?? 0;
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => false,
-    onMoveShouldSetPanResponder: () => !!isEditing && item.type !== "text",
+    onMoveShouldSetPanResponder: (_ , g) => !!isEditing && (Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4),
     onPanResponderMove: (_, gestureState) => {
       const newX = (item.x ?? 0) + gestureState.dx;
       const newY = (item.y ?? 0) + gestureState.dy;
@@ -67,11 +88,42 @@ export default function DraggableItem({
 
   function renderControls() {
     if (!isSelected || !isEditing) return null;
+    if (item.type !== "text") return null;
 
     return (
-      <View style={styles.controlsWrapper}>
-        {item.type === "text" && (
-          <View style={styles.colorPicker}>
+      <View style={styles.controlsCard}>
+        <View style={styles.tabBar}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "color" && styles.activeTab]}
+            onPress={() => setActiveTab("color")}
+          >
+            <Ionicons
+              name="color-palette-outline"
+              size={14}
+              color={activeTab === "color" ? "#fff" : "#5A390E"}
+            />
+            <Text style={[styles.tabLabel, activeTab === "color" && styles.activeTabLabel]}>
+              Color
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "font" && styles.activeTab]}
+            onPress={() => setActiveTab("font")}
+          >
+            <Ionicons
+              name="text-outline"
+              size={14}
+              color={activeTab === "font" ? "#fff" : "#5A390E"}
+            />
+            <Text style={[styles.tabLabel, activeTab === "font" && styles.activeTabLabel]}>
+              Font
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {activeTab === "color" && (
+          <View style={styles.tabContent}>
             {TEXT_COLORS.map((color) => (
               <TouchableOpacity
                 key={color}
@@ -86,39 +138,32 @@ export default function DraggableItem({
           </View>
         )}
 
-        <View style={styles.transformRow}>
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={() =>
-              onScaleChange?.(item.id, Math.max(0.5, currentScale - 0.1))
-            }
-          >
-            <Text style={styles.controlButtonText}>−</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={() =>
-              onScaleChange?.(item.id, Math.min(5, currentScale + 0.1))
-            }
-          >
-            <Text style={styles.controlButtonText}>+</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={() => onRotationChange?.(item.id, currentRotation - 1)}
-          >
-            <Text style={styles.controlButtonText}>↺</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={() => onRotationChange?.(item.id, currentRotation + 1)}
-          >
-            <Text style={styles.controlButtonText}>↻</Text>
-          </TouchableOpacity>
-        </View>
+        {activeTab === "font" && (
+          <View style={styles.tabContent}>
+            {FONTS.map((f) => (
+              <TouchableOpacity
+                key={f.value}
+                onPress={() => onFontChange?.(item.id, f.value)}
+                style={[
+                  styles.fontChip,
+                  (item.font === f.value || (!item.font && f.value === "System")) &&
+                    styles.activeFontChip,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.fontChipText,
+                    f.value !== "System" && { fontFamily: f.value },
+                    (item.font === f.value || (!item.font && f.value === "System")) &&
+                      styles.activeFontChipText,
+                  ]}
+                >
+                  {f.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
     );
   }
@@ -152,12 +197,21 @@ export default function DraggableItem({
     }
 
     if (item.type === "text") {
+      const fontFamily =
+        item.font && item.font !== "System" ? item.font : undefined;
+
       return (
         <View style={styles.textContainer}>
           <TextInput
             value={item.content}
             multiline
-            style={[styles.draggableText, { color: item.color || "#5A390E" }]}
+            editable={true}
+            style={[
+              styles.draggableText,
+              { color: item.color || "#5A390E" },
+              fontFamily && { fontFamily },
+              !isSelected && { borderColor: "transparent" },
+            ]}
             placeholder="Type here..."
             onFocus={() => setSelectedId(item.id)}
             onChangeText={(text) => onContentChange(item.id, text)}
@@ -194,57 +248,69 @@ export default function DraggableItem({
       );
     }
 
+    if (item.type === "music") {
+      return (
+        <TouchableOpacity
+          onPress={() => Linking.openURL(item.sticker!)}
+          style={{
+            backgroundColor: "#1DB954",
+            borderRadius: 12,
+            padding: 10,
+            width: 140,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <Image
+            source={item.image}
+            style={{ width: 40, height: 40, borderRadius: 6 }}
+          />
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{ color: "#fff", fontSize: 11, fontWeight: "700" }}
+              numberOfLines={1}
+            >
+              {item.content}
+            </Text>
+            <Ionicons name="musical-notes" size={14} color="#fff" />
+          </View>
+        </TouchableOpacity>
+      );
+    }
+
     return null;
   }
 
   return (
-  <View style={{ position: "absolute", left: position.x, top: position.y }}>
-    
-    {/* Delete button — outside scale so stays same size */}
-    {isEditing && (
-  <TouchableOpacity
-    style={[
-      styles.deleteBtnStyle,
-      {
-        top: -8,
-        right: -8,
-        transform: [{ translateX: (currentScale - 1) * 40 }, { translateY: -(currentScale - 1) * 40 }],
-      },
-    ]}
-    onPress={() => deleteItem(item.id)}
-  >
-    <Text style={styles.deleteText}>✕</Text>
-  </TouchableOpacity>
-)}
+    <View style={{ position: "absolute", left: position.x, top: position.y }}>
 
-    {/* Scaled/rotated content */}
-    <View
-      style={{
-        transform: [
-          { scale: currentScale },
-          { rotate: `${currentRotation}deg` },
-        ],
-      }}
-      {...(item.type !== "text" ? panResponder.panHandlers : {})}
-    >
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={() => setSelectedId(isSelected ? null : item.id)}
+
+      {/* Scaled/rotated content */}
+      <View
+        style={{
+          transform: [
+            { scale: currentScale },
+            { rotate: `${currentRotation}deg` },
+          ],
+        }}
+        {...panResponder.panHandlers}
       >
-        {renderContent()}
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setSelectedId(isSelected ? null : item.id)}
+        >
+          {renderContent()}
+        </TouchableOpacity>
+      </View>
 
-    {/* Controls */}
-    {renderControls()}
-  </View>
-);
+      {/* Controls */}
+      {renderControls()}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    position: "absolute",
-  },
   note: {
     width: 140,
     minHeight: 100,
@@ -275,21 +341,56 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderRadius: 5,
   },
-  colorPicker: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
+
+  // ── Tabbed controls card ──────────────────────────────────────────────────
+  controlsCard: {
+    marginTop: 8,
     backgroundColor: "#F8E5CF",
-    borderRadius: 20,
-    padding: 8,
-    marginTop: 6,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: "#d7c3ac",
+    overflow: "hidden",
+    minWidth: 220,
   },
+  tabBar: {
+    flexDirection: "row",
+    backgroundColor: "#ede0cc",
+    borderBottomWidth: 1,
+    borderBottomColor: "#d7c3ac",
+  },
+  tab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: 7,
+  },
+  activeTab: {
+    backgroundColor: "#5A390E",
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#5A390E",
+  },
+  activeTabLabel: {
+    color: "#fff",
+  },
+  tabContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+
+  // ── Color dots ────────────────────────────────────────────────────────────
   colorDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     borderWidth: 2,
     borderColor: "white",
   },
@@ -297,33 +398,57 @@ const styles = StyleSheet.create({
     borderColor: "#5A390E",
     transform: [{ scale: 1.2 }],
   },
-  controlsWrapper: {
-    marginTop: 6,
-    alignItems: "center",
-  },
-  transformRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 6,
-    backgroundColor: "#F8E5CF",
-    padding: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#d7c3ac",
-  },
-  controlButton: {
-    backgroundColor: "#fffaf4",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+
+  // ── Font chips ────────────────────────────────────────────────────────────
+  fontChip: {
+    paddingHorizontal: 9,
+    paddingVertical: 5,
     borderRadius: 10,
+    backgroundColor: "#fffaf4",
     borderWidth: 1,
     borderColor: "#d7c3ac",
   },
-  controlButtonText: {
-    fontSize: 18,
+  activeFontChip: {
+    backgroundColor: "#5A390E",
+    borderColor: "#5A390E",
+  },
+  fontChipText: {
+    fontSize: 13,
     color: "#5A390E",
     fontWeight: "600",
   },
+  activeFontChipText: {
+    color: "#fff",
+  },
+
+  // ── Inline transform buttons (live in the tab bar row) ───────────────────
+  inlineTransform: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingHorizontal: 6,
+  },
+  inlineBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  inlineBtnText: {
+    fontSize: 16,
+    color: "#5A390E",
+    fontWeight: "700",
+    lineHeight: 20,
+  },
+  barDivider: {
+    width: 1,
+    height: 18,
+    backgroundColor: "#d7c3ac",
+    marginHorizontal: 4,
+  },
+
+  // ── Delete button ─────────────────────────────────────────────────────────
   deleteBtnStyle: {
     position: "absolute",
     top: -8,

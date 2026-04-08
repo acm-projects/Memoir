@@ -1,6 +1,12 @@
 import { Calistoga_400Regular } from '@expo-google-fonts/calistoga';
 import { Inter_400Regular } from '@expo-google-fonts/inter';
 import { Montaga_400Regular, useFonts } from '@expo-google-fonts/montaga';
+import {
+  DancingScript_400Regular,
+} from '@expo-google-fonts/dancing-script';
+import { Pacifico_400Regular } from '@expo-google-fonts/pacifico';
+import { Caveat_400Regular } from '@expo-google-fonts/caveat';
+import { PlayfairDisplay_400Regular } from '@expo-google-fonts/playfair-display';
 import { Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -14,6 +20,10 @@ export default function RootLayout() {
     'Montaga': Montaga_400Regular,
     'Inter': Inter_400Regular,
     'Calistoga': Calistoga_400Regular,
+    DancingScript_400Regular,
+    Pacifico_400Regular,
+    Caveat_400Regular,
+    PlayfairDisplay_400Regular,
   });
 
   if (!loaded) return null;
