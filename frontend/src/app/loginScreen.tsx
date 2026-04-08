@@ -1,3 +1,4 @@
+//INTEGRATED
 import { supabase } from '@/lib/supabase' // Importing the Supabase client instance to interact with the authentication and database services provided by Supabase.
 import { useState } from 'react' // Importing the useState hook from React to manage local state within the component.
 import { TouchableWithoutFeedback, View, Keyboard,  Text, TextInput, Pressable, StyleSheet, ImageBackground,  Image, TouchableOpacity, Alert,  } from "react-native"; // Importing various components from React Native to build the user interface, including View for layout, Text for displaying text, TextInput for user input fields, Pressable and TouchableOpacity for creating touchable elements, StyleSheet for styling, ImageBackground and Image for displaying images, Keyboard for handling keyboard interactions, and Alert for showing alert dialogs.

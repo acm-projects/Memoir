@@ -1,3 +1,4 @@
+// INTEGRATED
 import React, { useEffect, useState } from "react";
 import { View, Text, TextInput, StyleSheet, Pressable, ScrollView, Image, ImageBackground, Platform, } from "react-native";
 import { useRouter } from "expo-router";
@@ -118,7 +119,7 @@ export default function CreateFolder() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {/* Manual back button above the paperBack */}
         <Pressable
-          onPress={() => router.replace('/bulletin-board')}   // <-- INTEGRATION: Routing back
+          onPress={() => router.replace('/timelineScreen')}   // <-- INTEGRATION: Routing back
           style={{
             alignSelf: 'flex-start',
             marginTop: 65,
