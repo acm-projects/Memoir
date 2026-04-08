@@ -72,7 +72,7 @@ export default function viewFolder() {
       console.error('Error fetching folders:', error);
     } else if (data) {
       // Sort: All Memories (is_default) first, then rest alphabetically
-      const sorted = data.sort((a, b) => {
+      const sorted = data.sort((a: Folder, b: Folder) => {
         if (a.is_default) return -1;
         if (b.is_default) return 1;
         return a.name.localeCompare(b.name);

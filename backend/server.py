@@ -453,9 +453,8 @@ def recommend_template():
 @app.route('/seed-template-embeddings', methods=['POST'])
 def seed_template_embeddings():
     try:
-        # fetch all templates without embeddings
         templates = requests.get(
-            f"{SUPABASE_URL}/rest/v1/templates?embedding=is.null&select=id,style_description",
+            f"{SUPABASE_URL}/rest/v1/templates2?embedding=is.null&select=id,name,tags,style_description",
             headers=HEADERS
         ).json()
 
@@ -464,13 +463,19 @@ def seed_template_embeddings():
 
         updated = []
         for template in templates:
-            embedding = generate_embedding(template['style_description'])
-            requests.patch(
-                f"{SUPABASE_URL}/rest/v1/templates?id=eq.{template['id']}",
-                json={'embedding': embedding},
-                headers=HEADERS
-            )
-            updated.append(template['id'])
+            combined_text = " ".join(filter(None, [
+                template.get('name', ''),
+                template.get('tags', ''),
+                template.get('style_description', '')
+            ]))
+            if combined_text:
+                embedding = generate_embedding(combined_text)
+                requests.patch(
+                    f"{SUPABASE_URL}/rest/v1/templates2?id=eq.{template['id']}",
+                    json={'embedding': embedding},
+                    headers=HEADERS
+                )
+                updated.append(template['id'])
 
         return jsonify({
             'success': True,
@@ -478,8 +483,11 @@ def seed_template_embeddings():
         }), 200
 
     except Exception as e:
+        print(f"Seed error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
     
 # for the endpoint
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
+    
