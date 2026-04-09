@@ -3,7 +3,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Image,                            // FIX: was imported from 'react-native-svg', now from 'react-native'
   ImageBackground,
   ScrollView,
   StatusBar,
@@ -15,42 +14,48 @@ import {
 import { heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import ChatRoomHeader from "../components/ChatRoomHeader";
 import { supabase } from '@/lib/supabase';
-import { getConversationPartner, getMessages, sendMessage } from '@/services/messages.service';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { getConversationPartner, getMessages, sendMessage, sendCardMessage } from '@/services/messages.service';
+import { pinCustomCard } from '@/services/bulletin-board.services';
 
 interface Message {
   id: string;
   text: string;
-  sent: boolean; // true = current user sent it → renders right side dark red
+  sent: boolean;
+  type: "text" | "card";
+  cardColor?: string;
+  cardItems?: string;
+  cardId?: string;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export default function ChatRoom() {
-  // CHANGED: was grabbing 'item' (whole user object), now just 'id' (conversation_id)
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, pendingCard, pendingCardColor, pendingCardItems } = useLocalSearchParams<{
+    id: string;
+    pendingCard?: string;
+    pendingCardColor?: string;
+    pendingCardItems?: string;
+  }>();
+
   const router = useRouter();
-
-  const [messages, setMessages] = useState<Message[]>([]); // CHANGED: was MOCK_MESSAGES
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
-  const [loading, setLoading] = useState(false);           // ADDED
-  const [currentUserId, setCurrentUserId] = useState('');  // ADDED
-
-  // ADDED: other person's profile, fetched from conversation_participants + profiles
+  const [loading, setLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState('');
   const [partnerName, setPartnerName] = useState('');
   const [partnerAvatar, setPartnerAvatar] = useState<string | null>(null);
-
+  const cardSentRef = useRef(false);
   const scrollViewRef = useRef<ScrollView | null>(null);
 
-  // ── Fetch messages + partner profile on mount ────────────────────────────────
-  // ADDED: was missing entirely, messages were just hardcoded mock data
   useEffect(() => {
     fetchMessages();
   }, []);
 
-  // ── Real-time subscription — new messages appear instantly ───────────────────
-  // ADDED: without this, you'd have to manually refresh to see new messages
+  useEffect(() => {
+    if (pendingCard === "true" && currentUserId && !cardSentRef.current) {
+      cardSentRef.current = true;
+      handleSendCardMessage();
+    }
+  }, [currentUserId]);
+
   useEffect(() => {
     const channel = supabase
       .channel(`chatroom-${id}`)
@@ -60,19 +65,14 @@ export default function ChatRoom() {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `conversation_id=eq.${id}`, // scoped to only this conversation
+          filter: `conversation_id=eq.${id}`,
         },
-        () => {
-          fetchMessages();
-        }
+        () => { fetchMessages(); }
       )
       .subscribe();
-
-    return () => { supabase.removeChannel(channel); }; // cleanup on unmount
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // ── Fetch messages for this conversation ─────────────────────────────────────
-  // ADDED: replaces MOCK_MESSAGES with real data from Supabase
   async function fetchMessages() {
     setLoading(true);
 
@@ -80,14 +80,12 @@ export default function ChatRoom() {
     if (!user) { setLoading(false); return; }
     setCurrentUserId(user.id);
 
-    // get the other person's profile from conversation_participants
     const { data: partner } = await getConversationPartner(id, user.id);
     if (partner) {
-      setPartnerName(partner.profiles?.username ?? 'Unknown'); // BACKEND: adjust if column name differs
-      setPartnerAvatar(partner.profiles?.avatar_url ?? null);  // BACKEND: adjust if column name differs
+      setPartnerName(partner.profiles?.username ?? 'Unknown');
+      setPartnerAvatar(partner.profiles?.avatar_url ?? null);
     }
 
-    // fetch all messages oldest → newest
     const { data, error } = await getMessages(id);
     if (error) { console.error('Error fetching messages:', error); setLoading(false); return; }
 
@@ -95,7 +93,11 @@ export default function ChatRoom() {
       const mapped: Message[] = data.map((msg: any) => ({
         id: msg.id,
         text: msg.content,
-        sent: msg.sender_id === user.id, // true → right dark red, false → left cream
+        sent: msg.sender_id === user.id,
+        type: msg.shared_card_id ? "card" : "text",
+        cardColor: msg.custom_cards?.card_color ?? undefined,
+        cardItems: msg.custom_cards?.card_items ?? undefined,
+        cardId: msg.shared_card_id ?? undefined,
       }));
       setMessages(mapped);
     }
@@ -104,74 +106,134 @@ export default function ChatRoom() {
     setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: false }), 100);
   }
 
-  // ── Send a message ────────────────────────────────────────────────────────────
-  // CHANGED: was only updating local state, now inserts into Supabase
+  const handleSendCardMessage = async () => {
+    if (!currentUserId || !pendingCardColor) return;
+    const { error } = await sendCardMessage(
+      id,
+      currentUserId,
+      pendingCardColor,
+      pendingCardItems ?? "[]"
+    );
+    if (error) console.error("Error sending card message:", error);
+  };
+
   const handleSendMessage = async () => {
     if (inputText.trim() === '') return;
-
     const { error } = await sendMessage(id, currentUserId, inputText);
     if (error) { console.error('Error sending message:', error); return; }
-
     setInputText('');
-    // no manual state update needed — real-time subscription re-fetches automatically
   };
-  // ─── Render ───────────────────────────────────────────────────────────────────
+
+  const handlePinToBoard = async (message: Message) => {
+    if (!message.cardId) return;
+    try {
+      await pinCustomCard(message.cardId);
+      router.push({ pathname: "/bulletin-board" });
+    } catch (e) {
+      console.error('Error pinning card to board:', e);
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: '#7a1a1a' }}>
       <StatusBar barStyle="light-content" />
-
-      {/* CHANGED: was passing 'user={item}' from nav params, now passes real fetched profile */}
-      <ChatRoomHeader
-        name={partnerName}
-        avatar={partnerAvatar}
-        router={router}
-      />
+      <ChatRoomHeader name={partnerName} avatar={partnerAvatar} router={router} />
 
       <ImageBackground
         source={require('../../assets/images/layered-vintage-paper.png')}
         style={{ flex: 1 }}
       >
-        {/* ADDED: loading spinner while fetching */}
         {loading ? (
-          <ActivityIndicator
-            size="small"
-            color="#7a1a1a"
-            style={{ marginTop: 40 }}
-          />
+          <ActivityIndicator size="small" color="#7a1a1a" style={{ marginTop: 40 }} />
         ) : (
           <ScrollView
             ref={scrollViewRef}
             style={{ flex: 1 }}
             contentContainerStyle={{ padding: 10 }}
           >
-            {messages.map(message => (
-              <View
-                key={message.id}
-                style={{
-                  alignSelf: message.sent ? 'flex-end' : 'flex-start',
-                  marginBottom: 8,
-                  maxWidth: '75%',
-                }}
-              >
-                <View style={{
-                  backgroundColor: message.sent ? '#7a1a1a' : '#fff8f0',
-                  borderRadius: 12,
-                  padding: 10,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.5,
-                  shadowRadius: 2,
-                }}>
-                  <Text style={{ color: message.sent ? '#F5EEE1' : 'black', fontSize: hp(1.8) }}>
-                    {message.text}
-                  </Text>
+            {messages.map(message => {
+              if (message.type === "card") {
+                return (
+                  <View
+                    key={message.id}
+                    style={{
+                      alignSelf: message.sent ? 'flex-end' : 'flex-start',
+                      marginBottom: 8,
+                      maxWidth: '75%',
+                    }}
+                  >
+                    <View style={{
+                      backgroundColor: message.cardColor ?? "#fffaf4",
+                      borderRadius: 16,
+                      padding: 14,
+                      borderWidth: 1,
+                      borderColor: "rgba(122,26,26,0.15)",
+                      minWidth: 180,
+                      minHeight: 120,
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.15,
+                      shadowRadius: 4,
+                    }}>
+                      <Text style={{ fontSize: 11, color: "#a07050", marginBottom: 6 }}>
+                        🎴 Card from {message.sent ? "you" : partnerName}
+                      </Text>
+                      <Text style={{ color: "#5a2a20", fontSize: 13 }}>
+                        Tap to view card
+                      </Text>
+                      {!message.sent && (
+                        <TouchableOpacity
+                          onPress={() => handlePinToBoard(message)}
+                          style={{
+                            marginTop: 12,
+                            alignSelf: "flex-end",
+                            backgroundColor: "#557263",
+                            borderRadius: 20,
+                            paddingHorizontal: 12,
+                            paddingVertical: 6,
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          <Text style={{ color: "#fff", fontSize: 13, fontFamily: "Inter" }}>
+                            + Add to board
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                );
+              }
+
+              return (
+                <View
+                  key={message.id}
+                  style={{
+                    alignSelf: message.sent ? 'flex-end' : 'flex-start',
+                    marginBottom: 8,
+                    maxWidth: '75%',
+                  }}
+                >
+                  <View style={{
+                    backgroundColor: message.sent ? '#7a1a1a' : '#fff8f0',
+                    borderRadius: 12,
+                    padding: 10,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.5,
+                    shadowRadius: 2,
+                  }}>
+                    <Text style={{ color: message.sent ? '#F5EEE1' : 'black', fontSize: hp(1.8) }}>
+                      {message.text}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            ))}
+              );
+            })}
           </ScrollView>
         )}
 
-        {/* ── Input bar ── */}
         <View style={{
           flexDirection: 'row',
           marginHorizontal: 10,
@@ -189,7 +251,6 @@ export default function ChatRoom() {
             placeholderTextColor="white"
             style={{ color: '#f5e8d8', fontSize: 16, flex: 1, marginRight: 2 }}
           />
-          {/* CHANGED: now calls handleSendMessage() instead of old local sendMessage() */}
           <TouchableOpacity
             onPress={handleSendMessage}
             style={{ backgroundColor: '#F5EEE1', borderRadius: 20, padding: 10 }}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,31 +7,51 @@ import {
   TouchableOpacity,
   Image,
   Platform,
+  ActivityIndicator,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BackButton from "../components/back-Button";
 import BottomNavbar from "../components/BottomNavbar";
 import CardSentAnimation from "../components/CardSentAnimation";
+import { supabase } from "@/lib/supabase";
+import { getContacts } from "@/services/messages.service";
 
 const ios = Platform.OS === "ios";
 
-const CONTACTS = [
-  { id: 1, name: "Teju", avatar: require("../../assets/images/origami-gorilla.png") },
-  { id: 2, name: "Kasish", avatar: require("../../assets/images/default-avatar.png") },
-  { id: 3, name: "Jiya", avatar: require("../../assets/images/origami-fox.png") },
-  { id: 4, name: "Harleen", avatar: require("../../assets/images/origami-gorilla.png") },
-  { id: 5, name: "Tammy", avatar: require("../../assets/images/default-avatar.png") },
-];
-// TODO: Replace mock data with real backend response
-// TODO: Integrate with backend API here (endpoint: /contacts, method: GET)
-// TODO: Integrate with backend API here (endpoint: /send-card, method: POST)
-// TODO: Add backend integration logic (loading, error handling, response handling)
+interface Contact {
+  conversationId: string;
+  userId: string;
+  name: string;
+  avatarUrl: string | null;
+}
 
 export default function SendCard() {
   const { top } = useSafeAreaInsets();
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null); // now a conversationId string
   const [showAnimation, setShowAnimation] = useState(false);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const { cardColor, cardItems } = useLocalSearchParams<{
+    cardColor?: string;
+    cardItems?: string;
+  }>();
+
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  async function fetchContacts() {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+
+    const { data, error } = await getContacts(user.id);
+    if (error) console.error('Error fetching contacts:', error);
+    else if (data) setContacts(data);
+    setLoading(false);
+  }
 
   const handleSend = () => {
     setShowAnimation(true);
@@ -39,7 +59,17 @@ export default function SendCard() {
 
   const handleAnimationComplete = () => {
     setShowAnimation(false);
-    router.push("/timelineScreen");
+    const selected = contacts.find(c => c.conversationId === selectedId);
+    router.push({
+      pathname: "/chatRoom",
+      params: {
+        id: selectedId!,
+        name: selected?.name ?? '',
+        pendingCard: "true",
+        pendingCardColor: cardColor ?? "#fffaf4",
+        pendingCardItems: cardItems ?? "[]",
+      },
+    });
   };
 
   return (
@@ -47,7 +77,6 @@ export default function SendCard() {
       {showAnimation && (
         <CardSentAnimation onComplete={handleAnimationComplete} />
       )}
-      {/* Header Area - Matching Messages Vibe */}
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
           <BackButton color="#f5e8d8" />
@@ -57,49 +86,55 @@ export default function SendCard() {
         </View>
       </View>
 
-      {/* Main Content Area - The "Sheet" */}
       <View style={styles.listArea}>
         <Text style={styles.sectionLabel}>Contacts</Text>
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={{ paddingBottom: 150 }}
-          showsVerticalScrollIndicator={false}
-        >
-          {CONTACTS.map((contact) => {
-            const isSelected = selectedId === contact.id;
-            return (
-              <TouchableOpacity
-                key={contact.id}
-                onPress={() => setSelectedId(contact.id)}
-                style={isSelected ? styles.userCardSelected : styles.userCardRead}
-                activeOpacity={0.7}
-              >
-                <View style={styles.avatarWrapper}>
-                  <Image source={contact.avatar} style={styles.avatarImg} />
-                  {isSelected && (
-                    <View style={styles.selectedDot}>
-                      <Text style={styles.checkMark}>✓</Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={styles.cardTextArea}>
-                  <Text style={isSelected ? styles.userNameSelected : styles.userNameRead}>
-                    {contact.name}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
-        {/* Floating Send Button */}
-        {selectedId && !showAnimation && (
-          <TouchableOpacity
-            style={styles.floatingSendBtn}
-            onPress={handleSend}
+        {loading ? (
+          <ActivityIndicator size="small" color="#7a1a1a" style={{ marginTop: 40 }} />
+        ) : contacts.length === 0 ? (
+          <View style={{ padding: 30, alignItems: 'center' }}>
+            <Text style={{ color: '#a07050', fontSize: 14 }}>No conversations yet</Text>
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={{ paddingBottom: 150 }}
+            showsVerticalScrollIndicator={false}
           >
+            {contacts.map((contact) => {
+              const isSelected = selectedId === contact.conversationId;
+              return (
+                <TouchableOpacity
+                  key={contact.conversationId}
+                  onPress={() => setSelectedId(contact.conversationId)}
+                  style={isSelected ? styles.userCardSelected : styles.userCardRead}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.avatarWrapper}>
+                    {contact.avatarUrl ? (
+                      <Image source={{ uri: contact.avatarUrl }} style={styles.avatarImg} />
+                    ) : (
+                      <Image source={require("../../assets/images/default-avatar.png")} style={styles.avatarImg} />
+                    )}
+                    {isSelected && (
+                      <View style={styles.selectedDot}>
+                        <Text style={styles.checkMark}>✓</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.cardTextArea}>
+                    <Text style={isSelected ? styles.userNameSelected : styles.userNameRead}>
+                      {contact.name}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
+
+        {selectedId && !showAnimation && (
+          <TouchableOpacity style={styles.floatingSendBtn} onPress={handleSend}>
             <Text style={styles.sendText}>Send Card</Text>
           </TouchableOpacity>
         )}
@@ -137,12 +172,6 @@ const styles = StyleSheet.create({
     fontSize: 27,
     color: "#f5e8d8",
     letterSpacing: -0.5,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: "#c89a7a",
-    marginTop: 2,
-    fontFamily: "Inter",
   },
   listArea: {
     flex: 1,
@@ -182,7 +211,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1.5,
-    borderColor: "#557263", // Green accent to show selection
+    borderColor: "#557263",
   },
   avatarWrapper: {
     position: "relative",
@@ -244,7 +273,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   sendText: {
-    color: "#f5e8d8",
+    color: "#f5ede0",
     fontFamily: "Calistoga",
     fontSize: 18,
   },
