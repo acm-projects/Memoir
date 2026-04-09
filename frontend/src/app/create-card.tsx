@@ -255,6 +255,70 @@ export default function CreateCard() {
   const [cardColor, setCardColor] = useState("#fffaf4");
   const [items, setItems] = useState<Item[]>([
 
+  { 
+
+id: "1", 
+
+type: "text", 
+
+content: "Thank You!", 
+
+x: 120, 
+
+y: 110, 
+
+color: "#5A390E", 
+
+font: "Caveat_400Regular", 
+
+rotation: 0, 
+
+scale: 2.5, 
+
+}, 
+
+{ 
+
+id: "2", 
+
+type: "sticker", 
+
+content: "heart", 
+
+sticker: "heart", 
+
+x: 150, 
+
+y: 200, 
+
+rotation: 0, 
+
+scale: 2, 
+
+}, 
+
+{ 
+
+id: "3", 
+
+type: "text", 
+
+content: "I appreciate all that you do!                           {Your message here}", 
+
+x: 70, 
+
+y: 300, 
+
+color: "#5A390E", 
+
+font: "Caveat_400Regular", 
+
+rotation: 0, 
+
+scale: 1, 
+
+}, 
+
 
   
  

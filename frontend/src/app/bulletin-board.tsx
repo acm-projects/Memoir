@@ -78,9 +78,6 @@ export default function BulletinBoard() {
       scale: 1,
     },
   ]);
-  // TODO: Replace mock data with real backend response
-  // TODO: Integrate with backend API here (endpoint: /bulletin-board, method: GET/POST)
-  // TODO: Add backend integration logic (loading, error handling, response handling)
 
   const [isEditing, setIsEditing] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -185,58 +182,59 @@ export default function BulletinBoard() {
   }
 
   async function searchSpotify(query: string) {
-  if (!query) return;
+    if (!query) return;
 
-  const clientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
-  const clientSecret = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_SECRET;
+    const clientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_SECRET;
 
-  console.log('ID:', clientId);
-  console.log('SECRET:', clientSecret);
+    console.log('ID:', clientId);
+    console.log('SECRET:', clientSecret);
 
-  try {
-    const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + btoa(`${clientId}:${clientSecret}`),
-      },
-      body: 'grant_type=client_credentials',
-    });
+    try {
+      const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ' + btoa(`${clientId}:${clientSecret}`),
+        },
+        body: 'grant_type=client_credentials',
+      });
 
-    const rawText = await tokenRes.text();
-    console.log('Raw response:', rawText);
+      const rawText = await tokenRes.text();
+      console.log('Raw response:', rawText);
 
-    const tokenData = JSON.parse(rawText);
+      const tokenData = JSON.parse(rawText);
 
-    const res = await fetch(
-  `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`,
-  { headers: { Authorization: `Bearer ${tokenData.access_token}` } }
-);
+      const res = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`,
+        { headers: { Authorization: `Bearer ${tokenData.access_token}` } }
+      );
 
-const searchText = await res.text();
-console.log('Search response:', searchText); // ← add this
+      const searchText = await res.text();
+      console.log('Search response:', searchText);
 
-const data = JSON.parse(searchText);
-setTracks(data.tracks?.items ?? []);
-  } catch (err) {
-    console.log('Spotify error:', err);
+      const data = JSON.parse(searchText);
+      setTracks(data.tracks?.items ?? []);
+    } catch (err) {
+      console.log('Spotify error:', err);
+    }
   }
-}
-function addMusicItem(track: any) {
-  const id = Date.now().toString();
-  setItems((prev) => [...prev, {
-    id,
-    type: "music",
-    content: track.name,
-    x: 100,
-    y: 150,
-    sticker: track.external_urls.spotify,
-    image: { uri: track.album.images[0].url },
-    rotation: seededRotation(id),
-    scale: 1,
-  }]);
-  setActiveTool(null);
-}
+
+  function addMusicItem(track: any) {
+    const id = Date.now().toString();
+    setItems((prev) => [...prev, {
+      id,
+      type: "music",
+      content: track.name,
+      x: 100,
+      y: 150,
+      sticker: track.external_urls.spotify,
+      image: { uri: track.album.images[0].url },
+      rotation: seededRotation(id),
+      scale: 1,
+    }]);
+    setActiveTool(null);
+  }
 
   async function pickImage() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -272,6 +270,7 @@ function addMusicItem(track: any) {
   const handleDone = () => {
     setIsEditing(false);
     setActiveTool(null);
+    setSelectedId(null);
   };
 
   return (
@@ -363,7 +362,8 @@ function addMusicItem(track: any) {
 
         {isEditing && (
           <View style={styles.footerWrapper}>
-            {activeTool && (
+            {/* Panel — only show when no item is selected */}
+            {activeTool && !selectedId && (
               <View style={styles.panel}>
                 <View style={styles.panelHeader}>
                   <Text style={styles.panelTitle}>{activeTool.toUpperCase()}</Text>
@@ -403,11 +403,7 @@ function addMusicItem(track: any) {
                     style={styles.panelUploadArea}
                     onPress={pickImage}
                   >
-                    <Ionicons
-                      name="cloud-upload-outline"
-                      size={24}
-                      color="#8B7355"
-                    />
+                    <Ionicons name="cloud-upload-outline" size={24} color="#8B7355" />
                     <Text style={styles.uploadText}>Upload from Camera Roll</Text>
                   </TouchableOpacity>
                 )}
@@ -424,7 +420,6 @@ function addMusicItem(track: any) {
                         searchGifs(t);
                       }}
                     />
-
                     <ScrollView
                       horizontal
                       showsHorizontalScrollIndicator={false}
@@ -462,90 +457,146 @@ function addMusicItem(track: any) {
                 )}
 
                 {activeTool === "music" && (
-            <View>
-              <TextInput
-                style={styles.gifInput}
-                placeholder="Search a song..."
-                placeholderTextColor="#9a7a60"
-                value={musicSearch}
-                onChangeText={(t) => {
-                  setMusicSearch(t);
-                  searchSpotify(t);
-                }}
-              />
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {tracks.map((track) => (
-                  <TouchableOpacity
-                    key={track.id}
-                    onPress={() => addMusicItem(track)}
-                  >
-                    <Image source={{ uri: track.album.images[0].url }} style={{ width: 60, height: 60 }} />
-                    <Text>{track.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
+                  <View>
+                    <TextInput
+                      style={styles.gifInput}
+                      placeholder="Search a song..."
+                      placeholderTextColor="#9a7a60"
+                      value={musicSearch}
+                      onChangeText={(t) => {
+                        setMusicSearch(t);
+                        searchSpotify(t);
+                      }}
+                    />
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      {tracks.map((track) => (
+                        <TouchableOpacity
+                          key={track.id}
+                          onPress={() => addMusicItem(track)}
+                        >
+                          <Image source={{ uri: track.album.images[0].url }} style={{ width: 60, height: 60 }} />
+                          <Text>{track.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
             )}
 
-            <View style={styles.toolbar}>
-              <Pressable
-                style={[
-                  styles.toolButton,
-                  activeTool === "note" && styles.activeToolBtn,
-                ]}
-                onPress={() => setActiveTool("note")}
-              >
-                <Ionicons name="document-text-outline" size={24} color="#5A390E" />
-              </Pressable>
+            {/* Toolbar — swaps based on selectedId */}
+            {selectedId ? (
+              <View style={styles.toolbar}>
+                <TouchableOpacity
+                  style={styles.toolButton}
+                  onPress={() => {
+                    const item = items.find((i) => i.id === selectedId);
+                    if (item) handleScaleChange(selectedId, Math.max(0.5, (item.scale ?? 1) - 0.1));
+                  }}
+                >
+                  <Text style={styles.selBtnText}>−</Text>
+                </TouchableOpacity>
 
-              <Pressable
-                style={[
-                  styles.toolButton,
-                  activeTool === "photo" && styles.activeToolBtn,
-                ]}
-                onPress={() => setActiveTool("photo")}
-              >
-                <Ionicons name="image-outline" size={24} color="#5A390E" />
-              </Pressable>
+                <TouchableOpacity
+                  style={styles.toolButton}
+                  onPress={() => {
+                    const item = items.find((i) => i.id === selectedId);
+                    if (item) handleScaleChange(selectedId, Math.min(5, (item.scale ?? 1) + 0.1));
+                  }}
+                >
+                  <Text style={styles.selBtnText}>+</Text>
+                </TouchableOpacity>
 
-              <Pressable
-                style={[
-                  styles.toolButton,
-                  activeTool === "sticker" && styles.activeToolBtn,
-                ]}
-                onPress={() => setActiveTool("sticker")}
-              >
-                <Ionicons name="happy-outline" size={24} color="#5A390E" />
-              </Pressable>
+                <View style={styles.toolbarDivider} />
 
-              <Pressable
-                style={[
-                  styles.toolButton,
-                  activeTool === "gif" && styles.activeToolBtn,
-                ]}
-                onPress={() => {
-                  setActiveTool("gif");
-                  searchGifs("");
-                }}
-              >
-                <Ionicons name="film-outline" size={24} color="#5A390E" />
-              </Pressable>
+                <TouchableOpacity
+                  style={styles.toolButton}
+                  onPress={() => {
+                    const item = items.find((i) => i.id === selectedId);
+                    if (item) handleRotationChange(selectedId, (item.rotation ?? 0) - 3);
+                  }}
+                >
+                  <Text style={styles.selBtnText}>↺</Text>
+                </TouchableOpacity>
 
-              <Pressable
-                style={[styles.toolButton, activeTool === "music" && styles.activeToolBtn]}
-                onPress={() => setActiveTool("music")}
-              >
-                <Ionicons name="musical-notes-outline" size={24} color="#5A390E" />
-              </Pressable>
+                <TouchableOpacity
+                  style={styles.toolButton}
+                  onPress={() => {
+                    const item = items.find((i) => i.id === selectedId);
+                    if (item) handleRotationChange(selectedId, (item.rotation ?? 0) + 3);
+                  }}
+                >
+                  <Text style={styles.selBtnText}>↻</Text>
+                </TouchableOpacity>
 
-              <View style={styles.toolbarDivider} />
+                <View style={styles.toolbarDivider} />
 
-              <Pressable style={styles.doneButton} onPress={handleDone}>
-                <Ionicons name="checkmark" size={22} color="#F6E5CD" />
-              </Pressable>
-            </View>
+                <TouchableOpacity
+                  style={styles.toolButton}
+                  onPress={() => {
+                    deleteItem(selectedId);
+                    setSelectedId(null);
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={22} color="#7B1D1D" />
+                </TouchableOpacity>
+
+                <View style={styles.toolbarDivider} />
+
+                <TouchableOpacity
+                  style={styles.toolButton}
+                  onPress={() => setSelectedId(null)}
+                >
+                  <Ionicons name="checkmark" size={24} color="#2C5F2E" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.toolbar}>
+                <Pressable
+                  style={[styles.toolButton, activeTool === "note" && styles.activeToolBtn]}
+                  onPress={() => setActiveTool("note")}
+                >
+                  <Ionicons name="document-text-outline" size={24} color="#5A390E" />
+                </Pressable>
+
+                <Pressable
+                  style={[styles.toolButton, activeTool === "photo" && styles.activeToolBtn]}
+                  onPress={() => setActiveTool("photo")}
+                >
+                  <Ionicons name="image-outline" size={24} color="#5A390E" />
+                </Pressable>
+
+                <Pressable
+                  style={[styles.toolButton, activeTool === "sticker" && styles.activeToolBtn]}
+                  onPress={() => setActiveTool("sticker")}
+                >
+                  <Ionicons name="happy-outline" size={24} color="#5A390E" />
+                </Pressable>
+
+                <Pressable
+                  style={[styles.toolButton, activeTool === "gif" && styles.activeToolBtn]}
+                  onPress={() => {
+                    setActiveTool("gif");
+                    searchGifs("");
+                  }}
+                >
+                  <Ionicons name="film-outline" size={24} color="#5A390E" />
+                </Pressable>
+
+                <Pressable
+                  style={[styles.toolButton, activeTool === "music" && styles.activeToolBtn]}
+                  onPress={() => setActiveTool("music")}
+                >
+                  <Ionicons name="musical-notes-outline" size={24} color="#5A390E" />
+                </Pressable>
+
+                <View style={styles.toolbarDivider} />
+
+                <Pressable style={styles.doneButton} onPress={handleDone}>
+                  <Ionicons name="checkmark" size={22} color="#F6E5CD" />
+                </Pressable>
+              </View>
+            )}
           </View>
         )}
       </ImageBackground>
@@ -695,6 +746,13 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  selBtnText: {
+    fontSize: 22,
+    color: "#5A390E",
+    fontWeight: "700",
+    lineHeight: 26,
   },
 
   panel: {
