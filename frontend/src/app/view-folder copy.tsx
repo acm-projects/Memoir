@@ -1,22 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
-  ImageBackground,
-  TouchableOpacity,
-  FlatList,
-  Dimensions,
-  Image,
-} from 'react-native';
-
+import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground, TouchableOpacity, FlatList, Dimensions, Image, } from 'react-native';
 import { router } from 'expo-router';
 import BottomNavbar from '../components/BottomNavbar';
 import { Ionicons,MaterialIcons } from '@expo/vector-icons';
 import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
 import { ScrollView } from 'react-native';
+import FolderItem from '../components/folder-item';
+import { supabase } from '../lib/supabase';
+import { getFolders } from '@/services/folders.service';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

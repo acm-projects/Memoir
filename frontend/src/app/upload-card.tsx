@@ -1,15 +1,5 @@
 import React, { useState, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Platform,
-  ImageBackground,
-  Image,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Platform, ImageBackground, Image, } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -48,6 +38,8 @@ export default function UploadCard() {
     const url = URL.createObjectURL(file);
     setUploadedImages((prev) => [...prev, url]);
   };
+
+  const safeUploadedImages = Array.isArray(uploadedImages) ? uploadedImages : [];
 
   const triggerFileInput = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -94,18 +86,40 @@ export default function UploadCard() {
   };
 
   const onNext = () => {
-    const card = {
-      id: createTempId(),
-      image: uploadedImages,
-      title,
-      caption,
-      date: selectedDate ? selectedDate.toISOString() : null,
-      folderId: selectedFolder,
-    };
-    console.log('Next (saved to temp)', card);
-    // TODO: Integrate with backend API here (endpoint: /upload-card, method: POST)
-    // TODO: Add backend integration logic (loading, error handling, response handling)
-    router.push('/selectMemory' as any);
+    // const card = {
+    //   id: createTempId(),
+    //   image: uploadedImages,
+    //   title,
+    //   caption,
+    //   date: selectedDate ? selectedDate.toISOString() : null,
+    //   folderId: selectedFolder,
+    // };
+    // console.log('Next (saved to temp)', card);
+    // // TODO: Integrate with backend API here (endpoint: /upload-card, method: POST)
+    // // TODO: Add backend integration logic (loading, error handling, response handling)
+    // router.push('/selectMemory' as any);
+
+    if(!title.trim()) {
+      alert('Please add a title');
+      return;
+    }
+
+    if(safeUploadedImages.length === 0) {
+      alert('Please upload at least one image');
+      return;
+    }
+
+    //Pass daya to selectMemory via params
+    router.push({
+      pathname: '/selectMemory',
+      params: {
+        images: JSON.stringify(safeUploadedImages),
+        title: title.trim(),
+        caption: caption.trim(),
+        date: selectedDate ? selectedDate.toISOString() : '',
+      },
+    });
+
   };
 
   return (
