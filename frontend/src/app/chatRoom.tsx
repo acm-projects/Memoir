@@ -6,6 +6,7 @@ import {
   ImageBackground,
   ScrollView,
   StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -14,8 +15,9 @@ import {
 import { heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import ChatRoomHeader from "../components/ChatRoomHeader";
 import { supabase } from '@/lib/supabase';
-import { getConversationPartner, getMessages, sendMessage, sendCardMessage } from '@/services/messages.service';
+import { getConversationPartner, getMessages, sendMessage } from '@/services/messages.service';
 import { pinCustomCard } from '@/services/bulletin-board.services';
+import { Svg, Path, Circle, Line, Ellipse, G, Text as SvgText } from 'react-native-svg';
 
 interface Message {
   id: string;
@@ -82,8 +84,10 @@ export default function ChatRoom() {
 
     const { data: partner } = await getConversationPartner(id, user.id);
     if (partner) {
-      setPartnerName(partner.profiles?.username ?? 'Unknown');
-      setPartnerAvatar(partner.profiles?.avatar_url ?? null);
+      // If partner.profiles is an array, use the first element; otherwise, use as object
+      const profile = Array.isArray(partner.profiles) ? partner.profiles[0] : partner.profiles;
+      setPartnerName(profile?.username ?? 'Unknown');
+      setPartnerAvatar(profile?.avatar_url ?? null);
     }
 
     const { data, error } = await getMessages(id);
@@ -143,6 +147,105 @@ export default function ChatRoom() {
         source={require('../../assets/images/layered-vintage-paper.png')}
         style={{ flex: 1 }}
       >
+        {/* Background Illustrations Layer */}
+        <View style={[StyleSheet.absoluteFillObject]} pointerEvents="none">
+          {/* Compass Rose */}
+          <Svg width="90" height="90" style={{ position: 'absolute', top: 10, left: 8 }} viewBox="0 0 90 90" fill="none">
+            <G opacity={0.10}>
+              <Circle cx="45" cy="45" r="44" stroke="#8B6A3E" strokeWidth="2" />
+              <Path d="M45 10 L45 80" stroke="#8B6A3E" strokeWidth="2" />
+              <Path d="M10 45 L80 45" stroke="#8B6A3E" strokeWidth="2" />
+              <Path d="M45 45 L70 20 L45 45 L20 70 Z" stroke="#8B6A3E" strokeWidth="2" fill="none" />
+              <Circle cx="45" cy="45" r="6" stroke="#8B6A3E" strokeWidth="2" fill="none" />
+            </G>
+          </Svg>
+          {/* Sailing Ship */}
+          <Svg width="90" height="70" style={{ position: 'absolute', top: 120, right: -5 }} viewBox="0 0 90 70" fill="none">
+            <G opacity={0.10}>
+              <Path d="M10 60 Q45 10 80 60 Z" stroke="#8B6A3E" strokeWidth="2" fill="none" />
+              <Path d="M45 60 L45 20" stroke="#8B6A3E" strokeWidth="2" />
+              <Path d="M45 20 L60 40 L45 40 Z" fill="#8B6A3E" fillOpacity="0.10" stroke="#8B6A3E" strokeWidth="1.5" />
+              <Path d="M45 20 L30 35 L45 35 Z" fill="#8B6A3E" fillOpacity="0.10" stroke="#8B6A3E" strokeWidth="1.5" />
+            </G>
+          </Svg>
+          {/* Dotted Travel Path with Crosshairs */}
+          <Svg width="60" height="180" style={{ position: 'absolute', top: 250, left: 40 }} viewBox="0 0 60 180" fill="none">
+            <G opacity={0.10}>
+              <Path d="M30 10 Q10 60 30 110 Q50 160 30 170" stroke="#8B6A3E" strokeWidth="2" strokeDasharray="4 6" fill="none" />
+              {/* Crosshair markers */}
+              <G>
+                <Circle cx="30" cy="10" r="5" stroke="#8B6A3E" strokeWidth="1.5" fill="none" />
+                <Line x1="30" y1="5" x2="30" y2="15" stroke="#8B6A3E" strokeWidth="1" />
+                <Line x1="25" y1="10" x2="35" y2="10" stroke="#8B6A3E" strokeWidth="1" />
+              </G>
+              <G>
+                <Circle cx="30" cy="110" r="5" stroke="#8B6A3E" strokeWidth="1.5" fill="none" />
+                <Line x1="30" y1="105" x2="30" y2="115" stroke="#8B6A3E" strokeWidth="1" />
+                <Line x1="25" y1="110" x2="35" y2="110" stroke="#8B6A3E" strokeWidth="1" />
+              </G>
+              <G>
+                <Circle cx="30" cy="170" r="5" stroke="#8B6A3E" strokeWidth="1.5" fill="none" />
+                <Line x1="30" y1="165" x2="30" y2="175" stroke="#8B6A3E" strokeWidth="1" />
+                <Line x1="25" y1="170" x2="35" y2="170" stroke="#8B6A3E" strokeWidth="1" />
+              </G>
+            </G>
+          </Svg>
+          {/* Coordinates Text */}
+          <Svg width="120" height="30" style={{ position: 'absolute', top: 470, right: 12 }}>
+            <SvgText
+              x="100%"
+              y="22"
+              fontSize="18"
+              fontWeight="bold"
+              fill="#8B6A3E"
+              opacity={0.11}
+              textAnchor="end"
+            >
+              43°N · 12°E
+            </SvgText>
+          </Svg>
+          {/* ATLAS Oval Frame with Scrollwork */}
+          <Svg width="120" height="80" style={{ position: 'absolute', bottom: 90, left: 0 }} viewBox="0 0 120 80" fill="none">
+            <G opacity={0.10}>
+              <Ellipse cx="60" cy="40" rx="55" ry="32" stroke="#8B6A3E" strokeWidth="2" fill="none" />
+              <Path d="M20 40 Q10 60 30 70" stroke="#8B6A3E" strokeWidth="1.5" fill="none" />
+              <Path d="M100 40 Q110 60 90 70" stroke="#8B6A3E" strokeWidth="1.5" fill="none" />
+              <SvgText x="60" y="48" fontSize="18" fontWeight="bold" fill="#8B6A3E" opacity="0.18" textAnchor="middle">ATLAS</SvgText>
+            </G>
+          </Svg>
+          {/* Wave Border Dashed Path */}
+          <Svg width="340" height="30" style={{ position: 'absolute', bottom: 60, left: 0 }} viewBox="0 0 340 30" fill="none">
+            <G opacity={0.10}>
+              <Path d="M0 15 Q40 0 80 15 T160 15 T240 15 T320 15" stroke="#8B6A3E" strokeWidth="2" fill="none" strokeDasharray="8 8" />
+            </G>
+          </Svg>
+          {/* ~ est. 2026 ~ Text */}
+          <Svg width="160" height="30" style={{ position: 'absolute', bottom: 38, left: 18 }}>
+            <SvgText
+              x="50%"
+              y="22"
+              fontSize="16"
+              fontWeight="bold"
+              fill="#8B6A3E"
+              opacity={0.11}
+              textAnchor="middle"
+            >
+              ~ est. 2026 ~
+            </SvgText>
+          </Svg>
+          {/* Decorative Divider with Diamonds and Tick Marks */}
+          <Svg width="180" height="18" style={{ position: 'absolute', bottom: 18, left: 10 }} viewBox="0 0 180 18" fill="none">
+            <G opacity={0.10}>
+              <Path d="M10 9 H170" stroke="#8B6A3E" strokeWidth="2" />
+              <Path d="M90 3 L96 9 L90 15 L84 9 Z" fill="#8B6A3E" />
+              <Line x1="30" y1="6" x2="30" y2="12" stroke="#8B6A3E" strokeWidth="1.5" />
+              <Line x1="60" y1="6" x2="60" y2="12" stroke="#8B6A3E" strokeWidth="1.5" />
+              <Line x1="120" y1="6" x2="120" y2="12" stroke="#8B6A3E" strokeWidth="1.5" />
+              <Line x1="150" y1="6" x2="150" y2="12" stroke="#8B6A3E" strokeWidth="1.5" />
+            </G>
+          </Svg>
+        </View>
+
         {loading ? (
           <ActivityIndicator size="small" color="#7a1a1a" style={{ marginTop: 40 }} />
         ) : (
