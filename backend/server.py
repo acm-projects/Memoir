@@ -518,8 +518,7 @@ def seed_template_embeddings():
         print(f"Seed error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
     
-# for the endpoint
 if __name__ == '__main__':
-    app.run(debug=True, port=8000)
+    app.run(host="0.0.0.0", debug=True, port=8000)
 
     

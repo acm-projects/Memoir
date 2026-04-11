@@ -63,7 +63,8 @@ type Message = {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const FLASK_URL = process.env.EXPO_PUBLIC_FLASK_URL ?? "https://your-flask-url";
+const FLASK_URL = process.env.EXPO_PUBLIC_FLASK_URL;
+console.log("ENV:", process.env);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -213,6 +214,7 @@ function AIChatModal({
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
 
+    console.log("Sending request to:", `${FLASK_URL}/recommend-template`);
     const response = await fetch(`${FLASK_URL}/recommend-template`, {
       method: "POST",
       headers: {
@@ -455,6 +457,12 @@ export default function CreateCard() {
       ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${query}&limit=50`
       : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=50`;
     const res = await fetch(url);
+    console.log("RAW RESPONSE:", res);
+
+    const text = await res.text();
+    console.log("RAW TEXT:", text);
+
+    const data = JSON.parse(text);
     const json = await res.json();
     setGifs(json.data || []);
   }
