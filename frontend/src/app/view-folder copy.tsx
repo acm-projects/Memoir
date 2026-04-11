@@ -133,7 +133,7 @@ export default function ViewFolder() {
     }
     return dots;
   }, []);
-
+/we
   const renderFolder = (item: FolderListItem, index: number) => {
     const COLORS = [
       { color: '#6B4E7D', stripColor: '#573D68' },
