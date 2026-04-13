@@ -1,4 +1,5 @@
 import numpy as np
+import openai
 
 # THE MONKEY PATCH: This intercepts the NumPy crash
 # It forces NumPy to allow the "inhomogeneous" data the OCR library is sending.
@@ -265,6 +266,24 @@ def embed_card():
             'success': False,
             'error': str(e)
         }), 500
+
+# ================================================================
+# PERSONA ENDPOINT (for testing LLM responses)
+    
+@app.route("/persona", methods=["POST"])
+def persona():
+    prompt = request.json["prompt"]
+    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    res = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=150,
+    )
+
+    raw = res.choices[0].message.content
+
+    return jsonify({"raw": raw})
 
 # ================================================================
 # SEARCH ENDPOINT

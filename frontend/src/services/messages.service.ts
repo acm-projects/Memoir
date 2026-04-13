@@ -66,32 +66,28 @@ export async function getConversations(userId: string) {
 
 // Zeros out unread count when user opens a conversation
 export async function markConversationAsRead(conversationId: string, userId: string) {
-  return await supabase
+  const {data, error} = await supabase
     .from('messages')
     .update({ unread: 0 })
     .eq('conversation_id', conversationId)
     .neq('sender_id', userId);
+    console.log('markConversationAsRead result:', { data, error }); // ← add this
+  return { data, error };
 }
 
 // ─── Chat room (used by chatRoom.tsx) ─────────────────────────────────────────
 
 // Gets the other participant's profile from conversation_participants
 export async function getConversationPartner(conversationId: string, currentUserId: string) {
-  const { data, error } = await supabase
+  const {data, error} = await supabase
     .from('conversation_participants')
     .select(`
-      user_id,
-      profiles:user_id (
-        username,
-        avatar_url
-      )
+      profiles (id, username, avatar_url)
     `)
     .eq('conversation_id', conversationId)
-    .neq('user_id', currentUserId)
-    .single();
+    .neq('user_id', currentUserId).single();
 
-  if (error) return { data: null, error };
-  return { data, error: null };
+  return { data: data, error: null };
 }
 
 // Gets all messages for a conversation, oldest first, joining custom_cards for card messages
@@ -127,9 +123,6 @@ export async function sendCardMessage(
   cardColor: string,
   cardItems: string,
 ) {
-  // Force refresh the session
-  const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
-  console.log('refreshed session user:', session?.user?.id);
 
   const { data: card, error: cardError } = await supabase
     .from('custom_cards')

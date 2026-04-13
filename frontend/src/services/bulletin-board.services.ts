@@ -41,6 +41,13 @@ export async function fetchBoardItems(folderId: string) {
   ];
 }
 
+// Fetches all available stickers from Supabase
+export async function fetchStickers() {
+  const { data, error } = await supabase.from('stickers').select('id, name, image_url');
+  if (error) throw error;
+  return data as { id: string; name: string; image_url: string }[];
+}
+
 export async function updateItemPosition(itemType: string, id: string, fields: ItemFields) {
   const table = TABLE_MAP[itemType];
   if (!table) return;
@@ -68,12 +75,10 @@ export async function addNote(folderId: string, color: string) {
   return { ...data, type: 'note' as const };
 }
 
-export async function addSticker(folderId: string, stickerKey: string) {
-  const { data: sticker, error: stickerError } = await supabase.from('stickers').select('*').eq('key', stickerKey).single();
-  if (stickerError) throw stickerError;
-
+// Takes stickerId directly — no need to look up by name anymore
+export async function addSticker(folderId: string, stickerId: string) {
   const { data, error } = await supabase.from('folder_stickers')
-    .insert({ folder_id: folderId, sticker_id: sticker.id, x: 150, y: 200, rotation: 0, scale: 1 })
+    .insert({ folder_id: folderId, sticker_id: stickerId, x: 150, y: 200, rotation: 0, scale: 1 })
     .select('*, stickers(*)').single();
   if (error) throw error;
   return { id: data.id, type: 'sticker' as const, content: '', x: data.x, y: data.y, rotation: data.rotation, scale: data.scale, sticker: data.stickers.image_url };

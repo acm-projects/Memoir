@@ -14,6 +14,7 @@ import {
   fetchBoardItems, addNote as addNoteService, addSticker as addStickerService,
   addGif as addGifService, addPhoto as addPhotoService,
   updateItemPosition, deleteItem as deleteItemService, updateNoteContent,
+  fetchStickers,
 } from "@/services/bulletin-board.services";
 import { supabase } from "@/lib/supabase";
 
@@ -37,11 +38,7 @@ type Item = {
 
 const NOTE_COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
 const ACCENT_COLORS = ["#557263", "#7B1D1D", "#8B6A3E", "#4A6741", "#6B4F6B"];
-const STICKERS = [
-  { key: "star", source: require("../../assets/images/star-stamp.png") },
-  { key: "heart", source: require("../../assets/images/costa-rica-stamp.png") },
-  { key: "flower", source: require("../../assets/images/Australia-Stamp.png") },
-];
+
 
 function seededRotation(id: string) {
   let hash = 0;
@@ -65,9 +62,14 @@ export default function BulletinBoard() {
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
   const [activeTool, setActiveTool] = useState<"note" | "sticker" | "gif" | "photo" | null>(null);
   const [gifs, setGifs] = useState<any[]>([]);
+  // Add state
+  const [availableStickers, setAvailableStickers] = useState<{id: string, name: string, image_url: string}[]>([]);
   const [gifSearch, setGifSearch] = useState("");
 
-  useEffect(() => { loadItems(); }, [id]);
+
+  useEffect(() => { loadItems(); 
+    fetchStickers().then(setAvailableStickers).catch(console.error); // added fix: fetch stickers
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -175,11 +177,11 @@ export default function BulletinBoard() {
   };
 
   const addSticker = async (stickerKey: string) => {
-    try {
-      const newItem = await addStickerService(id, stickerKey);
-      setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
-    } catch (e) { console.error("Failed to add sticker:", e); }
-    setActiveTool(null);
+   try {
+    const newItem = await addStickerService(id, stickerKey);
+    setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
+  } catch (e) { console.error("Failed to add sticker:", e); }
+  setActiveTool(null);
   };
 
   const addGif = async (gifUrl: string) => {
@@ -313,9 +315,9 @@ export default function BulletinBoard() {
 
                 {activeTool === "sticker" && (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stickerRow}>
-                    {STICKERS.map((s) => (
-                      <TouchableOpacity key={s.key} onPress={() => addSticker(s.key)}>
-                        <Image source={s.source} style={styles.stickerThumb} />
+                    {availableStickers.map((s) => (
+                      <TouchableOpacity key={s.id} onPress={() => addSticker(s.id)}>
+                        <Image source={{ uri: s.image_url }} style={styles.stickerThumb} />
                       </TouchableOpacity>
                     ))}
                   </ScrollView>

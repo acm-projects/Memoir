@@ -29,6 +29,7 @@ export interface Persona {
   bio: string;
   emoji: string;
 }
+
 export async function getUserProfile(
   userId: string
 ): Promise<{ data: { username: string; avatar_url: string | null } | null; error: any }> {
@@ -49,8 +50,8 @@ export async function getMostFrequentTags(
 
   const { data, error } = await supabase
     .from('card_tags')
-    .select('tag_id, tags(name)')
-    .eq('user_id', userId);
+    .select('tag_id, tags(name), cards!inner(user_id)')
+    .eq('cards.user_id', userId);
 
   if (error || !data) return { data: null, error };
 
@@ -140,29 +141,36 @@ export async function getBoardContents(
   userId: string
 ): Promise<{ data: BoardContents | null; error: any }> {
 
-  const [stickersRes, photosRes, notesRes, templatesRes] = await Promise.all([
+  const { data: folders } = await supabase
+    .from('folders')
+    .select('id')
+    .eq('user_id', userId);
+
+  const folderIds = (folders ?? []).map((f: any) => f.id);
+
+  if (folderIds.length === 0) {
+    return { data: { stickers: 0, photos: 0, notes: 0, templates: 0 }, error: null };
+  }
+
+  const [stickersRes, photosRes, notesRes] = await Promise.all([
     supabase
-      .from('stickers')
+      .from('folder_stickers')
       .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId),
+      .in('folder_id', folderIds),
 
     supabase
       .from('board_photos')
-      .select('id, cards!inner(user_id)', { count: 'exact', head: true })
-      .eq('cards.user_id', userId),
+      .select('id', { count: 'exact', head: true })
+      .in('folder_id', folderIds),
 
     supabase
       .from('notes')
       .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId),
+      .in('folder_id', folderIds),
 
-    supabase
-      .from('templates')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId),
   ]);
 
-  const error = stickersRes.error || photosRes.error || notesRes.error || templatesRes.error;
+  const error = stickersRes.error || photosRes.error || notesRes.error;
   if (error) return { data: null, error };
 
   return {
@@ -170,7 +178,7 @@ export async function getBoardContents(
       stickers: stickersRes.count ?? 0,
       photos: photosRes.count ?? 0,
       notes: notesRes.count ?? 0,
-      templates: templatesRes.count ?? 0,
+      templates: 0,
     },
     error: null,
   };
@@ -205,23 +213,19 @@ Respond ONLY with a JSON object, no markdown, no explanation:
   `.trim();
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', { // change
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.EXPO_PUBLIC_OPENAI_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 150,
-      }),
-    });
+   
+  const response = await fetch("http://127.0.0.1:5000/persona", { // flask url
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ prompt }),
+});
 
-    const json = await response.json();
-    const raw = json.choices?.[0]?.message?.content ?? '';
-    const parsed: Persona = JSON.parse(raw);
-    return { data: parsed, error: null };
+const { raw } = await response.json();
+const parsed: Persona = JSON.parse(raw);
+
+return { data: parsed, error: null };
   } catch (err) {
     return { data: null, error: err };
   }

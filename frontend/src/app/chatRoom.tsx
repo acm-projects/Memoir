@@ -78,7 +78,11 @@ export default function ChatRoom() {
     setCurrentUserId(user.id);
 
     const { data: partner } = await getConversationPartner(id, user.id);
+    console.log('partner raw:', partner); // ← add this
+
     if (partner) {
+      const profiles = Array.isArray(partner.profiles) ? partner.profiles[0] : partner.profiles;
+      console.log('profiles:', JSON.stringify(profiles)); // ← and this
       setPartnerName(partner.profiles?.username ?? 'Unknown');
       setPartnerAvatar(partner.profiles?.avatar_url ?? null);
     }
@@ -129,7 +133,7 @@ export default function ChatRoom() {
     }
   };
 
-  // Renders a mini preview of the card's items
+  //--Renders a mini preview of the card's items--
   const renderCardPreview = (cardItems: string, cardColor: string) => {
     try {
       const items: string[] = JSON.parse(cardItems);
