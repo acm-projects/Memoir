@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -26,15 +26,20 @@ import {
   addSticker as addStickerService,
   addGif as addGifService,
   addPhoto as addPhotoService,
+  addMusic as addMusicService,   // ← new import
   updateItemPosition,
   deleteItem as deleteItemService,
   updateNoteContent,
 } from "@/services/bulletin-board.services";
 import { supabase } from "@/lib/supabase";
 
+// ─────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────
+
 type Item = {
   id: string;
-  type: "note" | "sticker" | "card" | "photo" | "gif" | "custom_card";
+  type: "note" | "sticker" | "card" | "photo" | "gif" | "custom_card" | "music";
   content: string;
   x: number;
   y: number;
@@ -47,7 +52,13 @@ type Item = {
   cardColor?: string;
   cardItems?: string;
   cardId?: string;
+  spotifyUrl?: string;
+  artistName?: string;
 };
+
+// ─────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────
 
 function seededRotation(id: string) {
   let hash = 0;
@@ -65,18 +76,34 @@ function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
   };
 }
 
+// ─────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────
+
 export default function BulletinBoard() {
   const router = useRouter();
   const { title, folderId } = useLocalSearchParams<{ title: string; folderId: string }>();
 
+  // ── Board state ──
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
-  const [activeTool, setActiveTool] = useState<"note" | "sticker" | "gif" | "photo" | null>(null);
+  const [activeTool, setActiveTool] = useState<"note" | "sticker" | "gif" | "photo" | "music" | null>(null);
+
+  // ── GIF state ──
   const [gifs, setGifs] = useState<any[]>([]);
   const [gifSearch, setGifSearch] = useState("");
+
+  // ── Music / Spotify state ──
+  const [tracks, setTracks] = useState<any[]>([]);
+  const [musicSearch, setMusicSearch] = useState("");
+  const [musicLoading, setMusicLoading] = useState(false);
+
+  // ─────────────────────────────────────────────
+  // Constants
+  // ─────────────────────────────────────────────
 
   const NOTE_COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
   const STICKERS = [
@@ -85,6 +112,10 @@ export default function BulletinBoard() {
     { key: "flower", source: require("../../assets/images/Australia-Stamp.png") },
   ];
   const ACCENT_COLORS = ["#557263", "#7B1D1D", "#8B6A3E", "#4A6741", "#6B4F6B"];
+
+  // ─────────────────────────────────────────────
+  // Load + Realtime
+  // ─────────────────────────────────────────────
 
   useEffect(() => {
     loadItems();
@@ -108,42 +139,39 @@ export default function BulletinBoard() {
     const channels = [
       supabase
         .channel(`notes:${folderId}`)
-        .on('postgres_changes', {
-          event: '*', schema: 'public', table: 'notes',
-          filter: `folder_id=eq.${folderId}`,
-        }, (payload) => handleRealtimeChange('note', payload))
+        .on("postgres_changes", { event: "*", schema: "public", table: "notes", filter: `folder_id=eq.${folderId}` },
+          (payload) => handleRealtimeChange("note", payload))
         .subscribe(),
 
       supabase
         .channel(`cards:${folderId}`)
-        .on('postgres_changes', {
-          event: '*', schema: 'public', table: 'cards',
-          filter: `folder_id=eq.${folderId}`,
-        }, (payload) => handleRealtimeChange('card', payload))
+        .on("postgres_changes", { event: "*", schema: "public", table: "cards", filter: `folder_id=eq.${folderId}` },
+          (payload) => handleRealtimeChange("card", payload))
         .subscribe(),
 
       supabase
         .channel(`folder_stickers:${folderId}`)
-        .on('postgres_changes', {
-          event: '*', schema: 'public', table: 'folder_stickers',
-          filter: `folder_id=eq.${folderId}`,
-        }, (payload) => handleRealtimeChange('sticker', payload))
+        .on("postgres_changes", { event: "*", schema: "public", table: "folder_stickers", filter: `folder_id=eq.${folderId}` },
+          (payload) => handleRealtimeChange("sticker", payload))
         .subscribe(),
 
       supabase
         .channel(`board_gifs:${folderId}`)
-        .on('postgres_changes', {
-          event: '*', schema: 'public', table: 'board_gifs',
-          filter: `folder_id=eq.${folderId}`,
-        }, (payload) => handleRealtimeChange('gif', payload))
+        .on("postgres_changes", { event: "*", schema: "public", table: "board_gifs", filter: `folder_id=eq.${folderId}` },
+          (payload) => handleRealtimeChange("gif", payload))
         .subscribe(),
 
       supabase
         .channel(`board_photos:${folderId}`)
-        .on('postgres_changes', {
-          event: '*', schema: 'public', table: 'board_photos',
-          filter: `folder_id=eq.${folderId}`,
-        }, (payload) => handleRealtimeChange('photo', payload))
+        .on("postgres_changes", { event: "*", schema: "public", table: "board_photos", filter: `folder_id=eq.${folderId}` },
+          (payload) => handleRealtimeChange("photo", payload))
+        .subscribe(),
+
+      // ← new music channel
+      supabase
+        .channel(`board_music:${folderId}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "board_music", filter: `folder_id=eq.${folderId}` },
+          (payload) => handleRealtimeChange("music", payload))
         .subscribe(),
     ];
 
@@ -152,10 +180,10 @@ export default function BulletinBoard() {
     };
   }, [folderId]);
 
-  function handleRealtimeChange(type: Item['type'], payload: any) {
+  function handleRealtimeChange(type: Item["type"], payload: any) {
     const { eventType, new: newRow, old: oldRow } = payload;
 
-    if (eventType === 'DELETE') {
+    if (eventType === "DELETE") {
       setItems((prev) => prev.filter((item) => item.id !== oldRow.id));
       return;
     }
@@ -163,7 +191,7 @@ export default function BulletinBoard() {
     const mapped = mapRowToItem(type, newRow);
     if (!mapped) return;
 
-    if (eventType === 'INSERT') {
+    if (eventType === "INSERT") {
       setItems((prev) =>
         prev.some((i) => i.id === mapped.id)
           ? prev.map((i) => (i.id === mapped.id ? mapped : i))
@@ -171,55 +199,65 @@ export default function BulletinBoard() {
       );
     }
 
-    if (eventType === 'UPDATE') {
+    if (eventType === "UPDATE") {
       setItems((prev) =>
         prev.map((i) => (i.id === mapped.id ? { ...i, ...mapped } : i))
       );
     }
   }
 
-  function mapRowToItem(type: Item['type'], row: any): Item | null {
+  function mapRowToItem(type: Item["type"], row: any): Item | null {
     if (!row) return null;
     switch (type) {
-      case 'note':
+      case "note":
         return {
-          id: row.id, type: 'note',
+          id: row.id, type: "note",
           content: row.content, color: row.color,
           x: row.x, y: row.y,
           rotation: row.rotation, scale: row.scale,
         };
-      case 'card':
+      case "card":
         return {
-          id: row.id, type: 'card',
+          id: row.id, type: "card",
           content: row.content,
           x: row.x, y: row.y,
           rotation: row.rotation, scale: row.scale,
           image: { uri: row.image_url },
         };
-      case 'sticker':
+      case "sticker":
         return {
-          id: row.id, type: 'sticker', content: '',
+          id: row.id, type: "sticker", content: "",
           x: row.x, y: row.y,
           rotation: row.rotation, scale: row.scale,
           sticker: row.image_url,
         };
-      case 'gif':
+      case "gif":
         return {
-          id: row.id, type: 'gif', content: '',
+          id: row.id, type: "gif", content: "",
           x: row.x, y: row.y,
           rotation: row.rotation, scale: row.scale,
           sticker: row.giphy_url,
         };
-      case 'photo':
+      case "photo":
         return {
-          id: row.id, type: 'photo', content: '',
+          id: row.id, type: "photo", content: "",
           x: row.x, y: row.y,
           rotation: row.rotation, scale: row.scale,
           sticker: row.image_url,
         };
-      case 'custom_card':
+      case "music":
         return {
-          id: row.id, type: 'custom_card', content: '',
+          id: row.id, type: "music",
+          content: row.track_name ?? "",
+          x: row.x, y: row.y,
+          rotation: row.rotation, scale: row.scale,
+          sticker: row.album_image_url,
+          spotifyUrl: row.spotify_url,
+          artistName: row.artist_name,
+        };
+      case "custom_card":
+        return {
+          id: row.id, type: "custom_card", content: "",
           x: row.x, y: row.y,
           rotation: row.rotation, scale: row.scale,
           cardColor: row.custom_cards?.card_color,
@@ -230,6 +268,10 @@ export default function BulletinBoard() {
         return null;
     }
   }
+
+  // ─────────────────────────────────────────────
+  // Add items
+  // ─────────────────────────────────────────────
 
   const addNote = async (color: string) => {
     try {
@@ -284,6 +326,66 @@ export default function BulletinBoard() {
     }
   };
 
+  // ─────────────────────────────────────────────
+  // Spotify
+  // ─────────────────────────────────────────────
+
+  async function searchSpotify(query: string) {
+    if (!query.trim()) {
+      setTracks([]);
+      return;
+    }
+
+    const clientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_SECRET;
+
+    setMusicLoading(true);
+    try {
+      const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: "Basic " + btoa(`${clientId}:${clientSecret}`),
+        },
+        body: "grant_type=client_credentials",
+      });
+      const tokenData = await tokenRes.json();
+
+      const res = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`,
+        { headers: { Authorization: `Bearer ${tokenData.access_token}` } }
+      );
+      const data = await res.json();
+      setTracks(data.tracks?.items ?? []);
+    } catch (err) {
+      console.error("Spotify error:", err);
+    } finally {
+      setMusicLoading(false);
+    }
+  }
+
+  async function addMusicItem(track: any) {
+    try {
+      const newItem = await addMusicService(
+        folderId,
+        track.external_urls.spotify,
+        track.name,
+        track.artists?.[0]?.name ?? "",
+        track.album.images[0]?.url ?? ""
+      );
+      setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
+    } catch (e) {
+      console.error("Failed to add music item:", e);
+    }
+    setActiveTool(null);
+    setTracks([]);
+    setMusicSearch("");
+  }
+
+  // ─────────────────────────────────────────────
+  // Delete + position
+  // ─────────────────────────────────────────────
+
   const deleteItem = async (id: string) => {
     const item = items.find((i) => i.id === id);
     if (!item) return;
@@ -297,7 +399,7 @@ export default function BulletinBoard() {
   };
 
   const debouncedSave = useCallback(
-    debounce((id: string, type: Item['type'], fields: Partial<Item>) => {
+    debounce((id: string, type: Item["type"], fields: Partial<Item>) => {
       updateItemPosition(type, id, fields).catch((e) =>
         console.error("Failed to save position:", e)
       );
@@ -307,7 +409,7 @@ export default function BulletinBoard() {
 
   const handlePositionChange = (id: string, newX: number, newY: number) => {
     setItems((prev) =>
-      prev.map((item) => item.id === id ? { ...item, x: newX, y: newY } : item)
+      prev.map((item) => (item.id === id ? { ...item, x: newX, y: newY } : item))
     );
     const item = items.find((i) => i.id === id);
     if (item) debouncedSave(id, item.type, { x: newX, y: newY });
@@ -315,7 +417,7 @@ export default function BulletinBoard() {
 
   const handleRotationChange = (id: string, newRotation: number) => {
     setItems((prev) =>
-      prev.map((item) => item.id === id ? { ...item, rotation: newRotation } : item)
+      prev.map((item) => (item.id === id ? { ...item, rotation: newRotation } : item))
     );
     const item = items.find((i) => i.id === id);
     if (item) debouncedSave(id, item.type, { rotation: newRotation });
@@ -323,7 +425,7 @@ export default function BulletinBoard() {
 
   const handleScaleChange = (id: string, newScale: number) => {
     setItems((prev) =>
-      prev.map((item) => item.id === id ? { ...item, scale: newScale } : item)
+      prev.map((item) => (item.id === id ? { ...item, scale: newScale } : item))
     );
     const item = items.find((i) => i.id === id);
     if (item) debouncedSave(id, item.type, { scale: newScale });
@@ -340,10 +442,14 @@ export default function BulletinBoard() {
 
   const onContentChange = (id: string, newContent: string) => {
     setItems((prev) =>
-      prev.map((item) => item.id === id ? { ...item, content: newContent } : item)
+      prev.map((item) => (item.id === id ? { ...item, content: newContent } : item))
     );
     debouncedContentSave(id, newContent);
   };
+
+  // ─────────────────────────────────────────────
+  // GIFs
+  // ─────────────────────────────────────────────
 
   async function searchGifs(query: string) {
     const apiKey = process.env.EXPO_PUBLIC_GIPHY_KEY;
@@ -358,7 +464,12 @@ export default function BulletinBoard() {
   const handleDone = () => {
     setIsEditing(false);
     setActiveTool(null);
+    setSelectedId(null);
   };
+
+  // ─────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -370,6 +481,7 @@ export default function BulletinBoard() {
 
   return (
     <View style={styles.container}>
+      {/* ── Banner ── */}
       <ImageBackground
         source={require("../../assets/images/RED swirl subtle.png")}
         style={styles.topBanner}
@@ -386,6 +498,7 @@ export default function BulletinBoard() {
         )}
       </ImageBackground>
 
+      {/* ── Torn edge ── */}
       <View style={styles.tornEdgeContainer}>
         <Svg height="28" width="100%">
           <Path
@@ -395,6 +508,7 @@ export default function BulletinBoard() {
         </Svg>
       </View>
 
+      {/* ── Board ── */}
       <ImageBackground
         source={require("../../assets/images/layered-vintage-paper.png")}
         style={styles.paperBackground}
@@ -443,9 +557,12 @@ export default function BulletinBoard() {
           </View>
         </TouchableWithoutFeedback>
 
+        {/* ── Edit mode footer ── */}
         {isEditing && (
           <View style={styles.footerWrapper}>
-            {activeTool && (
+
+            {/* ── Tool panel (only when no item selected) ── */}
+            {activeTool && !selectedId && (
               <View style={styles.panel}>
                 <View style={styles.panelHeader}>
                   <Text style={styles.panelTitle}>{activeTool.toUpperCase()}</Text>
@@ -454,6 +571,7 @@ export default function BulletinBoard() {
                   </TouchableOpacity>
                 </View>
 
+                {/* NOTE */}
                 {activeTool === "note" && (
                   <View style={styles.colorRow}>
                     {NOTE_COLORS.map((c) => (
@@ -466,6 +584,7 @@ export default function BulletinBoard() {
                   </View>
                 )}
 
+                {/* STICKER */}
                 {activeTool === "sticker" && (
                   <ScrollView
                     horizontal
@@ -480,6 +599,7 @@ export default function BulletinBoard() {
                   </ScrollView>
                 )}
 
+                {/* PHOTO */}
                 {activeTool === "photo" && (
                   <TouchableOpacity style={styles.panelUploadArea} onPress={pickImage}>
                     <Ionicons name="cloud-upload-outline" size={24} color="#8B7355" />
@@ -487,10 +607,11 @@ export default function BulletinBoard() {
                   </TouchableOpacity>
                 )}
 
+                {/* GIF */}
                 {activeTool === "gif" && (
                   <View>
                     <TextInput
-                      style={styles.gifInput}
+                      style={styles.searchInput}
                       placeholder="Search GIFs..."
                       placeholderTextColor="#9a7a60"
                       value={gifSearch}
@@ -508,8 +629,66 @@ export default function BulletinBoard() {
                         >
                           <Image
                             source={{ uri: gif.images.fixed_height.url }}
-                            style={styles.gifThumb}
+                            style={styles.mediaThumb}
                           />
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+
+                {/* MUSIC */}
+                {activeTool === "music" && (
+                  <View>
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="Search a song..."
+                      placeholderTextColor="#9a7a60"
+                      value={musicSearch}
+                      onChangeText={(t) => { setMusicSearch(t); searchSpotify(t); }}
+                      returnKeyType="search"
+                      onSubmitEditing={() => searchSpotify(musicSearch)}
+                    />
+
+                    {musicLoading && (
+                      <ActivityIndicator
+                        size="small"
+                        color="#1DB954"
+                        style={{ marginVertical: 8 }}
+                      />
+                    )}
+
+                    {!musicLoading && tracks.length === 0 && musicSearch.length > 0 && (
+                      <Text style={styles.noResultsText}>No tracks found.</Text>
+                    )}
+
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{ gap: 10, paddingVertical: 4 }}
+                    >
+                      {tracks.map((track) => (
+                        <TouchableOpacity
+                          key={track.id}
+                          style={styles.musicTrackCard}
+                          onPress={() => addMusicItem(track)}
+                        >
+                          {/* Album art */}
+                          <Image
+                            source={{ uri: track.album.images[0]?.url }}
+                            style={styles.musicAlbumArt}
+                          />
+                          {/* Spotify green dot */}
+                          <View style={styles.spotifyBadge}>
+                            <Ionicons name="musical-note" size={8} color="#fff" />
+                          </View>
+                          {/* Track info */}
+                          <Text style={styles.musicTrackName} numberOfLines={2}>
+                            {track.name}
+                          </Text>
+                          <Text style={styles.musicArtistName} numberOfLines={1}>
+                            {track.artists?.[0]?.name}
+                          </Text>
                         </TouchableOpacity>
                       ))}
                     </ScrollView>
@@ -518,36 +697,114 @@ export default function BulletinBoard() {
               </View>
             )}
 
-            <View style={styles.toolbar}>
-              <Pressable
-                style={[styles.toolButton, activeTool === "note" && styles.activeToolBtn]}
-                onPress={() => setActiveTool("note")}
-              >
-                <Ionicons name="document-text-outline" size={24} color="#5A390E" />
-              </Pressable>
-              <Pressable
-                style={[styles.toolButton, activeTool === "photo" && styles.activeToolBtn]}
-                onPress={() => setActiveTool("photo")}
-              >
-                <Ionicons name="image-outline" size={24} color="#5A390E" />
-              </Pressable>
-              <Pressable
-                style={[styles.toolButton, activeTool === "sticker" && styles.activeToolBtn]}
-                onPress={() => setActiveTool("sticker")}
-              >
-                <Ionicons name="happy-outline" size={24} color="#5A390E" />
-              </Pressable>
-              <Pressable
-                style={[styles.toolButton, activeTool === "gif" && styles.activeToolBtn]}
-                onPress={() => { setActiveTool("gif"); searchGifs(""); }}
-              >
-                <Ionicons name="film-outline" size={24} color="#5A390E" />
-              </Pressable>
-              <View style={styles.toolbarDivider} />
-              <Pressable style={styles.doneButton} onPress={handleDone}>
-                <Ionicons name="checkmark" size={22} color="#F6E5CD" />
-              </Pressable>
-            </View>
+            {/* ── Toolbar: item selected vs default ── */}
+            {selectedId ? (
+              <View style={styles.toolbar}>
+                <TouchableOpacity
+                  style={styles.toolButton}
+                  onPress={() => {
+                    const item = items.find((i) => i.id === selectedId);
+                    if (item) handleScaleChange(selectedId, Math.max(0.5, (item.scale ?? 1) - 0.1));
+                  }}
+                >
+                  <Text style={styles.selBtnText}>−</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.toolButton}
+                  onPress={() => {
+                    const item = items.find((i) => i.id === selectedId);
+                    if (item) handleScaleChange(selectedId, Math.min(5, (item.scale ?? 1) + 0.1));
+                  }}
+                >
+                  <Text style={styles.selBtnText}>+</Text>
+                </TouchableOpacity>
+
+                <View style={styles.toolbarDivider} />
+
+                <TouchableOpacity
+                  style={styles.toolButton}
+                  onPress={() => {
+                    const item = items.find((i) => i.id === selectedId);
+                    if (item) handleRotationChange(selectedId, (item.rotation ?? 0) - 3);
+                  }}
+                >
+                  <Text style={styles.selBtnText}>↺</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.toolButton}
+                  onPress={() => {
+                    const item = items.find((i) => i.id === selectedId);
+                    if (item) handleRotationChange(selectedId, (item.rotation ?? 0) + 3);
+                  }}
+                >
+                  <Text style={styles.selBtnText}>↻</Text>
+                </TouchableOpacity>
+
+                <View style={styles.toolbarDivider} />
+
+                <TouchableOpacity
+                  style={styles.toolButton}
+                  onPress={() => {
+                    deleteItem(selectedId);
+                    setSelectedId(null);
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={22} color="#7B1D1D" />
+                </TouchableOpacity>
+
+                <View style={styles.toolbarDivider} />
+
+                <TouchableOpacity style={styles.toolButton} onPress={() => setSelectedId(null)}>
+                  <Ionicons name="checkmark" size={24} color="#2C5F2E" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.toolbar}>
+                <Pressable
+                  style={[styles.toolButton, activeTool === "note" && styles.activeToolBtn]}
+                  onPress={() => setActiveTool("note")}
+                >
+                  <Ionicons name="document-text-outline" size={24} color="#5A390E" />
+                </Pressable>
+
+                <Pressable
+                  style={[styles.toolButton, activeTool === "photo" && styles.activeToolBtn]}
+                  onPress={() => setActiveTool("photo")}
+                >
+                  <Ionicons name="image-outline" size={24} color="#5A390E" />
+                </Pressable>
+
+                <Pressable
+                  style={[styles.toolButton, activeTool === "sticker" && styles.activeToolBtn]}
+                  onPress={() => setActiveTool("sticker")}
+                >
+                  <Ionicons name="happy-outline" size={24} color="#5A390E" />
+                </Pressable>
+
+                <Pressable
+                  style={[styles.toolButton, activeTool === "gif" && styles.activeToolBtn]}
+                  onPress={() => { setActiveTool("gif"); searchGifs(""); }}
+                >
+                  <Ionicons name="film-outline" size={24} color="#5A390E" />
+                </Pressable>
+
+                {/* ← Music button */}
+                <Pressable
+                  style={[styles.toolButton, activeTool === "music" && styles.activeToolBtn]}
+                  onPress={() => setActiveTool("music")}
+                >
+                  <Ionicons name="musical-notes-outline" size={24} color="#5A390E" />
+                </Pressable>
+
+                <View style={styles.toolbarDivider} />
+
+                <Pressable style={styles.doneButton} onPress={handleDone}>
+                  <Ionicons name="checkmark" size={22} color="#F6E5CD" />
+                </Pressable>
+              </View>
+            )}
           </View>
         )}
       </ImageBackground>
@@ -557,8 +814,13 @@ export default function BulletinBoard() {
   );
 }
 
+// ─────────────────────────────────────────────
+// Styles
+// ─────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F3EE" },
+
   topBanner: {
     height: 150,
     width: "105%",
@@ -598,8 +860,11 @@ const styles = StyleSheet.create({
     marginRight: 20,
   },
   bannerEditText: { color: "#F6E5CD", fontSize: 13, fontWeight: "600" },
+
   tornEdgeContainer: { marginTop: -18, zIndex: 10 },
+
   paperBackground: { flex: 1, width: "100%" },
+
   corkboardFrame: {
     flex: 1,
     borderWidth: 12,
@@ -613,6 +878,7 @@ const styles = StyleSheet.create({
   board: { flex: 1 },
   boardContent: { height: 1500, paddingTop: 20 },
   absoluteFull: { position: "absolute", top: 0, left: 0 },
+
   footerWrapper: {
     position: "absolute",
     bottom: 100,
@@ -622,6 +888,7 @@ const styles = StyleSheet.create({
     gap: 10,
     zIndex: 100,
   },
+
   toolbar: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -637,13 +904,13 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     paddingHorizontal: 8,
   },
-  toolButton: { padding: 12, borderRadius: 25 },
+  toolButton: { padding: 10, borderRadius: 25 },
   activeToolBtn: { backgroundColor: "rgba(90, 57, 14, 0.15)" },
   toolbarDivider: {
     width: 1,
     height: 28,
     backgroundColor: "rgba(109,27,18,0.25)",
-    marginHorizontal: 4,
+    marginHorizontal: 2,
   },
   doneButton: {
     backgroundColor: "#6D1B12",
@@ -653,6 +920,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  selBtnText: { fontSize: 22, color: "#5A390E", fontWeight: "700", lineHeight: 26 },
+
   panel: {
     backgroundColor: "#ede0cc",
     width: "92%",
@@ -668,10 +937,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   panelTitle: { fontWeight: "bold", fontSize: 12, color: "#5A390E", letterSpacing: 1 },
+
   colorRow: { flexDirection: "row", justifyContent: "center", gap: 12 },
   colorDot: { width: 36, height: 36, borderRadius: 18 },
+
   stickerRow: { gap: 15, paddingVertical: 5 },
   stickerThumb: { width: 60, height: 60, resizeMode: "contain" },
+
   panelUploadArea: {
     borderWidth: 1.5,
     borderColor: "#C8B89A",
@@ -682,13 +954,60 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   uploadText: { fontSize: 13, color: "#8B7355" },
-  gifInput: {
+
+  searchInput: {
     backgroundColor: "#F5EEE1",
     borderWidth: 1,
     borderColor: "#C8B89A",
     borderRadius: 10,
     padding: 10,
     marginBottom: 10,
+    color: "#3D2B1F",
   },
-  gifThumb: { width: 90, height: 90, borderRadius: 8 },
+
+  mediaThumb: { width: 90, height: 90, borderRadius: 8 },
+
+  // ── Music-specific styles ──
+  musicTrackCard: {
+    width: 80,
+    alignItems: "center",
+    position: "relative",
+  },
+  musicAlbumArt: {
+    width: 76,
+    height: 76,
+    borderRadius: 10,
+    backgroundColor: "#d7c3ac",
+  },
+  spotifyBadge: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    backgroundColor: "#1DB954",
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  musicTrackName: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#3D2B1F",
+    textAlign: "center",
+    marginTop: 5,
+    lineHeight: 13,
+  },
+  musicArtistName: {
+    fontSize: 9,
+    color: "#7A5C3E",
+    textAlign: "center",
+    marginTop: 2,
+  },
+  noResultsText: {
+    fontSize: 12,
+    color: "#9a7a60",
+    textAlign: "center",
+    marginVertical: 8,
+  },
 });
