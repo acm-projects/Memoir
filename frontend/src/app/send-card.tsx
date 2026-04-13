@@ -15,20 +15,15 @@ import BackButton from "../components/back-Button";
 import BottomNavbar from "../components/BottomNavbar";
 import CardSentAnimation from "../components/CardSentAnimation";
 import { supabase } from "@/lib/supabase";
-import { getContacts } from "@/services/messages.service";
+import { getContacts, Contact } from "@/services/messages.service";
 
 const ios = Platform.OS === "ios";
 
-interface Contact {
-  conversationId: string;
-  userId: string;
-  name: string;
-  avatarUrl: string | null;
-}
+// ← removed local Contact interface, using the imported one
 
 export default function SendCard() {
   const { top } = useSafeAreaInsets();
-  const [selectedId, setSelectedId] = useState<string | null>(null); // now a conversationId string
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showAnimation, setShowAnimation] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
@@ -59,7 +54,7 @@ export default function SendCard() {
 
   const handleAnimationComplete = () => {
     setShowAnimation(false);
-    const selected = contacts.find(c => c.conversationId === selectedId);
+    const selected = contacts.find(c => c.id === selectedId);
     router.push({
       pathname: "/chatRoom",
       params: {
@@ -102,17 +97,17 @@ export default function SendCard() {
             showsVerticalScrollIndicator={false}
           >
             {contacts.map((contact) => {
-              const isSelected = selectedId === contact.conversationId;
+              const isSelected = selectedId === contact.id;
               return (
                 <TouchableOpacity
-                  key={contact.conversationId}
-                  onPress={() => setSelectedId(contact.conversationId)}
+                  key={contact.id}
+                  onPress={() => setSelectedId(contact.id)}
                   style={isSelected ? styles.userCardSelected : styles.userCardRead}
                   activeOpacity={0.7}
                 >
                   <View style={styles.avatarWrapper}>
-                    {contact.avatarUrl ? (
-                      <Image source={{ uri: contact.avatarUrl }} style={styles.avatarImg} />
+                    {contact.avatar ? (
+                      <Image source={{ uri: contact.avatar }} style={styles.avatarImg} />
                     ) : (
                       <Image source={require("../../assets/images/default-avatar.png")} style={styles.avatarImg} />
                     )}

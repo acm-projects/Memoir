@@ -38,7 +38,7 @@ export default function DraggableItem({
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
 
-  const isThumbtack = parseInt(item.id) % 2 === 0;
+  const isThumbtack = item.id.charCodeAt(0) % 2 === 0; // fix
   const pinSize = 14;
   const pinColor = accentColor;
 
@@ -309,6 +309,8 @@ export default function DraggableItem({
 
   function renderContent() {
     if (item.type === "card") {
+      console.log('rendering item, item:', item); // add this
+      console.log('rendering card, image:', item.image); // add this
       if (item.image) {
         return (
           <TouchableOpacity

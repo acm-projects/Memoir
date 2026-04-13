@@ -117,7 +117,7 @@ export default function Messages() {
   // BACKEND: calls markConversationAsRead() from messages.service.ts
   const openChatRoom = async (user: ConversationUser) => {
     await markConversationAsRead(user.id, currentUserId);
-    // FIX: expo-router params must be a plain string-keyed object, not a typed interface
+    
     router.push({
       pathname: '/chatRoom',
       params: { // PASS these to chat room
