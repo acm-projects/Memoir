@@ -1,51 +1,19 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Image,
-  ImageBackground,
-  FlatList,
-  TouchableOpacity,
-  Dimensions,
-  Platform,
-} from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, Image, ImageBackground, ActivityIndicator, FlatList, TouchableOpacity, Dimensions, Platform, } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import BottomNavbar from '../components/BottomNavbar';
 import { Ionicons } from '@expo/vector-icons';
-
+import { supabase } from '../lib/supabase';
+import { getFolders } from '@/services/folders.service';
+import { createCard } from '@/services/cards.service';
+import { addCardImage } from '@/services/card-images.service';
 
 const { width } = Dimensions.get('window');
 
 const swirlyBg = require('../../assets/images/swirly-subtle.png');
 const paperTexture = require('../../assets/images/layered-vintage-paper.png');
 
-//BACKEND: replace with actual data from backend API
-const STAMP_DATA = [
-  {
-    id: 'all',
-    label: 'All Memories',
-    image: require('../../assets/images/bird-stamp.png'),
-  },
-  {
-    id: 'prom',
-    label: '16th Birthday',
-    image: require('../../assets/images/blueFlower-stamp.png'),
-  },
-  {
-    id: 'plain',
-    label: 'Prom',
-    image: require('../../assets/images/brasil-stamp.png'),
-  },
-  {
-    id: 'spring',
-    label: 'Spring Break',
-    image: require('../../assets/images/butterfly-stamp.png'),
-  },
-];
-
-//BACKEND: replace with actual data from backend API
+const FLASK_URL = 'http://127.0.0.1:5000';
 
 const FOLDER_COLORS: Record<string, { color: string; stripColor: string }> = {
   all: { color: '#6B4E7D', stripColor: '#573D68' },
@@ -54,118 +22,230 @@ const FOLDER_COLORS: Record<string, { color: string; stripColor: string }> = {
   spring: { color: '#557263', stripColor: '#3D5548' },
 };
 
+interface Folder {
+  id: string;
+  name: string;
+  cover_image_url: string | null;
+  is_default: boolean;
+}
+
 const CARD_WIDTH = (width - 32 - 12) / 2;
 
 export default function SelectMemory() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const [search, setSearch] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const filteredData = STAMP_DATA.filter((item) => {
+  // Parse params from upload-card
+  const images: string[] = params.images ? JSON.parse(params.images as string) : [];
+  const title = params.title as string || '';
+  const caption = params.caption as string || '';
+  const date = params.date as string || '';
+
+  useEffect(() => {
+    fetchFolders();
+  }, []);
+
+  async function fetchFolders() {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+
+    const { data, error } = await getFolders(user.id);
+    if (error) {
+      console.error('Failed to fetch folders:', error);
+    } else if (data) {
+      const sorted = data.sort((a, b) => {
+        if (a.is_default) return -1;
+        if (b.is_default) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      setFolders(sorted);
+    }
+    setLoading(false);
+  }
+
+  const filteredFolders = folders.filter((folder) => {
     if (!search.trim()) return true;
-    return item.label.toLowerCase().includes(search.trim().toLowerCase());
+    return folder.name.toLowerCase().includes(search.trim().toLowerCase());
   });
 
-  const handleContinue = () => {
-    router.push('/view-folder copy');
+//OLD
+//OLD
+
+  async function handleContinue() {
+     if (!selectedFolderId) {
+      alert('Please select a folder');
+      return;
+    }
+    setSaving(true);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSaving(false); return; }
+
+    // Step 1 — Create the card in Supabase
+    const { data: card, error: cardError } = await createCard(user.id, {
+      title,
+      caption,
+      folder_id: selectedFolderId,
+      event_date: date || undefined,
+    });
+
+    if (cardError || !card) {
+      console.error('Failed to create card:', cardError);
+      setSaving(false);
+      return;
+    }
+
+    // Step 2 — Upload each image and save to card_images table
+    for (let i = 0; i < images.length; i++) {
+      const uri = images[i];
+      const fileName = `image-${Date.now()}-${i}.jpg`;
+
+      if (Platform.OS === 'web') {
+        // Web: blob URL needs to be converted to actual file
+        try {
+          const response = await fetch(uri);
+          const blob = await response.blob();
+
+          const { error: uploadError } = await supabase.storage
+            .from('cards')
+            .upload(`${card.id}/${fileName}`, blob, {
+              contentType: 'image/jpeg',
+            });
+
+          if (uploadError) {
+            console.error(`Failed to upload image ${i}:`, uploadError);
+            continue;
+          }
+
+          const { data: urlData } = supabase.storage
+            .from('cards')
+            .getPublicUrl(`${card.id}/${fileName}`);
+
+          await supabase.from('card_images').insert({
+            card_id: card.id,
+            image_url: urlData.publicUrl,
+            order_index: i,
+          });
+
+        } catch (error) {
+          console.error(`Failed to process image ${i}:`, error);
+        }
+      } else {
+        // Mobile: use addCardImage service directly with file URI
+        const { error: imageError } = await addCardImage(card.id, {
+          uri,
+          name: fileName,
+          type: 'image/jpeg',
+        });
+        if (imageError) {
+          console.error(`Failed to upload image ${i}:`, imageError);
+        }
+      }
+    }
+
+    // Step 3 — Call Flask /process-card to run OCR, tagging and embedding
+    try {
+      const response = await fetch(`${FLASK_URL}/process-card`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          card_id: card.id,
+          user_id: user.id,
+          use_mock: true,
+        }),
+      });
+      const result = await response.json();
+      console.log('Process card result:', result);
+    } catch (error) {
+      console.error('Failed to process card:', error);
+    }
+
+    setSaving(false);
+    router.replace({
+      pathname: '/bulletin-board',
+      params: { 
+        id: selectedFolderId, 
+        title: folders.find(f => f.id === selectedFolderId)?.name ?? '' 
+      },
+    });
   };
-  //Backend: connect to the actual view folder screen for the selected memory
-  const renderItem = ({ item }: { item: (typeof STAMP_DATA)[number] }) => {
+
+  const renderItem = ({ item }: { item: Folder }) => {
     const { color, stripColor } = FOLDER_COLORS[item.id] || FOLDER_COLORS['all'];
-    const isSelected = selectedId === item.id;
+    const isSelected = selectedFolderId === item.id;
 
     return (
       <TouchableOpacity
-        style={styles.cardWrapper}
+        style={[styles.stampCard, isSelected && styles.stampCardSelected]}
         activeOpacity={0.8}
-        onPress={() => setSelectedId(isSelected ? null : item.id)}
+        onPress={() => setSelectedFolderId(item.id)}
       >
-        <View style={styles.cardOuter}>
-          {/* Perf dashed border overlay */}
-          <View style={styles.perfBorder} pointerEvents="none" />
-          <View style={[styles.card, { borderRadius: 18 }]}>
-            {/* Top stamp area */}
-            <View style={[styles.cardTop, { backgroundColor: color }]}>
-               {/*BACKEND: replace with actual image from backend */}
-              <Image
-                source={item.image}
-                style={styles.stampImage}
-                resizeMode="contain"
-              />
-            </View>
-            {/* Bottom label */}
-            <View style={[styles.cardBottom, { backgroundColor: stripColor }]}>
-              <Text numberOfLines={1} style={styles.cardTitle}>
-                {item.label}
-              </Text>
-            </View>
-          </View>
-
-          {/* Checkmark overlay — shown when selected */}
-          {isSelected && (
-            <View style={styles.checkOverlay} pointerEvents="none">
-              <View style={styles.checkCircle}>
-                <Ionicons name="checkmark" size={18} color="#fff" />
-              </View>
-            </View>
+        <View style={[styles.stampTop, isSelected && styles.stampTopSelected]}>
+          {item.cover_image_url ? (
+            <Image
+              source={{ uri: item.cover_image_url }}
+              style={styles.stampImage}
+              resizeMode="contain"
+            />
+          ) : (
+            <Image
+              source={require('../../assets/images/star-stamp.png')}
+              style={styles.stampImage}
+              resizeMode="contain"
+            />
           )}
+        </View>
+        <View style={[styles.stampBottom, isSelected && styles.stampBottomSelected]}>
+          <Text style={[styles.stampLabel, isSelected && styles.stampLabelSelected]}>
+            {item.name}
+          </Text>
         </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <ImageBackground
-      source={swirlyBg}
-      style={styles.screen}
-      imageStyle={styles.swirlyImage}
-    >
-      {/* Green header area matching Upload Card */}
-      <View style={styles.greenHeader}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Text style={styles.backArrow}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Select a Memory</Text>
-        </View>
-      </View>
-
-      {/* Floating paper card */}
-      <ImageBackground
-        source={paperTexture}
-        style={styles.paperCard}
-        imageStyle={styles.paperImage}
-      >
+    <ImageBackground source={swirlyBg} style={styles.screen} imageStyle={styles.swirlyImage}>
+      <ImageBackground source={paperTexture} style={styles.paperCard} imageStyle={styles.paperImage}>
         <View style={styles.cardContent}>
-          {/* Search bar inside paper card, above section label */}
-          <View style={styles.searchContainerOuter}>
-            <View style={styles.searchContainer}>
-              <Ionicons name="search" size={16} color="#8B7355" />
-              <TextInput
-                placeholder=" Search"
-                placeholderTextColor="#A07C5A"
-                value={search}
-                onChangeText={setSearch}
-                style={styles.searchInput}
-              />
-            </View>
-            {/* Divider row inside paper card, above search */}
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerFlourish}>✦</Text>
-              <View style={styles.dividerLine} />
-            </View>
+
+          {/* Header */}
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={styles.backArrow}>←</Text>
+            </TouchableOpacity>
+            <Text style={styles.pageTitle}>Select a Memory</Text>
           </View>
 
-          {/* Section label inside paper */}
+          {/* Search bar */}
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={16} color="#8B7355" />
+            <TextInput
+              placeholder=" Search folders"
+              placeholderTextColor="#A07C5A"
+              value={search}
+              onChangeText={setSearch}
+              style={styles.searchInput}
+            />
+          </View>
+
           <Text style={styles.sectionLabel}>Your Folders</Text>
 
-          <View style={styles.stampGridWrapper}>
+          {/* Folder grid */}
+          {loading ? (
+            <ActivityIndicator size="large" color="#7B1D1D" style={{ marginTop: 40 }} />
+          ) : (
             <FlatList
-              data={filteredData}
+              data={filteredFolders}
               keyExtractor={(item) => item.id}
               numColumns={2}
               columnWrapperStyle={styles.columnWrapper}
@@ -173,24 +253,27 @@ export default function SelectMemory() {
               renderItem={renderItem}
               showsVerticalScrollIndicator={false}
             />
+          )}
+
+          {/* Continue button */}
+          <View style={styles.footerRow}>
+            <TouchableOpacity
+              style={[
+                styles.continueButton,
+                (!selectedFolderId || saving) && styles.continueButtonDisabled,
+              ]}
+              activeOpacity={0.8}
+              onPress={handleContinue}
+              disabled={!selectedFolderId || saving}
+            >
+              <Text style={styles.continueText}>
+                {saving ? 'Saving...' : 'Continue'}
+              </Text>
+            </TouchableOpacity>
           </View>
+
         </View>
       </ImageBackground>
-
-      <View style={styles.footerRowFloating}>
-        <TouchableOpacity
-          style={[
-            styles.continueButton,
-            !selectedId && styles.continueButtonDisabled,
-          ]}
-          activeOpacity={0.8}
-          onPress={handleContinue}
-          disabled={!selectedId}
-        >
-          <Text style={styles.continueText}>Continue</Text>
-        </TouchableOpacity>
-      </View>
-
       <BottomNavbar />
     </ImageBackground>
   );
@@ -411,5 +494,54 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  pageTitle: {
+    fontSize: 22, 
+    fontWeight: '700', 
+    color: '#5A390E',
+    marginLeft: 16, 
+    fontFamily: 'Calistoga',
+  },
+  stampCard: {
+    width: CARD_WIDTH, borderRadius: 14, overflow: 'hidden',
+    opacity: 0.75,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15, shadowRadius: 6, elevation: 4,
+  },  
+  stampCardSelected: { 
+    opacity: 1, 
+    borderWidth: 3, 
+    borderColor: '#7B1D1D' 
+  },
+  stampTop: {
+    height: CARD_WIDTH * 0.75, 
+    backgroundColor: '#557263',
+    alignItems: 'center', 
+    justifyContent: 'center',
+  },
+  stampTopSelected: { 
+    backgroundColor: '#4A6355' 
+  },
+  stampBottom: {
+    backgroundColor: '#3D5248', 
+    paddingVertical: 8, 
+    paddingHorizontal: 6,
+  },
+  stampBottomSelected: { 
+    backgroundColor: '#7B1D1D' 
+  },
+  stampLabel: {
+    color: '#fff', 
+    fontSize: 12, 
+    fontWeight: '700',
+    textAlign: 'center', 
+    fontFamily: 'Calistoga',
+  },
+  stampLabelSelected: { 
+    color: '#F6E5CD' 
+  },
+  footerRow: { 
+    marginTop: 16, 
+    paddingHorizontal: 4 
   },
 });

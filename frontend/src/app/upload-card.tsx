@@ -86,18 +86,6 @@ export default function UploadCard() {
   };
 
   const onNext = () => {
-    // const card = {
-    //   id: createTempId(),
-    //   image: uploadedImages,
-    //   title,
-    //   caption,
-    //   date: selectedDate ? selectedDate.toISOString() : null,
-    //   folderId: selectedFolder,
-    // };
-    // console.log('Next (saved to temp)', card);
-    // // TODO: Integrate with backend API here (endpoint: /upload-card, method: POST)
-    // // TODO: Add backend integration logic (loading, error handling, response handling)
-    // router.push('/selectMemory' as any);
 
     if(!title.trim()) {
       alert('Please add a title');

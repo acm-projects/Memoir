@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+// INTEGRATED
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ImageBackground, TouchableOpacity, FlatList, Dimensions, Image, } from 'react-native';
 import { router } from 'expo-router';
 import BottomNavbar from '../components/BottomNavbar';
@@ -10,37 +11,142 @@ import { supabase } from '../lib/supabase';
 import { getFolders } from '@/services/folders.service';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-const folders = [
-  { id: '1', title: 'Create New Folder', isAdd: true,  image: null,       color: '#8B2500', stripColor: '#7A1800', isWide: false },
-  { id: '2', title: 'All Memories',      isAdd: false, image: require('../../assets/images/bird-stamp.png'),    color: '#6B4E7D', stripColor: '#573D68', isWide: false },
-  { id: '3', title: 'Spring Break',      isAdd: false, image: require('../../assets/images/blueFlower-stamp.png'), color: '#557263', stripColor: '#3D5548', isWide: false },
-  { id: '4', title: 'Prom',              isAdd: false, image: require('../../assets/images/brasil-stamp.png'),     color: '#9B2335', stripColor: '#7D1525', isWide: false },
-  { id: '5', title: 'College grad',      isAdd: false, image: require('../../assets/images/butterfly-stamp.png'),  color: '#4A6B7B', stripColor: '#3A5A6A', isWide: true  },
-  { id: '6', title: 'Bestieee',          isAdd: false, image: require('../../assets/images/cat-stamp.png'),       color: '#7B2D2D', stripColor: '#621818', isWide: true  },
-];
-// TODO: Replace mock data with real backend response
-// TODO: Integrate with backend API here (endpoint: /folders, method: GET)
-// TODO: Add backend integration logic (loading, error handling, response handling)
-
-
 // AFTER — 2 columns with 16px side padding and 12px gap between
 const CARD_MARGIN = 12; // gap between columns
-const CARD_WIDTH = (SCREEN_WIDTH - 32 - CARD_MARGIN) / 2; // 16px padding each side
+const CARD_WIDTH = (SCREEN_WIDTH - 32 - CARD_MARGIN) / 2; // 16px padding each sidez
+
+// const folders = [
+//   { id: '1', title: 'Create New Folder', isAdd: true,  image: null,       color: '#8B2500', stripColor: '#7A1800', isWide: false },
+//   { id: '2', title: 'All Memories',      isAdd: false, image: require('../../assets/images/bird-stamp.png'),    color: '#6B4E7D', stripColor: '#573D68', isWide: false },
+//   { id: '3', title: 'Spring Break',      isAdd: false, image: require('../../assets/images/blueFlower-stamp.png'), color: '#557263', stripColor: '#3D5548', isWide: false },
+//   { id: '4', title: 'Prom',              isAdd: false, image: require('../../assets/images/brasil-stamp.png'),     color: '#9B2335', stripColor: '#7D1525', isWide: false },
+//   { id: '5', title: 'College grad',      isAdd: false, image: require('../../assets/images/butterfly-stamp.png'),  color: '#4A6B7B', stripColor: '#3A5A6A', isWide: true  },
+//   { id: '6', title: 'Bestieee',          isAdd: false, image: require('../../assets/images/cat-stamp.png'),       color: '#7B2D2D', stripColor: '#621818', isWide: true  },
+// ];
+
+// ─── Store Flask URL in one place so it can be swapped for production ─────────
+
+const FLASK_URL = 'http://127.0.0.1:5000';
+
+interface Folder {
+  id: string;
+  name: string;
+  cover_image_url: string | null;
+  is_default: boolean;
+  isAdd?: boolean;
+}
+
+interface SearchResult {
+  card_id: string;
+  title: string;
+  caption: string;
+  ocr_text: string;
+  folder_name: string;
+  similarity: number;
+}
 
 export default function ViewFolder() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [profileName, setProfileName] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
 
+  // Fetch profile name and folders on mount
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const filteredFolders = useMemo(
-    () =>
-      folders.filter((folder) => {
-        if (folder.isAdd) return true;
-        if (!searchQuery.trim()) return true;
-        return folder.title.toLowerCase().includes(searchQuery.toLowerCase());
-      }),
-    [searchQuery]
-  );
+  // Debounded search - wait 500ms after user stops typing to send search request
+  // When search is cleared, clears results and shows folder grid again
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      handleSearch(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  async function fetchData() {
+    setLoading(true);
+ 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+ 
+    // Fetch profile name for header
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single();
+    if (profile?.full_name) setProfileName(profile.full_name);
+ 
+    // Fetch real folders from Supabase
+    const { data, error } = await getFolders(user.id);
+    if (error) {
+      console.error('Failed to fetch folders:', error);
+    } else if (data) {
+      const sorted = [...data].sort((a, b) => {
+        if (a.is_default) return -1;
+        if (b.is_default) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      setFolders(sorted);
+    }
+ 
+    setLoading(false);
+  }
+
+  // Flask semantic search call
+  async function handleSearch(query: string) {
+    setSearching(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSearching(false); return; }
+
+    try {
+      const response = await fetch(`${FLASK_URL}/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query,
+          user_id: user.id,
+          match_count: 10,
+          match_threshold: 0.3,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSearchResults(data.results);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+    }
+    
+    setSearching(false);
+  }
+
+  // Prepend "Create New Folder" card to the top of the list, then filter based on search query
+  const filteredFolders = useMemo( () => {
+    const createCard: Folder = {
+      id: 'add',
+      name: 'Create New Folder',
+      cover_image_url: null,
+      is_default: false,
+      isAdd: true,
+    };
+
+    const realFolders = folders.filter((folder) => {
+      if(!searchQuery.trim()) return true;
+      return folder.name.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+    
+    return [createCard, ...realFolders];
+  }, [folders, searchQuery]);
 
   const backgroundDots = useMemo(() => {
     const dots: React.ReactElement[] = [];
@@ -62,86 +168,88 @@ export default function ViewFolder() {
         );
       }
     }
-
     return dots;
   }, []);
 
 // builds rows manually 
-  const renderGrid = (data: typeof folders) => 
+  const renderGrid = (data: Folder[]) => 
   {
     const rows: React.ReactElement[] = [];
-    let i = 0; 
 
-    while(i < data.length)
-    {
-        const item = data[i]
-
-      if(item.isWide)
-      {
-        rows.push(<View key={item.id} style={styles.wideRow}>
-          {renderFolder({ item })}
-        </View>);
-        i++; 
-
-      }
-      else{
-        const next = data[i + 1];
-         rows.push(
-        <View key={item.id} style={styles.columnWrapper}>
-          {renderFolder({ item })}
-          {/* Render second card if it exists and isn't wide */}
-          {next && !next.isWide ? renderFolder({ item: next }) : <View style={{ width: CARD_WIDTH }} />}
+    for (let i = 0; i < data.length; i+=2) {
+      const item1 = data[i];
+      const item2 = data[i + 1];
+      rows.push(
+        <View key={item1.id} style={styles.columnWrapper}>
+          {renderFolder({ item: item1 })}
+          {item2 ? renderFolder({ item: item2 }) : <View style={{ width: CARD_WIDTH }} />}
         </View>
       );
-          i += next && !next.isWide ? 2 : 1; // If next was consumed as a pair, skip it; if it's wide, don't skip
-      }
     }
     return rows; 
   };
 
   const renderFolder = ({ item }: { item: (typeof folders)[number] }) => {
-    const cardW = item.isWide ? SCREEN_WIDTH - 32 : CARD_WIDTH;
+    // const cardW = item.isWide ? SCREEN_WIDTH - 32 : CARD_WIDTH;
+
+    const COLORS = [
+      { color: '#6B4E7D', stripColor: '#573D68' },
+      { color: '#557263', stripColor: '#3D5548' },
+      { color: '#9B2335', stripColor: '#7D1525' },
+      { color: '#4A6B7B', stripColor: '#3A5A6A' },
+      { color: '#7B2D2D', stripColor: '#621818' },
+      { color: '#8B6A3E', stripColor: '#6B4E28' },
+    ];
+
+    const colorIndex = folders.findIndex(f => f.id === item.id) % COLORS.length;
+    const { color, stripColor } = item.isAdd
+      ? { color: '#8B2500', stripColor: '#7A1800' }
+      : COLORS[colorIndex >= 0 ? colorIndex : 0];
+
+
     return (
       <TouchableOpacity
         activeOpacity={0.8}
-        style={[styles.cardWrapper, {width: cardW }]}
+        style={[styles.cardWrapper, {width: CARD_WIDTH }]}
         onPress={() => {
           if (item.isAdd) {
             router.push('/create-folder');
           } else {
             router.push({
               pathname: '/bulletin-board',
-              params: { id: item.id, title: item.title },
+              params: { id: item.id, title: item.name },
             });
           }
         }}
       >
-        <View style={[styles.card, { backgroundColor: item.color }]}>
+        <View style={[styles.card, { backgroundColor: color }]}>
           {/* Top red stamp area */}
           <View style={[
           styles.cardTop,
           {
-            backgroundColor: item.color,
+            backgroundColor: stripColor,
             // Wide cards are shorter height ratio; normal cards are square-ish
-            height: item.isWide ? cardW * 0.45 : cardW * 1.0,
+            height: CARD_WIDTH,
           }
         ]}>
             {item.isAdd ? (
               <View style={styles.addCircle}>
-                <MaterialIcons name="add"size={30} color="#EDE8D9"/>
+                <MaterialIcons name="add" size={30} color="#EDE8D9" />
               </View>
+            ) : item.cover_image_url ? (
+              // ─── Real cover image from Supabase Storage
+              <Image
+                source={{ uri: item.cover_image_url }}
+                style={[styles.stampImage, { width: '60%', height: '90%' }]}
+                resizeMode="contain"
+              />
             ) : (
-              item.image && (
-                <Image
-                  source={item.image}
-                  style={[
-                  styles.stampImage,
-                  // Wide card: image fills more of the horizontal space
-                  item.isWide && { width: '60%', height: '90%' }
-                ]}
-                  resizeMode="contain"
-                />
-              )
+              // ─── Fallback image if no cover set
+              <Image
+                source={require('../../assets/images/star-stamp.png')}
+                style={[styles.stampImage, { width: '60%', height: '90%' }]}
+                resizeMode="contain"
+              />
             )}
           </View>
 
@@ -149,10 +257,10 @@ export default function ViewFolder() {
           <View style={[
           styles.cardBottom,
           // Keep tan (#C8B89A) for brown cards, use slightly darker for maroon
-          { backgroundColor: item.stripColor}
+          { backgroundColor: stripColor}
         ]}>
             <Text numberOfLines={1} style={styles.cardTitle}>
-              {item.title}
+              {item.name}
             </Text>
           </View>
           <View style={styles.perfBorder} pointerEvents="none" />
