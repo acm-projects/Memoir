@@ -108,7 +108,7 @@ function templateToItems(template: TemplateMatch): Item[] {
         id,
         type: "sticker",
         content: parsed.sticker ?? "",
-        sticker: parsed.sticker ?? "",
+        sticker: parsed.image_url || parsed.sticker, // ← use image_url first
         x: parsed.x ?? 30,
         y: parsed.y ?? 30,
         rotation: parsed.rotation ?? seededRotation(id),
@@ -468,13 +468,73 @@ export default function CreateCard() {
   }
 
   // When user taps "Use this" — load template onto card and set cardId
-  const handleApplyTemplate = (template: TemplateMatch) => {
-    if (template.card_color) setCardColor(template.card_color);
-    setItems(templateToItems(template));
-    if (template.custom_card_id) {
-      setCardId(template.custom_card_id);
+const handleApplyTemplate = async (template: TemplateMatch) => {
+  if (template.card_color) setCardColor(template.card_color);
+
+  if (template.custom_card_id) {
+    const { data: card, error } = await supabase
+      .from("custom_cards")
+      .select("*")
+      .eq("id", template.custom_card_id)
+      .single();
+
+    if (card?.card_items) {
+      const cardItems = JSON.parse(card.card_items);
+      const newItems: Item[] = [];  // ← must be INSIDE here
+
+      cardItems.texts?.forEach((raw: string, i: number) => {
+        try {
+          const parsed = JSON.parse(raw);
+          const id = `tpl-text-${i}-${Date.now()}`;
+          newItems.push({
+            id, type: "text",
+            content: parsed.content ?? "...",
+            x: parsed.x ?? 20, y: parsed.y ?? 20,
+            color: parsed.color ?? "#5A390E",
+            font: parsed.font,
+            rotation: parsed.rotation ?? seededRotation(id),
+            scale: parsed.scale ?? 1,
+          });
+        } catch {}
+      });
+
+      cardItems.stickers?.forEach((raw: string, i: number) => {
+        try {
+          const parsed = JSON.parse(raw);
+          const id = `tpl-sticker-${i}-${Date.now()}`;
+          newItems.push({
+            id, type: "sticker",
+            content: parsed.sticker ?? "",
+            sticker: parsed.image_url || parsed.sticker,
+            x: parsed.x ?? 30, y: parsed.y ?? 30,
+            rotation: parsed.rotation ?? seededRotation(id),
+            scale: parsed.scale ?? 1,
+          });
+        } catch {}
+      });
+
+      cardItems.gifs?.forEach((raw: string, i: number) => {
+        try {
+          const parsed = JSON.parse(raw);
+          const id = `tpl-gif-${i}-${Date.now()}`;
+          newItems.push({
+            id, type: "sticker",
+            content: parsed.sticker ?? "",
+            sticker: parsed.sticker,
+            x: parsed.x ?? 30, y: parsed.y ?? 30,
+            rotation: parsed.rotation ?? seededRotation(id),
+            scale: parsed.scale ?? 1,
+          });
+        } catch {}
+      });
+
+      setItems(newItems);  // ← INSIDE the if block
+      setCardId(template.custom_card_id ?? null);
     }
-  };
+  } else {
+    setItems(templateToItems(template));
+  }
+};
 
   if (!fontsLoaded) return null;
 
