@@ -38,7 +38,7 @@ def process_ocr(image_url):
     image_response = requests.get(image_url)
     image = Image.open(io.BytesIO(image_response.content)).convert('RGB')
     print(f"Image downloaded successfully from: {image_url}")
-
+    
     # ============================================================
     # MOCK OCR - **TEJU** REPLACE THIS WITH REAL MODEL
     import TrOCR_Inference as trocr

@@ -1,4 +1,4 @@
-# from curses import raw
+from curses import raw
 import numpy as np
 import openai
 

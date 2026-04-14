@@ -10,15 +10,18 @@ import Svg, { Circle } from 'react-native-svg';
 const paperTexture = require('../../assets/images/layered-vintage-paper.png');
 const swirlyBg = require('../../assets/images/swirly-subtle.png');
 
+const createTempId = () => `card-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
 
 export default function UploadCard() {
   const router = useRouter();
   const fileInputRef = useRef<any>(null);
   const fileInputCameraRef = useRef<any>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  // TODO: Replace mock data with real backend response
   const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<number | string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 

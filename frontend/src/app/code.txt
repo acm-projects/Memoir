@@ -15,7 +15,7 @@ const { width } = Dimensions.get('window');
 const swirlyBg = require('../../assets/images/swirly-subtle.png');
 const paperTexture = require('../../assets/images/layered-vintage-paper.png');
 const CARD_WIDTH = (width - 32 - 12) / 2;
-const FLASK_URL = 'http://127.0.0.1:8000';
+const FLASK_URL = 'http://127.0.0.1:5000';
 
 // Colors from FirstMerge UI
 const FOLDER_COLORS: Record<string, { color: string; stripColor: string }> = {
