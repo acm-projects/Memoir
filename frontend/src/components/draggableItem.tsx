@@ -35,7 +35,7 @@ export default function DraggableItem({
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
 
-  const isThumbtack = parseInt(item.id) % 2 === 0;
+  const isThumbtack = item.id.charCodeAt(0) % 2 === 0; // fix
   const pinSize = 14;
   const pinColor = accentColor;
 
@@ -105,10 +105,11 @@ export default function DraggableItem({
       const scaledWidth = ITEM_WIDTH * scale.value;
       const scaledHeight = ITEM_HEIGHT * scale.value;
 
-      if (boardWidth && boardHeight) {
-        newX = clamp(newX, 0, Math.max(0, boardWidth - scaledWidth));
-        newY = clamp(newY, 0, Math.max(0, boardHeight - scaledHeight));
-      }
+        // Clamp to board bounds if provided
+        if (boardWidth && boardHeight) {
+          newX = Math.max(0, Math.min(newX, boardWidth - ITEM_WIDTH));
+          newY = Math.max(0, Math.min(newY, boardHeight - ITEM_HEIGHT));
+        }
 
       x.value = newX;
       y.value = newY;
@@ -226,6 +227,8 @@ export default function DraggableItem({
 
   function renderContent() {
     if (item.type === "card") {
+      console.log('rendering item, item:', item); // add this
+      console.log('rendering card, image:', item.image); // add this
       if (item.image) {
         return (
           <TouchableOpacity

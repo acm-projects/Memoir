@@ -1,26 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Image, ImageBackground, ActivityIndicator, FlatList, TouchableOpacity, Dimensions, Platform, } from 'react-native';
+import {
+  View, Text, TextInput, StyleSheet, Image, ImageBackground,
+  ActivityIndicator, FlatList, TouchableOpacity, Dimensions, Platform,
+} from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import BottomNavbar from '../components/BottomNavbar';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { getFolders } from '@/services/folders.service';
 import { createCard } from '@/services/cards.service';
-import { addCardImage } from '@/services/card-images.service';
 
 const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - 32 - 12) / 2;
 
 const swirlyBg = require('../../assets/images/swirly-subtle.png');
 const paperTexture = require('../../assets/images/layered-vintage-paper.png');
 
-const FLASK_URL = 'http://127.0.0.1:5000';
+// ─ Store Flask URL in one place — swap to production URL when deploying
+const FLASK_URL = 'http://127.0.0.1:8000'; 
 
-const FOLDER_COLORS: Record<string, { color: string; stripColor: string }> = {
-  all: { color: '#6B4E7D', stripColor: '#573D68' },
-  prom: { color: '#4A6B7B', stripColor: '#3A5A6A' },
-  plain: { color: '#9B2335', stripColor: '#7D1525' },
-  spring: { color: '#557263', stripColor: '#3D5548' },
-};
+const FOLDER_COLORS = [
+  { color: '#6B4E7D', stripColor: '#573D68' },
+  { color: '#557263', stripColor: '#3D5548' },
+  { color: '#9B2335', stripColor: '#7D1525' },
+  { color: '#4A6B7B', stripColor: '#3A5A6A' },
+  { color: '#7B2D2D', stripColor: '#621818' },
+  { color: '#8B6A3E', stripColor: '#6B4E28' },
+];
 
 interface Folder {
   id: string;
@@ -29,22 +35,21 @@ interface Folder {
   is_default: boolean;
 }
 
-const CARD_WIDTH = (width - 32 - 12) / 2;
-
 export default function SelectMemory() {
   const router = useRouter();
   const params = useLocalSearchParams();
+
   const [search, setSearch] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Parse params from upload-card
+  // ─ Parse params passed from upload-card
   const images: string[] = params.images ? JSON.parse(params.images as string) : [];
-  const title = params.title as string || '';
-  const caption = params.caption as string || '';
-  const date = params.date as string || '';
+  const title = (params.title as string) || '';
+  const caption = (params.caption as string) || '';
+  const date = (params.date as string) || '';
 
   useEffect(() => {
     fetchFolders();
@@ -59,7 +64,8 @@ export default function SelectMemory() {
     if (error) {
       console.error('Failed to fetch folders:', error);
     } else if (data) {
-      const sorted = data.sort((a, b) => {
+      // Sort: default folder first, then alphabetical
+      const sorted = [...data].sort((a, b) => {
         if (a.is_default) return -1;
         if (b.is_default) return 1;
         return a.name.localeCompare(b.name);
@@ -74,11 +80,8 @@ export default function SelectMemory() {
     return folder.name.toLowerCase().includes(search.trim().toLowerCase());
   });
 
-//OLD
-//OLD
-
   async function handleContinue() {
-     if (!selectedFolderId) {
+    if (!selectedFolderId) {
       alert('Please select a folder');
       return;
     }
@@ -87,7 +90,7 @@ export default function SelectMemory() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
 
-    // Step 1 — Create the card in Supabase
+    // ── Step 1: Create the card row in Supabase ───────────────────────────
     const { data: card, error: cardError } = await createCard(user.id, {
       title,
       caption,
@@ -101,107 +104,112 @@ export default function SelectMemory() {
       return;
     }
 
-    // Step 2 — Upload each image and save to card_images table
-    for (let i = 0; i < images.length; i++) {
-      const uri = images[i];
+    // ── Step 2: Upload all images in parallel and create card_images rows ─
+    // CRITICAL: Path MUST be {user_id}/{card_id}/{filename}
+    // Flask backend locates images by this exact path for OCR
+    const uploadPromises = images.map(async (uri, i) => {
       const fileName = `image-${Date.now()}-${i}.jpg`;
+      const storagePath = `${user.id}/${card.id}/${fileName}`; 
 
-      if (Platform.OS === 'web') {
-        // Web: blob URL needs to be converted to actual file
-        try {
-          const response = await fetch(uri);
-          const blob = await response.blob();
+      try {
+        const response = await fetch(uri);
+        const blob = await response.blob();
 
-          const { error: uploadError } = await supabase.storage
-            .from('cards')
-            .upload(`${card.id}/${fileName}`, blob, {
-              contentType: 'image/jpeg',
-            });
+        const { error: uploadError } = await supabase.storage
+          .from('cards')
+          .upload(storagePath, blob, { contentType: 'image/jpeg' });
 
-          if (uploadError) {
-            console.error(`Failed to upload image ${i}:`, uploadError);
-            continue;
-          }
-
-          const { data: urlData } = supabase.storage
-            .from('cards')
-            .getPublicUrl(`${card.id}/${fileName}`);
-
-          await supabase.from('card_images').insert({
-            card_id: card.id,
-            image_url: urlData.publicUrl,
-            order_index: i,
-          });
-
-        } catch (error) {
-          console.error(`Failed to process image ${i}:`, error);
+        if (uploadError) {
+          console.error(`Failed to upload image ${i}:`, uploadError);
+          return;
         }
-      } else {
-        // Mobile: use addCardImage service directly with file URI
-        const { error: imageError } = await addCardImage(card.id, {
-          uri,
-          name: fileName,
-          type: 'image/jpeg',
-        });
-        if (imageError) {
-          console.error(`Failed to upload image ${i}:`, imageError);
-        }
-      }
-    }
 
-    // Step 3 — Call Flask /process-card to run OCR, tagging and embedding
-    try {
-      const response = await fetch(`${FLASK_URL}/process-card`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        const { data: urlData } = supabase.storage
+          .from('cards')
+          .getPublicUrl(storagePath);
+
+        await supabase.from('card_images').insert({
           card_id: card.id,
-          user_id: user.id,
-          use_mock: true,
-        }),
-      });
-      const result = await response.json();
-      console.log('Process card result:', result);
-    } catch (error) {
-      console.error('Failed to process card:', error);
-    }
+          image_url: urlData.publicUrl,
+          order_index: i, // ─ correct column name (not "order")
+        });
 
+      } catch (error) {
+        console.error(`Failed to process image ${i}:`, error);
+      }
+    });
+
+    // was sequential for loop — now waits for ALL images to finish
+    // before navigating, so Flask has card_images rows to read for OCR
+    await Promise.all(uploadPromises);
+
+    // ── Step 3: Navigate IMMEDIATELY to one-specific-card ────────────────
+    // Pass isProcessing: true so the card screen shows OCR loading state
+    // Flask /process-card runs in the BACKGROUND after navigation
+    // User can edit caption, title etc while OCR is processing
     setSaving(false);
     router.replace({
-      pathname: '/bulletin-board',
-      params: { 
-        id: selectedFolderId, 
-        title: folders.find(f => f.id === selectedFolderId)?.name ?? '' 
+      pathname: '/one-specific-card',
+      params: {
+        id: card.id,
+        title: card.title,
+        isProcessing: 'true', // ─ ADDED: tells one-specific-card OCR is running
+        fromUpload: 'true'
       },
     });
-  };
 
-  const renderItem = ({ item }: { item: Folder }) => {
-    const { color, stripColor } = FOLDER_COLORS[item.id] || FOLDER_COLORS['all'];
+    // ── Step 4: Call Flask /process-card in background AFTER navigation ───
+    // Fire and forget — one-specific-card polls Supabase for ocr_text
+    // Non-blocking: if Flask fails, card is still saved and usable
+    fetch(`${FLASK_URL}/process-card`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        card_id: card.id,
+        user_id: user.id,
+        use_mock: false,
+      }),
+    })
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          console.log('Process card success:', result.results);
+        } else {
+          console.warn('Process card partial failure:', result.results?.errors);
+        }
+      })
+      .catch(error => {
+        // Flask being down does NOT block the user — card is already saved
+        console.error('Flask /process-card failed (non-blocking):', error);
+      });
+  }
+
+  const renderItem = ({ item, index }: { item: Folder; index: number }) => {
     const isSelected = selectedFolderId === item.id;
+
+    const { color, stripColor } = FOLDER_COLORS[index % FOLDER_COLORS.length];
+
+    const selectedTopColor = isSelected ? stripColor + 'CC' : stripColor;   // stripColor at ~80% = darker
+    const selectedBottomColor = isSelected ? color + 'CC' : color;
+    const selectedBorderColor = isSelected ? stripColor : 'transparent';
+
 
     return (
       <TouchableOpacity
-        style={[styles.stampCard, isSelected && styles.stampCardSelected]}
+        style={[ styles.stampCard, isSelected && { opacity: 1, borderWidth: 3, borderColor: selectedBorderColor }, ]}
         activeOpacity={0.8}
         onPress={() => setSelectedFolderId(item.id)}
       >
-        <View style={[styles.stampTop, isSelected && styles.stampTopSelected]}>
+        <View style={[styles.stampTop, { backgroundColor: selectedTopColor }]}>
           {item.cover_image_url ? (
-            <Image
-              source={{ uri: item.cover_image_url }}
-              style={styles.stampImage}
-              resizeMode="contain"
-            />
+            // ─ Real cover image from Supabase Storage
+            <Image source={{ uri: item.cover_image_url }} style={styles.stampImage} resizeMode="contain" />
           ) : (
-            <Image
-              source={require('../../assets/images/star-stamp.png')}
-              style={styles.stampImage}
-              resizeMode="contain"
-            />
+            // ─ Fallback if no cover image set
+            <Image source={require('../../assets/images/star-stamp.png')} style={styles.stampImage} resizeMode="contain" />
           )}
         </View>
-        <View style={[styles.stampBottom, isSelected && styles.stampBottomSelected]}>
+        <View style={[styles.stampBottom, { backgroundColor: selectedBottomColor }]}>
           <Text style={[styles.stampLabel, isSelected && styles.stampLabelSelected]}>
             {item.name}
           </Text>
@@ -217,10 +225,7 @@ export default function SelectMemory() {
 
           {/* Header */}
           <View style={styles.headerRow}>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
+            <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Text style={styles.backArrow}>←</Text>
             </TouchableOpacity>
             <Text style={styles.pageTitle}>Select a Memory</Text>
@@ -240,7 +245,7 @@ export default function SelectMemory() {
 
           <Text style={styles.sectionLabel}>Your Folders</Text>
 
-          {/* Folder grid */}
+          {/* Folder grid — real Supabase folders */}
           {loading ? (
             <ActivityIndicator size="large" color="#7B1D1D" style={{ marginTop: 40 }} />
           ) : (
@@ -267,7 +272,7 @@ export default function SelectMemory() {
               disabled={!selectedFolderId || saving}
             >
               <Text style={styles.continueText}>
-                {saving ? 'Saving...' : 'Continue'}
+                {saving ? 'Creating card...' : 'Continue'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -280,268 +285,61 @@ export default function SelectMemory() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#4A7568',
-  },
-  swirlyImage: {
-    resizeMode: Platform.OS === 'web' ? 'repeat' : 'cover',
-  },
-  greenHeader: {
-    paddingTop: 56,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backArrow: {
-    fontSize: 22,
-    color: '#EDE8D9',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#EDE8D9',
-    marginLeft: 70,
-    marginTop: 7,
-    fontFamily: 'Calistoga',
-    textAlign: 'center',
-  },
+  screen: { flex: 1, backgroundColor: '#4A7568' },
+  swirlyImage: { resizeMode: Platform.OS === 'web' ? 'repeat' : 'cover' },
   paperCard: {
-    flex: 1,
-    marginHorizontal: 0,
-    marginBottom: 0,
-    marginTop: 8,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
+    flex: 1, marginTop: 8,
+    borderTopLeftRadius: 32, borderTopRightRadius: 32,
     overflow: 'hidden',
   },
-  paperImage: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    resizeMode: 'cover',
-  },
-  cardContent: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 96,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#8B7355',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 8,
-    marginTop: 10,
-    paddingHorizontal: 4,
-  },
-  stampGridWrapper: {
-    marginTop: 12,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 6,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#D4C9A8',
-  },
-  dividerFlourish: {
-    color: '#C8B89A',
-    fontSize: 12,
-    marginHorizontal: 8,
-  },
-  searchContainerOuter: {
-    marginBottom: 6,
+  paperImage: { borderTopLeftRadius: 32, borderTopRightRadius: 32, resizeMode: 'cover' },
+  cardContent: { flex: 1, paddingHorizontal: 16, paddingTop: 20, paddingBottom: 96 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  backArrow: { fontSize: 22, color: '#5A390E' },
+  pageTitle: {
+    fontSize: 22, fontWeight: '700', color: '#5A390E',
+    marginLeft: 16, fontFamily: 'Calistoga',
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderWidth: 1,
-    borderColor: '#D4C9A8',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    flexDirection: 'row', alignItems: 'center',
+    borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.7)',
+    borderWidth: 1, borderColor: '#D4C9A8',
+    paddingHorizontal: 14, paddingVertical: 10, marginBottom: 12,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#5A390E',
+  searchInput: { flex: 1, fontSize: 14, color: '#5A390E' },
+  sectionLabel: {
+    fontSize: 12, fontWeight: '600', color: '#8B7355',
+    textTransform: 'uppercase', letterSpacing: 1,
+    marginBottom: 8, marginTop: 10, paddingHorizontal: 4,
   },
-  gridContent: {
-    paddingLeft: 2,
-    paddingRight: 32,
-    paddingBottom: 16,
-  },
-  columnWrapper: {
-    justifyContent: 'flex-start',
-    marginBottom: 18,
-  },
-  cardWrapper: {
-    width: CARD_WIDTH,
-    alignItems: 'center',
-    marginBottom: 18,
-    marginRight: 12,
-  },
-  cardOuter: {
-    width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
-    elevation: 6,
-    borderRadius: 18,
-    overflow: 'hidden',
-    backgroundColor: 'transparent',
-  },
-  perfBorder: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    right: 6,
-    bottom: 6,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.55)',
-    borderStyle: 'dashed',
-    borderRadius: 14,
-    zIndex: 2,
-    pointerEvents: 'none',
-  },
-  card: {
-    width: '100%',
-    borderRadius: 18,
-    overflow: 'hidden',
-    backgroundColor: 'transparent',
-  },
-  cardTop: {
-    height: CARD_WIDTH * 0.75,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-  },
-  stampImage: {
-    width: '90%',
-    height: '85%',
-    marginBottom: -4,
-    resizeMode: 'contain',
-  },
-  cardBottom: {
-    paddingVertical: 10,
-    paddingHorizontal: 4,
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
-  },
-  cardTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#fff',
-    textAlign: 'center',
-    fontFamily: 'Calistoga',
-  },
-  checkOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    //alignItems: 'center',
-    //justifyContent: 'center',
-    zIndex: 3,
-  },
-  checkCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#7B1D1D',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-    top:10,
-    left:10,
-  },
-  footerRowFloating: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 80,
-  },
-  continueButton: {
-    backgroundColor: '#7B1D1D',
-    paddingVertical: 14,
-    borderRadius: 999,
-    width: '100%',
-  },
-  continueButtonDisabled: {
-    backgroundColor: '#7B1D1D',
-    opacity: 0.45,
-  },
-  continueText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  pageTitle: {
-    fontSize: 22, 
-    fontWeight: '700', 
-    color: '#5A390E',
-    marginLeft: 16, 
-    fontFamily: 'Calistoga',
-  },
+  gridContent: { paddingBottom: 16 },
+  columnWrapper: { justifyContent: 'space-between', marginBottom: 12 },
   stampCard: {
     width: CARD_WIDTH, borderRadius: 14, overflow: 'hidden',
     opacity: 0.75,
     shadowColor: '#000', shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15, shadowRadius: 6, elevation: 4,
-  },  
-  stampCardSelected: { 
-    opacity: 1, 
-    borderWidth: 3, 
-    borderColor: '#7B1D1D' 
+    marginBottom: 6,
   },
+  stampCardSelected: { opacity: 1, borderWidth: 3, borderColor: '#7B1D1D' },
   stampTop: {
-    height: CARD_WIDTH * 0.75, 
-    backgroundColor: '#557263',
-    alignItems: 'center', 
-    justifyContent: 'center',
+    height: CARD_WIDTH * 0.75, backgroundColor: '#557263',
+    alignItems: 'center', justifyContent: 'center',
   },
-  stampTopSelected: { 
-    backgroundColor: '#4A6355' 
-  },
-  stampBottom: {
-    backgroundColor: '#3D5248', 
-    paddingVertical: 8, 
-    paddingHorizontal: 6,
-  },
-  stampBottomSelected: { 
-    backgroundColor: '#7B1D1D' 
-  },
+  stampTopSelected: { backgroundColor: '#4A6355' },
+  stampImage: { width: '85%', height: '85%', resizeMode: 'contain' },
+  stampBottom: { backgroundColor: '#3D5248', paddingVertical: 8, paddingHorizontal: 6 },
+  stampBottomSelected: { backgroundColor: '#7B1D1D' },
   stampLabel: {
-    color: '#fff', 
-    fontSize: 12, 
-    fontWeight: '700',
-    textAlign: 'center', 
-    fontFamily: 'Calistoga',
+    color: '#fff', fontSize: 12, fontWeight: '700',
+    textAlign: 'center', fontFamily: 'Calistoga',
   },
-  stampLabelSelected: { 
-    color: '#F6E5CD' 
+  stampLabelSelected: { color: '#F6E5CD' },
+  footerRow: { marginTop: 16, paddingHorizontal: 4 },
+  continueButton: {
+    backgroundColor: '#7B1D1D', paddingVertical: 14,
+    borderRadius: 999, width: '100%',
   },
-  footerRow: { 
-    marginTop: 16, 
-    paddingHorizontal: 4 
-  },
+  continueButtonDisabled: { opacity: 0.45 },
+  continueText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600', textAlign: 'center' },
 });

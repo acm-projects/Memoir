@@ -13,7 +13,6 @@ if not hasattr(vgg, 'model_urls'):
     }
 
 load_dotenv()
-
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 HEADERS = {
@@ -39,10 +38,11 @@ def process_ocr(image_url):
     image_response = requests.get(image_url)
     image = Image.open(io.BytesIO(image_response.content)).convert('RGB')
     print(f"Image downloaded successfully from: {image_url}")
-    
+
     # ============================================================
     # MOCK OCR - **TEJU** REPLACE THIS WITH REAL MODEL
     import TrOCR_Inference as trocr
-    return trocr.ocr(image)
+    text, confidence = trocr.ocr(image)
+    return text
     # ============================================================
     # return "Mock OCR text - image downloaded successfully!"

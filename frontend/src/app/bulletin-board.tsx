@@ -1,26 +1,28 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ImageBackground,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  Keyboard,
-  TouchableWithoutFeedback,
-  TextInput,
-  ActivityIndicator,
+  View, Text, StyleSheet, Pressable, ImageBackground, Image,
+  TouchableOpacity, ScrollView, Keyboard, TouchableWithoutFeedback,
+  TextInput, ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Svg, { Path, Circle } from "react-native-svg";
-
 import DraggableItem from "../components/draggableItem";
 import BottomNavbar from "../components/BottomNavbar";
 import {
+  fetchBoardItems, addNote as addNoteService, addSticker as addStickerService,
+  addGif as addGifService, addPhoto as addPhotoService,
+  updateItemPosition, deleteItem as deleteItemService, updateNoteContent,
+  fetchStickers,
+} from "@/services/bulletin-board.services";
+import { supabase } from "@/lib/supabase";
+
+type ItemType = "note" | "sticker" | "card" | "photo" | "gif" | "custom_card";
+
+type Item = {
+  id: string;
+  type: ItemType;
   fetchBoardItems,
   addNote as addNoteService,
   addSticker as addStickerService,
@@ -46,7 +48,6 @@ type Item = {
   color?: string;
   sticker?: string;
   image?: any;
-  noteBackground?: any;
   rotation: number;
   scale: number;
   cardColor?: string;
@@ -56,24 +57,19 @@ type Item = {
   artistName?: string;
 };
 
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
+const NOTE_COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
+const ACCENT_COLORS = ["#557263", "#7B1D1D", "#8B6A3E", "#4A6741", "#6B4F6B"];
+
 
 function seededRotation(id: string) {
   let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
+  for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
   return (hash % 13) - 6;
 }
 
 function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
   let timer: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
-  };
+  return (...args: Parameters<T>) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
 }
 
 // ─────────────────────────────────────────────
@@ -82,7 +78,7 @@ function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
 
 export default function BulletinBoard() {
   const router = useRouter();
-  const { title, folderId } = useLocalSearchParams<{ title: string; folderId: string }>();
+  const { title, id } = useLocalSearchParams<{ title: string; id: string }>();
 
   // ── Board state ──
   const [items, setItems] = useState<Item[]>([]);
@@ -94,8 +90,14 @@ export default function BulletinBoard() {
 
   // ── GIF state ──
   const [gifs, setGifs] = useState<any[]>([]);
+  // Add state
+  const [availableStickers, setAvailableStickers] = useState<{id: string, name: string, image_url: string}[]>([]);
   const [gifSearch, setGifSearch] = useState("");
 
+
+  useEffect(() => { loadItems(); 
+    fetchStickers().then(setAvailableStickers).catch(console.error); // added fix: fetch stickers
+  }, [id]);
   // ── Music / Spotify state ──
   const [tracks, setTracks] = useState<any[]>([]);
   const [musicSearch, setMusicSearch] = useState("");
@@ -118,14 +120,28 @@ export default function BulletinBoard() {
   // ─────────────────────────────────────────────
 
   useEffect(() => {
-    loadItems();
-  }, [folderId]);
+    if (!id) return;
+    const channels = [
+      { channel: `notes:${id}`, table: 'notes', type: 'note' as ItemType },
+      { channel: `cards:${id}`, table: 'cards', type: 'card' as ItemType },
+      { channel: `folder_stickers:${id}`, table: 'folder_stickers', type: 'sticker' as ItemType },
+      { channel: `board_gifs:${id}`, table: 'board_gifs', type: 'gif' as ItemType },
+      { channel: `board_photos:${id}`, table: 'board_photos', type: 'photo' as ItemType },
+    ].map(({ channel, table, type }) =>
+      supabase.channel(channel)
+        .on('postgres_changes', { event: '*', schema: 'public', table, filter: `folder_id=eq.${id}` },
+          (payload) => handleRealtimeChange(type, payload))
+        .subscribe()
+    );
+    return () => { channels.forEach((c) => supabase.removeChannel(c)); };
+  }, [id]);
 
   async function loadItems() {
     try {
       setLoading(true);
-      const data = await fetchBoardItems(folderId);
-      setItems(data as Item[]);
+      const data = await fetchBoardItems(id);
+      const deduped = data.filter((item, index, self) => index === self.findIndex(i => i.id === item.id));
+      setItems(deduped as Item[]);
     } catch (e) {
       console.error("Failed to load board items:", e);
     } finally {
@@ -133,82 +149,72 @@ export default function BulletinBoard() {
     }
   }
 
-  useEffect(() => {
-    if (!folderId) return;
-
-    const channels = [
-      supabase
-        .channel(`notes:${folderId}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "notes", filter: `folder_id=eq.${folderId}` },
-          (payload) => handleRealtimeChange("note", payload))
-        .subscribe(),
-
-      supabase
-        .channel(`cards:${folderId}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "cards", filter: `folder_id=eq.${folderId}` },
-          (payload) => handleRealtimeChange("card", payload))
-        .subscribe(),
-
-      supabase
-        .channel(`folder_stickers:${folderId}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "folder_stickers", filter: `folder_id=eq.${folderId}` },
-          (payload) => handleRealtimeChange("sticker", payload))
-        .subscribe(),
-
-      supabase
-        .channel(`board_gifs:${folderId}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "board_gifs", filter: `folder_id=eq.${folderId}` },
-          (payload) => handleRealtimeChange("gif", payload))
-        .subscribe(),
-
-      supabase
-        .channel(`board_photos:${folderId}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "board_photos", filter: `folder_id=eq.${folderId}` },
-          (payload) => handleRealtimeChange("photo", payload))
-        .subscribe(),
-
-      // ← new music channel
-      supabase
-        .channel(`board_music:${folderId}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "board_music", filter: `folder_id=eq.${folderId}` },
-          (payload) => handleRealtimeChange("music", payload))
-        .subscribe(),
-    ];
-
-    return () => {
-      channels.forEach((c) => supabase.removeChannel(c));
-    };
-  }, [folderId]);
-
-  function handleRealtimeChange(type: Item["type"], payload: any) {
+  function handleRealtimeChange(type: ItemType, payload: any) {
     const { eventType, new: newRow, old: oldRow } = payload;
-
-    if (eventType === "DELETE") {
+    if (eventType === 'DELETE') {
       setItems((prev) => prev.filter((item) => item.id !== oldRow.id));
       return;
     }
-
     const mapped = mapRowToItem(type, newRow);
     if (!mapped) return;
-
-    if (eventType === "INSERT") {
-      setItems((prev) =>
-        prev.some((i) => i.id === mapped.id)
-          ? prev.map((i) => (i.id === mapped.id ? mapped : i))
-          : [...prev, mapped]
-      );
+    if (eventType === 'INSERT') {
+      setItems((prev) => prev.some((i) => i.id === mapped.id) ? prev.map((i) => i.id === mapped.id ? mapped : i) : [...prev, mapped]);
     }
-
-    if (eventType === "UPDATE") {
-      setItems((prev) =>
-        prev.map((i) => (i.id === mapped.id ? { ...i, ...mapped } : i))
-      );
+    if (eventType === 'UPDATE') {
+      setItems((prev) => prev.map((i) => i.id === mapped.id ? { ...i, ...mapped } : i));
     }
   }
 
-  function mapRowToItem(type: Item["type"], row: any): Item | null {
+  function mapRowToItem(type: ItemType, row: any): Item | null {
     if (!row) return null;
+    const base = { id: row.id, type, content: '', x: row.x, y: row.y, rotation: row.rotation, scale: row.scale };
     switch (type) {
+      case 'note': return { ...base, content: row.content, color: row.color };
+      case 'card': return { ...base, content: row.title, image: { uri: row.image_url } };
+      case 'sticker': return { ...base, sticker: row.image_url };
+      case 'gif': return { ...base, sticker: row.giphy_url };
+      case 'photo': return { ...base, sticker: row.image_url };
+      case 'custom_card': return { ...base, cardColor: row.custom_cards?.card_color, cardItems: row.custom_cards?.card_items, cardId: row.card_id };
+      default: return null;
+    }
+  }
+
+  const debouncedSave = useCallback(
+    debounce((itemId: string, type: ItemType, fields: Partial<Item>) => {
+      updateItemPosition(type, itemId, fields).catch((e) => console.error("Failed to save:", e));
+    }, 600), []
+  );
+
+  const handlePositionChange = (itemId: string, newX: number, newY: number) => {
+    setItems((prev) => {
+      const item = prev.find((i) => i.id === itemId);
+      if (item) debouncedSave(itemId, item.type, { x: newX, y: newY });
+      return prev.map((i) => i.id === itemId ? { ...i, x: newX, y: newY } : i);
+    });
+  };
+
+  const handleRotationChange = (itemId: string, newRotation: number) => {
+    setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, rotation: newRotation } : i));
+    const item = items.find((i) => i.id === itemId);
+    if (item) debouncedSave(itemId, item.type, { rotation: newRotation });
+  };
+
+  const handleScaleChange = (itemId: string, newScale: number) => {
+    setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, scale: newScale } : i));
+    const item = items.find((i) => i.id === itemId);
+    if (item) debouncedSave(itemId, item.type, { scale: newScale });
+  };
+
+  const debouncedContentSave = useCallback(
+    debounce((itemId: string, content: string) => {
+      updateNoteContent(itemId, content).catch((e) => console.error("Failed to save content:", e));
+    }, 800), []
+  );
+
+  const onContentChange = (itemId: string, newContent: string) => {
+    setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, content: newContent } : i));
+    debouncedContentSave(itemId, newContent);
+  };
       case "note":
         return {
           id: row.id, type: "note",
@@ -275,57 +281,43 @@ export default function BulletinBoard() {
 
   const addNote = async (color: string) => {
     try {
-      const newItem = await addNoteService(folderId, color);
+      const newItem = await addNoteService(id, color);
       setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
-    } catch (e) {
-      console.error("Failed to add note:", e);
-    }
+    } catch (e) { console.error("Failed to add note:", e); }
     setActiveTool(null);
   };
 
   const addSticker = async (stickerKey: string) => {
-    try {
-      const newItem = await addStickerService(folderId, stickerKey);
-      setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
-    } catch (e) {
-      console.error("Failed to add sticker:", e);
-    }
-    setActiveTool(null);
+   try {
+    const newItem = await addStickerService(id, stickerKey);
+    setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
+  } catch (e) { console.error("Failed to add sticker:", e); }
+  setActiveTool(null);
   };
 
   const addGif = async (gifUrl: string) => {
     try {
-      const newItem = await addGifService(folderId, gifUrl);
+      const newItem = await addGifService(id, gifUrl);
       setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
-    } catch (e) {
-      console.error("Failed to add gif:", e);
-    }
+    } catch (e) { console.error("Failed to add gif:", e); }
     setActiveTool(null);
   };
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      alert("Permission required.");
-      return;
-    }
-
-    const res = await ImagePicker.launchImageLibraryAsync({
-      quality: 0.8,
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    });
-
+    if (status !== "granted") { alert("Permission required."); return; }
+    const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.8, mediaTypes: ImagePicker.MediaTypeOptions.Images });
     if (!res.canceled && res.assets[0]?.uri) {
       try {
-        const newItem = await addPhotoService(folderId, res.assets[0].uri);
+        const newItem = await addPhotoService(id, res.assets[0].uri);
         setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
-      } catch (e) {
-        console.error("Failed to add photo:", e);
-      }
+      } catch (e) { console.error("Failed to add photo:", e); }
       setActiveTool(null);
     }
   };
 
+  const deleteItem = async (itemId: string) => {
+    const item = items.find((i) => i.id === itemId);
   // ─────────────────────────────────────────────
   // Spotify
   // ─────────────────────────────────────────────
@@ -389,67 +381,14 @@ export default function BulletinBoard() {
   const deleteItem = async (id: string) => {
     const item = items.find((i) => i.id === id);
     if (!item) return;
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    setItems((prev) => prev.filter((i) => i.id !== itemId));
     try {
-      await deleteItemService(item.type, id);
+      await deleteItemService(item.type, itemId);
     } catch (e) {
-      console.error("Failed to delete item:", e);
+      console.error("Failed to delete:", e);
       setItems((prev) => [...prev, item]);
     }
   };
-
-  const debouncedSave = useCallback(
-    debounce((id: string, type: Item["type"], fields: Partial<Item>) => {
-      updateItemPosition(type, id, fields).catch((e) =>
-        console.error("Failed to save position:", e)
-      );
-    }, 600),
-    []
-  );
-
-  const handlePositionChange = (id: string, newX: number, newY: number) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, x: newX, y: newY } : item))
-    );
-    const item = items.find((i) => i.id === id);
-    if (item) debouncedSave(id, item.type, { x: newX, y: newY });
-  };
-
-  const handleRotationChange = (id: string, newRotation: number) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, rotation: newRotation } : item))
-    );
-    const item = items.find((i) => i.id === id);
-    if (item) debouncedSave(id, item.type, { rotation: newRotation });
-  };
-
-  const handleScaleChange = (id: string, newScale: number) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, scale: newScale } : item))
-    );
-    const item = items.find((i) => i.id === id);
-    if (item) debouncedSave(id, item.type, { scale: newScale });
-  };
-
-  const debouncedContentSave = useCallback(
-    debounce((id: string, content: string) => {
-      updateNoteContent(id, content).catch((e) =>
-        console.error("Failed to save note content:", e)
-      );
-    }, 800),
-    []
-  );
-
-  const onContentChange = (id: string, newContent: string) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, content: newContent } : item))
-    );
-    debouncedContentSave(id, newContent);
-  };
-
-  // ─────────────────────────────────────────────
-  // GIFs
-  // ─────────────────────────────────────────────
 
   async function searchGifs(query: string) {
     const apiKey = process.env.EXPO_PUBLIC_GIPHY_KEY;
@@ -459,24 +398,6 @@ export default function BulletinBoard() {
     const res = await fetch(url);
     const json = await res.json();
     setGifs(json.data || []);
-  }
-
-  const handleDone = () => {
-    setIsEditing(false);
-    setActiveTool(null);
-    setSelectedId(null);
-  };
-
-  // ─────────────────────────────────────────────
-  // Render
-  // ─────────────────────────────────────────────
-
-  if (loading) {
-    return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
-        <ActivityIndicator size="large" color="#6D1B12" />
-      </View>
-    );
   }
 
   return (
@@ -513,49 +434,41 @@ export default function BulletinBoard() {
         source={require("../../assets/images/layered-vintage-paper.png")}
         style={styles.paperBackground}
       >
-        <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setActiveTool(null); }}>
-          <View
-            style={styles.corkboardFrame}
-            onLayout={(e) => setBoardSize(e.nativeEvent.layout)}
-          >
-            <ScrollView
-              style={styles.board}
-              contentContainerStyle={styles.boardContent}
-              scrollEnabled={!isEditing}
-            >
-              <Svg width="100%" height="1500" style={styles.absoluteFull}>
-                {Array.from({ length: 60 }).map((_, i) => (
-                  <Circle
-                    key={i}
-                    cx={(i % 10) * 40 + 20}
-                    cy={Math.floor(i / 10) * 200 + 50}
-                    r={1.2}
-                    fill="#8B6A3E"
-                    opacity={0.12}
+        {loading ? (
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <ActivityIndicator size="large" color="#6D1B12" />
+          </View>
+        ) : (
+          <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setActiveTool(null); }}>
+            <View style={styles.corkboardFrame} onLayout={(e) => setBoardSize(e.nativeEvent.layout)}>
+              <ScrollView style={styles.board} contentContainerStyle={styles.boardContent} scrollEnabled={!isEditing}>
+                <Svg width="100%" height="1500" style={styles.absoluteFull}>
+                  {Array.from({ length: 60 }).map((_, i) => (
+                    <Circle key={i} cx={(i % 10) * 40 + 20} cy={Math.floor(i / 10) * 200 + 50} r={1.2} fill="#8B6A3E" opacity={0.12} />
+                  ))}
+                </Svg>
+
+                {items.map((item, idx) => (
+                  <DraggableItem
+                    key={item.id}
+                    item={item}
+                    deleteItem={deleteItem}
+                    isEditing={isEditing}
+                    selectedId={selectedId}
+                    setSelectedId={setSelectedId}
+                    onPositionChange={handlePositionChange}
+                    onRotationChange={handleRotationChange}
+                    onScaleChange={handleScaleChange}
+                    accentColor={ACCENT_COLORS[idx % ACCENT_COLORS.length]}
+                    onContentChange={onContentChange}
+                    boardWidth={boardSize.width}
+                    boardHeight={boardSize.height}
                   />
                 ))}
-              </Svg>
-
-              {items.map((item, idx) => (
-                <DraggableItem
-                  key={item.id}
-                  item={item}
-                  deleteItem={deleteItem}
-                  isEditing={isEditing}
-                  selectedId={selectedId}
-                  setSelectedId={setSelectedId}
-                  onPositionChange={handlePositionChange}
-                  onRotationChange={handleRotationChange}
-                  onScaleChange={handleScaleChange}
-                  accentColor={ACCENT_COLORS[idx % ACCENT_COLORS.length]}
-                  onContentChange={onContentChange}
-                  boardWidth={boardSize.width}
-                  boardHeight={boardSize.height}
-                />
-              ))}
-            </ScrollView>
-          </View>
-        </TouchableWithoutFeedback>
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        )}
 
         {/* ── Edit mode footer ── */}
         {isEditing && (
@@ -575,25 +488,17 @@ export default function BulletinBoard() {
                 {activeTool === "note" && (
                   <View style={styles.colorRow}>
                     {NOTE_COLORS.map((c) => (
-                      <TouchableOpacity
-                        key={c}
-                        style={[styles.colorDot, { backgroundColor: c }]}
-                        onPress={() => addNote(c)}
-                      />
+                      <TouchableOpacity key={c} style={[styles.colorDot, { backgroundColor: c }]} onPress={() => addNote(c)} />
                     ))}
                   </View>
                 )}
 
                 {/* STICKER */}
                 {activeTool === "sticker" && (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.stickerRow}
-                  >
-                    {STICKERS.map((s) => (
-                      <TouchableOpacity key={s.key} onPress={() => addSticker(s.key)}>
-                        <Image source={s.source} style={styles.stickerThumb} />
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stickerRow}>
+                    {availableStickers.map((s) => (
+                      <TouchableOpacity key={s.id} onPress={() => addSticker(s.id)}>
+                        <Image source={{ uri: s.image_url }} style={styles.stickerThumb} />
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -617,12 +522,10 @@ export default function BulletinBoard() {
                       value={gifSearch}
                       onChangeText={(t) => { setGifSearch(t); searchGifs(t); }}
                     />
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={{ gap: 8 }}
-                    >
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                       {gifs.map((gif) => (
+                        <TouchableOpacity key={gif.id} onPress={() => addGif(gif.images.fixed_height.url)}>
+                          <Image source={{ uri: gif.images.fixed_height.url }} style={styles.gifThumb} />
                         <TouchableOpacity
                           key={gif.id}
                           onPress={() => addGif(gif.images.fixed_height.url)}
@@ -697,6 +600,26 @@ export default function BulletinBoard() {
               </View>
             )}
 
+            <View style={styles.toolbar}>
+              {[
+                { tool: "note", icon: "document-text-outline" },
+                { tool: "photo", icon: "image-outline" },
+                { tool: "sticker", icon: "happy-outline" },
+                { tool: "gif", icon: "film-outline" },
+              ].map(({ tool, icon }) => (
+                <Pressable
+                  key={tool}
+                  style={[styles.toolButton, activeTool === tool && styles.activeToolBtn]}
+                  onPress={() => { setActiveTool(tool as any); if (tool === "gif") searchGifs(""); }}
+                >
+                  <Ionicons name={icon as any} size={24} color="#5A390E" />
+                </Pressable>
+              ))}
+              <View style={styles.toolbarDivider} />
+              <Pressable style={styles.doneButton} onPress={() => { setIsEditing(false); setActiveTool(null); }}>
+                <Ionicons name="checkmark" size={22} color="#F6E5CD" />
+              </Pressable>
+            </View>
             {/* ── Toolbar: item selected vs default ── */}
             {selectedId ? (
               <View style={styles.toolbar}>
@@ -841,24 +764,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   bannerBackText: { fontSize: 20, color: "#F6E5CD" },
-  bannerTitle: {
-    flex: 1,
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#F6E5CD",
-    fontFamily: "Calistoga",
-    marginBottom: 8,
-  },
-  bannerEditButton: {
-    backgroundColor: "rgba(246,229,205,0.25)",
-    borderRadius: 12,
-    paddingVertical: 3,
-    paddingHorizontal: 14,
-    marginBottom: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 20,
-  },
+  bannerTitle: { flex: 1, fontSize: 24, fontWeight: "700", color: "#F6E5CD", fontFamily: "Calistoga", marginBottom: 8 },
+  bannerEditButton: { backgroundColor: "rgba(246,229,205,0.25)", borderRadius: 12, paddingVertical: 3, paddingHorizontal: 14, marginBottom: 10, alignItems: "center", justifyContent: "center", marginRight: 20 },
   bannerEditText: { color: "#F6E5CD", fontSize: 13, fontWeight: "600" },
 
   tornEdgeContainer: { marginTop: -18, zIndex: 10 },

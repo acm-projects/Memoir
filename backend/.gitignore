@@ -9,4 +9,4 @@ server.txt
 requirements.txt
 __pycache__/
 *.pyc
-TrOCR_Inference.py
+# TrOCR_Inference.py
