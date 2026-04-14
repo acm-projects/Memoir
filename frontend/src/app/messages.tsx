@@ -60,20 +60,22 @@ export default function Messages() {
   }, []);
 
   // ── Real-time subscription — re-fetches when any new message is inserted ────
-  useEffect(() => {
-    const channel = supabase
-      .channel('messages-feed')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages' },
-        () => {
-          fetchConversations(); // just re-fetch, same as folder screen pattern
-        }
-      )
-      .subscribe();
+ useEffect(() => {
+  const channel = supabase
+    .channel(`messages-feed-${Date.now()}`) // unique name
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'messages' },
+      () => {
+        fetchConversations(); // re-fetch on new message
+      }
+    )
+    .subscribe(); // subscribe AFTER all .on() calls
 
-    return () => { supabase.removeChannel(channel); }; // cleanup on unmount
-  }, []);
+  return () => {
+    supabase.removeChannel(channel); // cleanup on unmount
+  };
+}, []); // empty deps = runs once
 
   // ── Main fetch function ──────────────────────────────────────────────────────
   async function fetchConversations() {
@@ -117,7 +119,7 @@ export default function Messages() {
   // BACKEND: calls markConversationAsRead() from messages.service.ts
   const openChatRoom = async (user: ConversationUser) => {
     await markConversationAsRead(user.id, currentUserId);
-    // FIX: expo-router params must be a plain string-keyed object, not a typed interface
+    
     router.push({
       pathname: '/chatRoom',
       params: { // PASS these to chat room

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   ImageBackground,
+  Modal,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -15,7 +16,13 @@ import {
 import { heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import ChatRoomHeader from "../components/ChatRoomHeader";
 import { supabase } from '@/lib/supabase';
-import { getConversationPartner, getMessages, sendMessage } from '@/services/messages.service';
+import {
+  getConversationPartner,
+  getMessages,
+  sendMessage,
+  sendCardMessage,          // ← new
+  markConversationAsRead,
+} from '@/services/messages.service';
 import { pinCustomCard } from '@/services/bulletin-board.services';
 import { Svg, Path, Circle, Line, Ellipse, G, Text as SvgText } from 'react-native-svg';
 
@@ -38,18 +45,17 @@ export default function ChatRoom() {
   }>();
 
   const router = useRouter();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [messages, setMessages]           = useState<Message[]>([]);
+  const [inputText, setInputText]         = useState('');
+  const [loading, setLoading]             = useState(false);
   const [currentUserId, setCurrentUserId] = useState('');
-  const [partnerName, setPartnerName] = useState('');
+  const [partnerName, setPartnerName]     = useState('');
   const [partnerAvatar, setPartnerAvatar] = useState<string | null>(null);
-  const cardSentRef = useRef(false);
-  const scrollViewRef = useRef<ScrollView | null>(null);
+  const [pinConfirmTarget, setPinConfirmTarget] = useState<Message | null>(null); // ← new
+  const cardSentRef    = useRef(false);
+  const scrollViewRef  = useRef<ScrollView | null>(null);
 
-  useEffect(() => {
-    fetchMessages();
-  }, []);
+  useEffect(() => { fetchMessages(); }, []);
 
   useEffect(() => {
     if (pendingCard === "true" && currentUserId && !cardSentRef.current) {
@@ -61,28 +67,21 @@ export default function ChatRoom() {
   useEffect(() => {
     const channel = supabase
       .channel(`chatroom-${id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${id}`,
-        },
-        () => { fetchMessages(); }
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${id}` },
+        () => { fetchMessages(); })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
 
   async function fetchMessages() {
     setLoading(true);
-
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
     setCurrentUserId(user.id);
 
     const { data: partner } = await getConversationPartner(id, user.id);
+    console.log('partner raw:', partner); // ← add this
+
     if (partner) {
       // If partner.profiles is an array, use the first element; otherwise, use as object
       const profile = Array.isArray(partner.profiles) ? partner.profiles[0] : partner.profiles;
@@ -92,6 +91,8 @@ export default function ChatRoom() {
 
     const { data, error } = await getMessages(id);
     if (error) { console.error('Error fetching messages:', error); setLoading(false); return; }
+
+    await markConversationAsRead(id, user.id);
 
     if (data) {
       const mapped: Message[] = data.map((msg: any) => ({
@@ -112,12 +113,7 @@ export default function ChatRoom() {
 
   const handleSendCardMessage = async () => {
     if (!currentUserId || !pendingCardColor) return;
-    const { error } = await sendCardMessage(
-      id,
-      currentUserId,
-      pendingCardColor,
-      pendingCardItems ?? "[]"
-    );
+    const { error } = await sendCardMessage(id, currentUserId, pendingCardColor, pendingCardItems ?? "[]");
     if (error) console.error("Error sending card message:", error);
   };
 
@@ -128,13 +124,33 @@ export default function ChatRoom() {
     setInputText('');
   };
 
-  const handlePinToBoard = async (message: Message) => {
-    if (!message.cardId) return;
+  const handlePinToBoard = async () => {
+    if (!pinConfirmTarget?.cardId) return;
+    setPinConfirmTarget(null);
     try {
-      await pinCustomCard(message.cardId);
+      await pinCustomCard(pinConfirmTarget.cardId);
       router.push({ pathname: "/bulletin-board" });
     } catch (e) {
       console.error('Error pinning card to board:', e);
+    }
+  };
+
+  //--Renders a mini preview of the card's items--
+  const renderCardPreview = (cardItems: string, cardColor: string) => {
+    try {
+      const items: string[] = JSON.parse(cardItems);
+      return (
+        <View style={{ backgroundColor: cardColor, borderRadius: 10, padding: 10, minWidth: 160, minHeight: 90 }}>
+          {items.slice(0, 3).map((item, i) => (
+            <Text key={i} style={{ color: '#5a2a20', fontSize: 12, marginBottom: 2 }}>• {item}</Text>
+          ))}
+          {items.length > 3 && (
+            <Text style={{ color: '#a07050', fontSize: 11 }}>+{items.length - 3} more…</Text>
+          )}
+        </View>
+      );
+    } catch {
+      return <View style={{ backgroundColor: cardColor, borderRadius: 10, width: 160, height: 90 }} />;
     }
   };
 
@@ -249,30 +265,20 @@ export default function ChatRoom() {
         {loading ? (
           <ActivityIndicator size="small" color="#7a1a1a" style={{ marginTop: 40 }} />
         ) : (
-          <ScrollView
-            ref={scrollViewRef}
-            style={{ flex: 1 }}
-            contentContainerStyle={{ padding: 10 }}
-          >
+          <ScrollView ref={scrollViewRef} style={{ flex: 1 }} contentContainerStyle={{ padding: 10 }}>
             {messages.map(message => {
               if (message.type === "card") {
                 return (
                   <View
                     key={message.id}
-                    style={{
-                      alignSelf: message.sent ? 'flex-end' : 'flex-start',
-                      marginBottom: 8,
-                      maxWidth: '75%',
-                    }}
+                    style={{ alignSelf: message.sent ? 'flex-end' : 'flex-start', marginBottom: 8, maxWidth: '75%' }}
                   >
                     <View style={{
-                      backgroundColor: message.cardColor ?? "#fffaf4",
+                      backgroundColor: '#fffaf4',
                       borderRadius: 16,
-                      padding: 14,
+                      padding: 12,
                       borderWidth: 1,
                       borderColor: "rgba(122,26,26,0.15)",
-                      minWidth: 180,
-                      minHeight: 120,
                       shadowColor: "#000",
                       shadowOffset: { width: 0, height: 2 },
                       shadowOpacity: 0.15,
@@ -281,27 +287,31 @@ export default function ChatRoom() {
                       <Text style={{ fontSize: 11, color: "#a07050", marginBottom: 6 }}>
                         🎴 Card from {message.sent ? "you" : partnerName}
                       </Text>
-                      <Text style={{ color: "#5a2a20", fontSize: 13 }}>
-                        Tap to view card
-                      </Text>
+
+                      {/* Mini card preview */}
+                      {message.cardColor && message.cardItems
+                        ? renderCardPreview(message.cardItems, message.cardColor)
+                        : <View style={{ backgroundColor: message.cardColor ?? '#e8d5b7', borderRadius: 10, width: 160, height: 90 }} />
+                      }
+
+                      {/* + pin button — only shown to recipient */}
                       {!message.sent && (
                         <TouchableOpacity
-                          onPress={() => handlePinToBoard(message)}
+                          onPress={() => setPinConfirmTarget(message)}
                           style={{
-                            marginTop: 12,
+                            marginTop: 10,
                             alignSelf: "flex-end",
                             backgroundColor: "#557263",
                             borderRadius: 20,
                             paddingHorizontal: 12,
-                            paddingVertical: 6,
+                            paddingVertical: 5,
                             flexDirection: "row",
                             alignItems: "center",
                             gap: 4,
                           }}
                         >
-                          <Text style={{ color: "#fff", fontSize: 13, fontFamily: "Inter" }}>
-                            + Add to board
-                          </Text>
+                          <Feather name="plus" size={14} color="#fff" />
+                          <Text style={{ color: "#fff", fontSize: 12, fontFamily: "Inter" }}>Add to board</Text>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -309,14 +319,11 @@ export default function ChatRoom() {
                 );
               }
 
+              // Plain text bubble
               return (
                 <View
                   key={message.id}
-                  style={{
-                    alignSelf: message.sent ? 'flex-end' : 'flex-start',
-                    marginBottom: 8,
-                    maxWidth: '75%',
-                  }}
+                  style={{ alignSelf: message.sent ? 'flex-end' : 'flex-start', marginBottom: 8, maxWidth: '75%' }}
                 >
                   <View style={{
                     backgroundColor: message.sent ? '#7a1a1a' : '#fff8f0',
@@ -337,6 +344,7 @@ export default function ChatRoom() {
           </ScrollView>
         )}
 
+        {/* Input bar */}
         <View style={{
           flexDirection: 'row',
           marginHorizontal: 10,
@@ -362,6 +370,45 @@ export default function ChatRoom() {
           </TouchableOpacity>
         </View>
       </ImageBackground>
+
+      {/* ── Pin confirmation modal ── */}
+      <Modal transparent animationType="fade" visible={!!pinConfirmTarget} onRequestClose={() => setPinConfirmTarget(null)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{
+            backgroundColor: '#fffaf4',
+            borderRadius: 20,
+            padding: 28,
+            width: '78%',
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOpacity: 0.25,
+            shadowRadius: 12,
+          }}>
+            <Text style={{ fontSize: 22 }}>📌</Text>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#5a2a20', marginTop: 10, textAlign: 'center' }}>
+              Add to bulletin board?
+            </Text>
+            <Text style={{ fontSize: 13, color: '#a07050', marginTop: 6, textAlign: 'center' }}>
+              This card will be pinned to your board.
+            </Text>
+
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 22 }}>
+              <TouchableOpacity
+                onPress={() => setPinConfirmTarget(null)}
+                style={{ flex: 1, borderRadius: 14, borderWidth: 1, borderColor: '#c9a98a', paddingVertical: 10, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#7a4a30', fontSize: 14 }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handlePinToBoard}
+                style={{ flex: 1, borderRadius: 14, backgroundColor: '#557263', paddingVertical: 10, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

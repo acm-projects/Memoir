@@ -49,7 +49,7 @@ const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const channel = supabase
-      .channel('card-tags-feed')
+      .channel('card-tags-feed-${Date.now()}')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'card_tags' },
