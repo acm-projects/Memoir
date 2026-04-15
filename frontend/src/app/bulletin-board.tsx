@@ -26,7 +26,7 @@ import {
   addSticker as addStickerService,
   addGif as addGifService,
   addPhoto as addPhotoService,
-  addMusic as addMusicService,   // ← new import
+  addMusic as addMusicService,   
   updateItemPosition,
   deleteItem as deleteItemService,
   updateNoteContent,
