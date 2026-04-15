@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -61,6 +61,15 @@ export default function DraggableItem({
   const startY = useSharedValue(0);
   const startRotation = useSharedValue(safeRotation);
   const startScale = useSharedValue(safeScale);
+
+// Inside the component, after the shared values are declared:
+useEffect(() => {
+  scale.value = safeScale;
+}, [item.scale]);
+
+useEffect(() => {
+  rotation.value = safeRotation;
+}, [item.rotation]);
 
 
   //BACKEND: replace with actual data from backend API

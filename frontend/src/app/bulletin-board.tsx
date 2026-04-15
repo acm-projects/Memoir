@@ -14,24 +14,7 @@ import {
   fetchBoardItems, addNote as addNoteService, addSticker as addStickerService,
   addGif as addGifService, addPhoto as addPhotoService,
   updateItemPosition, deleteItem as deleteItemService, updateNoteContent,
-  fetchStickers,
-} from "@/services/bulletin-board.services";
-import { supabase } from "@/lib/supabase";
-
-type ItemType = "note" | "sticker" | "card" | "photo" | "gif" | "custom_card";
-
-type Item = {
-  id: string;
-  type: ItemType;
-  fetchBoardItems,
-  addNote as addNoteService,
-  addSticker as addStickerService,
-  addGif as addGifService,
-  addPhoto as addPhotoService,
-  addMusic as addMusicService,   // ← new import
-  updateItemPosition,
-  deleteItem as deleteItemService,
-  updateNoteContent,
+  fetchStickers, addMusic as addMusicService,
 } from "@/services/bulletin-board.services";
 import { supabase } from "@/lib/supabase";
 
@@ -39,9 +22,11 @@ import { supabase } from "@/lib/supabase";
 // Types
 // ─────────────────────────────────────────────
 
+type ItemType = "note" | "sticker" | "card" | "photo" | "gif" | "custom_card" | "music";
+
 type Item = {
   id: string;
-  type: "note" | "sticker" | "card" | "photo" | "gif" | "custom_card" | "music";
+  type: ItemType;
   content: string;
   x: number;
   y: number;
@@ -57,9 +42,16 @@ type Item = {
   artistName?: string;
 };
 
+// ─────────────────────────────────────────────
+// Constants (defined once, outside the component)
+// ─────────────────────────────────────────────
+
 const NOTE_COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
 const ACCENT_COLORS = ["#557263", "#7B1D1D", "#8B6A3E", "#4A6741", "#6B4F6B"];
 
+// ─────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────
 
 function seededRotation(id: string) {
   let hash = 0;
@@ -88,48 +80,36 @@ export default function BulletinBoard() {
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
   const [activeTool, setActiveTool] = useState<"note" | "sticker" | "gif" | "photo" | "music" | null>(null);
 
-  // ── GIF state ──
+  // ── Sticker / GIF state ──
+  const [availableStickers, setAvailableStickers] = useState<{ id: string; name: string; image_url: string }[]>([]);
   const [gifs, setGifs] = useState<any[]>([]);
-  // Add state
-  const [availableStickers, setAvailableStickers] = useState<{id: string, name: string, image_url: string}[]>([]);
   const [gifSearch, setGifSearch] = useState("");
 
-
-  useEffect(() => { loadItems(); 
-    fetchStickers().then(setAvailableStickers).catch(console.error); // added fix: fetch stickers
-  }, [id]);
   // ── Music / Spotify state ──
   const [tracks, setTracks] = useState<any[]>([]);
   const [musicSearch, setMusicSearch] = useState("");
   const [musicLoading, setMusicLoading] = useState(false);
 
   // ─────────────────────────────────────────────
-  // Constants
-  // ─────────────────────────────────────────────
-
-  const NOTE_COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
-  const STICKERS = [
-    { key: "star", source: require("../../assets/images/star-stamp.png") },
-    { key: "heart", source: require("../../assets/images/costa-rica-stamp.png") },
-    { key: "flower", source: require("../../assets/images/Australia-Stamp.png") },
-  ];
-  const ACCENT_COLORS = ["#557263", "#7B1D1D", "#8B6A3E", "#4A6741", "#6B4F6B"];
-
-  // ─────────────────────────────────────────────
   // Load + Realtime
   // ─────────────────────────────────────────────
 
   useEffect(() => {
+    loadItems();
+    fetchStickers().then(setAvailableStickers).catch(console.error);
+  }, [id]);
+
+  useEffect(() => {
     if (!id) return;
     const channels = [
-      { channel: `notes:${id}`, table: 'notes', type: 'note' as ItemType },
-      { channel: `cards:${id}`, table: 'cards', type: 'card' as ItemType },
-      { channel: `folder_stickers:${id}`, table: 'folder_stickers', type: 'sticker' as ItemType },
-      { channel: `board_gifs:${id}`, table: 'board_gifs', type: 'gif' as ItemType },
-      { channel: `board_photos:${id}`, table: 'board_photos', type: 'photo' as ItemType },
+      { channel: `notes:${id}`, table: "notes", type: "note" as ItemType },
+      { channel: `cards:${id}`, table: "cards", type: "card" as ItemType },
+      { channel: `folder_stickers:${id}`, table: "folder_stickers", type: "sticker" as ItemType },
+      { channel: `board_gifs:${id}`, table: "board_gifs", type: "gif" as ItemType },
+      { channel: `board_photos:${id}`, table: "board_photos", type: "photo" as ItemType },
     ].map(({ channel, table, type }) =>
       supabase.channel(channel)
-        .on('postgres_changes', { event: '*', schema: 'public', table, filter: `folder_id=eq.${id}` },
+        .on("postgres_changes", { event: "*", schema: "public", table, filter: `folder_id=eq.${id}` },
           (payload) => handleRealtimeChange(type, payload))
         .subscribe()
     );
@@ -140,7 +120,7 @@ export default function BulletinBoard() {
     try {
       setLoading(true);
       const data = await fetchBoardItems(id);
-      const deduped = data.filter((item, index, self) => index === self.findIndex(i => i.id === item.id));
+      const deduped = data.filter((item, index, self) => index === self.findIndex((i) => i.id === item.id));
       setItems(deduped as Item[]);
     } catch (e) {
       console.error("Failed to load board items:", e);
@@ -151,33 +131,37 @@ export default function BulletinBoard() {
 
   function handleRealtimeChange(type: ItemType, payload: any) {
     const { eventType, new: newRow, old: oldRow } = payload;
-    if (eventType === 'DELETE') {
+    if (eventType === "DELETE") {
       setItems((prev) => prev.filter((item) => item.id !== oldRow.id));
       return;
     }
     const mapped = mapRowToItem(type, newRow);
     if (!mapped) return;
-    if (eventType === 'INSERT') {
+    if (eventType === "INSERT") {
       setItems((prev) => prev.some((i) => i.id === mapped.id) ? prev.map((i) => i.id === mapped.id ? mapped : i) : [...prev, mapped]);
     }
-    if (eventType === 'UPDATE') {
+    if (eventType === "UPDATE") {
       setItems((prev) => prev.map((i) => i.id === mapped.id ? { ...i, ...mapped } : i));
     }
   }
 
   function mapRowToItem(type: ItemType, row: any): Item | null {
     if (!row) return null;
-    const base = { id: row.id, type, content: '', x: row.x, y: row.y, rotation: row.rotation, scale: row.scale };
+    const base = { id: row.id, type, content: "", x: row.x, y: row.y, rotation: row.rotation, scale: row.scale };
     switch (type) {
-      case 'note': return { ...base, content: row.content, color: row.color };
-      case 'card': return { ...base, content: row.title, image: { uri: row.image_url } };
-      case 'sticker': return { ...base, sticker: row.image_url };
-      case 'gif': return { ...base, sticker: row.giphy_url };
-      case 'photo': return { ...base, sticker: row.image_url };
-      case 'custom_card': return { ...base, cardColor: row.custom_cards?.card_color, cardItems: row.custom_cards?.card_items, cardId: row.card_id };
+      case "note": return { ...base, content: row.content, color: row.color };
+      case "card": return { ...base, content: row.title, image: { uri: row.image_url } };
+      case "sticker": return { ...base, sticker: row.image_url };
+      case "gif": return { ...base, sticker: row.giphy_url };
+      case "photo": return { ...base, type: "sticker" as ItemType, sticker: row.image_url };
+      case "custom_card": return { ...base, cardColor: row.custom_cards?.card_color, cardItems: row.custom_cards?.card_items, cardId: row.card_id };
       default: return null;
     }
   }
+
+  // ─────────────────────────────────────────────
+  // Position / Rotation / Scale / Content
+  // ─────────────────────────────────────────────
 
   const debouncedSave = useCallback(
     debounce((itemId: string, type: ItemType, fields: Partial<Item>) => {
@@ -194,16 +178,20 @@ export default function BulletinBoard() {
   };
 
   const handleRotationChange = (itemId: string, newRotation: number) => {
-    setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, rotation: newRotation } : i));
-    const item = items.find((i) => i.id === itemId);
+  setItems((prev) => {
+    const item = prev.find((i) => i.id === itemId);
     if (item) debouncedSave(itemId, item.type, { rotation: newRotation });
-  };
+    return prev.map((i) => i.id === itemId ? { ...i, rotation: newRotation } : i);
+  });
+};
 
-  const handleScaleChange = (itemId: string, newScale: number) => {
-    setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, scale: newScale } : i));
-    const item = items.find((i) => i.id === itemId);
+const handleScaleChange = (itemId: string, newScale: number) => {
+  setItems((prev) => {
+    const item = prev.find((i) => i.id === itemId);
     if (item) debouncedSave(itemId, item.type, { scale: newScale });
-  };
+    return prev.map((i) => i.id === itemId ? { ...i, scale: newScale } : i);
+  });
+};
 
   const debouncedContentSave = useCallback(
     debounce((itemId: string, content: string) => {
@@ -215,68 +203,9 @@ export default function BulletinBoard() {
     setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, content: newContent } : i));
     debouncedContentSave(itemId, newContent);
   };
-      case "note":
-        return {
-          id: row.id, type: "note",
-          content: row.content, color: row.color,
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-        };
-      case "card":
-        return {
-          id: row.id, type: "card",
-          content: row.content,
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-          image: { uri: row.image_url },
-        };
-      case "sticker":
-        return {
-          id: row.id, type: "sticker", content: "",
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-          sticker: row.image_url,
-        };
-      case "gif":
-        return {
-          id: row.id, type: "gif", content: "",
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-          sticker: row.giphy_url,
-        };
-      case "photo":
-        return {
-          id: row.id, type: "photo", content: "",
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-          sticker: row.image_url,
-        };
-      case "music":
-        return {
-          id: row.id, type: "music",
-          content: row.track_name ?? "",
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-          sticker: row.album_image_url,
-          spotifyUrl: row.spotify_url,
-          artistName: row.artist_name,
-        };
-      case "custom_card":
-        return {
-          id: row.id, type: "custom_card", content: "",
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-          cardColor: row.custom_cards?.card_color,
-          cardItems: row.custom_cards?.card_items,
-          cardId: row.card_id,
-        };
-      default:
-        return null;
-    }
-  }
 
   // ─────────────────────────────────────────────
-  // Add items
+  // Add / Delete items
   // ─────────────────────────────────────────────
 
   const addNote = async (color: string) => {
@@ -288,11 +217,11 @@ export default function BulletinBoard() {
   };
 
   const addSticker = async (stickerKey: string) => {
-   try {
-    const newItem = await addStickerService(id, stickerKey);
-    setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
-  } catch (e) { console.error("Failed to add sticker:", e); }
-  setActiveTool(null);
+    try {
+      const newItem = await addStickerService(id, stickerKey);
+      setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
+    } catch (e) { console.error("Failed to add sticker:", e); }
+    setActiveTool(null);
   };
 
   const addGif = async (gifUrl: string) => {
@@ -318,19 +247,24 @@ export default function BulletinBoard() {
 
   const deleteItem = async (itemId: string) => {
     const item = items.find((i) => i.id === itemId);
+    if (!item) return;
+    setItems((prev) => prev.filter((i) => i.id !== itemId));
+    try {
+      await deleteItemService(item.type, itemId);
+    } catch (e) {
+      console.error("Failed to delete:", e);
+      setItems((prev) => [...prev, item]);
+    }
+  };
+
   // ─────────────────────────────────────────────
   // Spotify
   // ─────────────────────────────────────────────
 
   async function searchSpotify(query: string) {
-    if (!query.trim()) {
-      setTracks([]);
-      return;
-    }
-
+    if (!query.trim()) { setTracks([]); return; }
     const clientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
     const clientSecret = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_SECRET;
-
     setMusicLoading(true);
     try {
       const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
@@ -342,7 +276,6 @@ export default function BulletinBoard() {
         body: "grant_type=client_credentials",
       });
       const tokenData = await tokenRes.json();
-
       const res = await fetch(
         `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`,
         { headers: { Authorization: `Bearer ${tokenData.access_token}` } }
@@ -359,7 +292,7 @@ export default function BulletinBoard() {
   async function addMusicItem(track: any) {
     try {
       const newItem = await addMusicService(
-        folderId,
+        id,
         track.external_urls.spotify,
         track.name,
         track.artists?.[0]?.name ?? "",
@@ -375,20 +308,8 @@ export default function BulletinBoard() {
   }
 
   // ─────────────────────────────────────────────
-  // Delete + position
+  // GIFs
   // ─────────────────────────────────────────────
-
-  const deleteItem = async (id: string) => {
-    const item = items.find((i) => i.id === id);
-    if (!item) return;
-    setItems((prev) => prev.filter((i) => i.id !== itemId));
-    try {
-      await deleteItemService(item.type, itemId);
-    } catch (e) {
-      console.error("Failed to delete:", e);
-      setItems((prev) => [...prev, item]);
-    }
-  };
 
   async function searchGifs(query: string) {
     const apiKey = process.env.EXPO_PUBLIC_GIPHY_KEY;
@@ -399,6 +320,10 @@ export default function BulletinBoard() {
     const json = await res.json();
     setGifs(json.data || []);
   }
+
+  // ─────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────
 
   return (
     <View style={styles.container}>
@@ -474,7 +399,7 @@ export default function BulletinBoard() {
         {isEditing && (
           <View style={styles.footerWrapper}>
 
-            {/* ── Tool panel (only when no item selected) ── */}
+            {/* ── Tool panel (only when no item is selected) ── */}
             {activeTool && !selectedId && (
               <View style={styles.panel}>
                 <View style={styles.panelHeader}>
@@ -484,7 +409,6 @@ export default function BulletinBoard() {
                   </TouchableOpacity>
                 </View>
 
-                {/* NOTE */}
                 {activeTool === "note" && (
                   <View style={styles.colorRow}>
                     {NOTE_COLORS.map((c) => (
@@ -493,7 +417,6 @@ export default function BulletinBoard() {
                   </View>
                 )}
 
-                {/* STICKER */}
                 {activeTool === "sticker" && (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stickerRow}>
                     {availableStickers.map((s) => (
@@ -504,7 +427,6 @@ export default function BulletinBoard() {
                   </ScrollView>
                 )}
 
-                {/* PHOTO */}
                 {activeTool === "photo" && (
                   <TouchableOpacity style={styles.panelUploadArea} onPress={pickImage}>
                     <Ionicons name="cloud-upload-outline" size={24} color="#8B7355" />
@@ -512,7 +434,6 @@ export default function BulletinBoard() {
                   </TouchableOpacity>
                 )}
 
-                {/* GIF */}
                 {activeTool === "gif" && (
                   <View>
                     <TextInput
@@ -525,22 +446,13 @@ export default function BulletinBoard() {
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                       {gifs.map((gif) => (
                         <TouchableOpacity key={gif.id} onPress={() => addGif(gif.images.fixed_height.url)}>
-                          <Image source={{ uri: gif.images.fixed_height.url }} style={styles.gifThumb} />
-                        <TouchableOpacity
-                          key={gif.id}
-                          onPress={() => addGif(gif.images.fixed_height.url)}
-                        >
-                          <Image
-                            source={{ uri: gif.images.fixed_height.url }}
-                            style={styles.mediaThumb}
-                          />
+                          <Image source={{ uri: gif.images.fixed_height.url }} style={styles.mediaThumb} />
                         </TouchableOpacity>
                       ))}
                     </ScrollView>
                   </View>
                 )}
 
-                {/* MUSIC */}
                 {activeTool === "music" && (
                   <View>
                     <TextInput
@@ -552,46 +464,21 @@ export default function BulletinBoard() {
                       returnKeyType="search"
                       onSubmitEditing={() => searchSpotify(musicSearch)}
                     />
-
                     {musicLoading && (
-                      <ActivityIndicator
-                        size="small"
-                        color="#1DB954"
-                        style={{ marginVertical: 8 }}
-                      />
+                      <ActivityIndicator size="small" color="#1DB954" style={{ marginVertical: 8 }} />
                     )}
-
                     {!musicLoading && tracks.length === 0 && musicSearch.length > 0 && (
                       <Text style={styles.noResultsText}>No tracks found.</Text>
                     )}
-
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={{ gap: 10, paddingVertical: 4 }}
-                    >
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
                       {tracks.map((track) => (
-                        <TouchableOpacity
-                          key={track.id}
-                          style={styles.musicTrackCard}
-                          onPress={() => addMusicItem(track)}
-                        >
-                          {/* Album art */}
-                          <Image
-                            source={{ uri: track.album.images[0]?.url }}
-                            style={styles.musicAlbumArt}
-                          />
-                          {/* Spotify green dot */}
+                        <TouchableOpacity key={track.id} style={styles.musicTrackCard} onPress={() => addMusicItem(track)}>
+                          <Image source={{ uri: track.album.images[0]?.url }} style={styles.musicAlbumArt} />
                           <View style={styles.spotifyBadge}>
                             <Ionicons name="musical-note" size={8} color="#fff" />
                           </View>
-                          {/* Track info */}
-                          <Text style={styles.musicTrackName} numberOfLines={2}>
-                            {track.name}
-                          </Text>
-                          <Text style={styles.musicArtistName} numberOfLines={1}>
-                            {track.artists?.[0]?.name}
-                          </Text>
+                          <Text style={styles.musicTrackName} numberOfLines={2}>{track.name}</Text>
+                          <Text style={styles.musicArtistName} numberOfLines={1}>{track.artists?.[0]?.name}</Text>
                         </TouchableOpacity>
                       ))}
                     </ScrollView>
@@ -600,26 +487,6 @@ export default function BulletinBoard() {
               </View>
             )}
 
-            <View style={styles.toolbar}>
-              {[
-                { tool: "note", icon: "document-text-outline" },
-                { tool: "photo", icon: "image-outline" },
-                { tool: "sticker", icon: "happy-outline" },
-                { tool: "gif", icon: "film-outline" },
-              ].map(({ tool, icon }) => (
-                <Pressable
-                  key={tool}
-                  style={[styles.toolButton, activeTool === tool && styles.activeToolBtn]}
-                  onPress={() => { setActiveTool(tool as any); if (tool === "gif") searchGifs(""); }}
-                >
-                  <Ionicons name={icon as any} size={24} color="#5A390E" />
-                </Pressable>
-              ))}
-              <View style={styles.toolbarDivider} />
-              <Pressable style={styles.doneButton} onPress={() => { setIsEditing(false); setActiveTool(null); }}>
-                <Ionicons name="checkmark" size={22} color="#F6E5CD" />
-              </Pressable>
-            </View>
             {/* ── Toolbar: item selected vs default ── */}
             {selectedId ? (
               <View style={styles.toolbar}>
@@ -669,10 +536,7 @@ export default function BulletinBoard() {
 
                 <TouchableOpacity
                   style={styles.toolButton}
-                  onPress={() => {
-                    deleteItem(selectedId);
-                    setSelectedId(null);
-                  }}
+                  onPress={() => { deleteItem(selectedId); setSelectedId(null); }}
                 >
                   <Ionicons name="trash-outline" size={22} color="#7B1D1D" />
                 </TouchableOpacity>
@@ -685,45 +549,25 @@ export default function BulletinBoard() {
               </View>
             ) : (
               <View style={styles.toolbar}>
-                <Pressable
-                  style={[styles.toolButton, activeTool === "note" && styles.activeToolBtn]}
-                  onPress={() => setActiveTool("note")}
-                >
-                  <Ionicons name="document-text-outline" size={24} color="#5A390E" />
-                </Pressable>
-
-                <Pressable
-                  style={[styles.toolButton, activeTool === "photo" && styles.activeToolBtn]}
-                  onPress={() => setActiveTool("photo")}
-                >
-                  <Ionicons name="image-outline" size={24} color="#5A390E" />
-                </Pressable>
-
-                <Pressable
-                  style={[styles.toolButton, activeTool === "sticker" && styles.activeToolBtn]}
-                  onPress={() => setActiveTool("sticker")}
-                >
-                  <Ionicons name="happy-outline" size={24} color="#5A390E" />
-                </Pressable>
-
-                <Pressable
-                  style={[styles.toolButton, activeTool === "gif" && styles.activeToolBtn]}
-                  onPress={() => { setActiveTool("gif"); searchGifs(""); }}
-                >
-                  <Ionicons name="film-outline" size={24} color="#5A390E" />
-                </Pressable>
-
-                {/* ← Music button */}
-                <Pressable
-                  style={[styles.toolButton, activeTool === "music" && styles.activeToolBtn]}
-                  onPress={() => setActiveTool("music")}
-                >
-                  <Ionicons name="musical-notes-outline" size={24} color="#5A390E" />
-                </Pressable>
+                {[
+                  { tool: "note", icon: "document-text-outline" },
+                  { tool: "photo", icon: "image-outline" },
+                  { tool: "sticker", icon: "happy-outline" },
+                  { tool: "gif", icon: "film-outline" },
+                  { tool: "music", icon: "musical-notes-outline" },
+                ].map(({ tool, icon }) => (
+                  <Pressable
+                    key={tool}
+                    style={[styles.toolButton, activeTool === tool && styles.activeToolBtn]}
+                    onPress={() => { setActiveTool(tool as any); if (tool === "gif") searchGifs(""); }}
+                  >
+                    <Ionicons name={icon as any} size={24} color="#5A390E" />
+                  </Pressable>
+                ))}
 
                 <View style={styles.toolbarDivider} />
 
-                <Pressable style={styles.doneButton} onPress={handleDone}>
+                <Pressable style={styles.doneButton} onPress={() => { setIsEditing(false); setActiveTool(null); }}>
                   <Ionicons name="checkmark" size={22} color="#F6E5CD" />
                 </Pressable>
               </View>
@@ -874,18 +718,8 @@ const styles = StyleSheet.create({
 
   mediaThumb: { width: 90, height: 90, borderRadius: 8 },
 
-  // ── Music-specific styles ──
-  musicTrackCard: {
-    width: 80,
-    alignItems: "center",
-    position: "relative",
-  },
-  musicAlbumArt: {
-    width: 76,
-    height: 76,
-    borderRadius: 10,
-    backgroundColor: "#d7c3ac",
-  },
+  musicTrackCard: { width: 80, alignItems: "center", position: "relative" },
+  musicAlbumArt: { width: 76, height: 76, borderRadius: 10, backgroundColor: "#d7c3ac" },
   spotifyBadge: {
     position: "absolute",
     top: 4,
@@ -897,24 +731,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  musicTrackName: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: "#3D2B1F",
-    textAlign: "center",
-    marginTop: 5,
-    lineHeight: 13,
-  },
-  musicArtistName: {
-    fontSize: 9,
-    color: "#7A5C3E",
-    textAlign: "center",
-    marginTop: 2,
-  },
-  noResultsText: {
-    fontSize: 12,
-    color: "#9a7a60",
-    textAlign: "center",
-    marginVertical: 8,
-  },
+  musicTrackName: { fontSize: 10, fontWeight: "600", color: "#3D2B1F", textAlign: "center", marginTop: 5, lineHeight: 13 },
+  musicArtistName: { fontSize: 9, color: "#7A5C3E", textAlign: "center", marginTop: 2 },
+  noResultsText: { fontSize: 12, color: "#9a7a60", textAlign: "center", marginVertical: 8 },
 });

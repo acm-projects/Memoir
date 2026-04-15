@@ -7,8 +7,6 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "./global.css";
 
 
-
-
 export default function RootLayout() {
   const [loaded] = useFonts({
     'Montaga': Montaga_400Regular,
@@ -17,7 +15,6 @@ export default function RootLayout() {
   });
 
   if (!loaded) return null;
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       {/* Back to default animation behavior */}

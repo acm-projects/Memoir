@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   ImageBackground,
   Modal,
   ScrollView,
@@ -20,7 +21,7 @@ import {
   getConversationPartner,
   getMessages,
   sendMessage,
-  sendCardMessage,          // ← new
+  sendCardMessage,
   markConversationAsRead,
 } from '@/services/messages.service';
 import { pinCustomCard } from '@/services/bulletin-board.services';
@@ -51,9 +52,9 @@ export default function ChatRoom() {
   const [currentUserId, setCurrentUserId] = useState('');
   const [partnerName, setPartnerName]     = useState('');
   const [partnerAvatar, setPartnerAvatar] = useState<string | null>(null);
-  const [pinConfirmTarget, setPinConfirmTarget] = useState<Message | null>(null); // ← new
-  const cardSentRef    = useRef(false);
-  const scrollViewRef  = useRef<ScrollView | null>(null);
+  const [pinConfirmTarget, setPinConfirmTarget] = useState<Message | null>(null);
+  const cardSentRef   = useRef(false);
+  const scrollViewRef = useRef<ScrollView | null>(null);
 
   useEffect(() => { fetchMessages(); }, []);
 
@@ -80,10 +81,9 @@ export default function ChatRoom() {
     setCurrentUserId(user.id);
 
     const { data: partner } = await getConversationPartner(id, user.id);
-    console.log('partner raw:', partner); // ← add this
+    console.log('partner raw:', partner);
 
     if (partner) {
-      // If partner.profiles is an array, use the first element; otherwise, use as object
       const profile = Array.isArray(partner.profiles) ? partner.profiles[0] : partner.profiles;
       setPartnerName(profile?.username ?? 'Unknown');
       setPartnerAvatar(profile?.avatar_url ?? null);
@@ -135,24 +135,35 @@ export default function ChatRoom() {
     }
   };
 
-  //--Renders a mini preview of the card's items--
   const renderCardPreview = (cardItems: string, cardColor: string) => {
-    try {
-      const items: string[] = JSON.parse(cardItems);
-      return (
-        <View style={{ backgroundColor: cardColor, borderRadius: 10, padding: 10, minWidth: 160, minHeight: 90 }}>
-          {items.slice(0, 3).map((item, i) => (
-            <Text key={i} style={{ color: '#5a2a20', fontSize: 12, marginBottom: 2 }}>• {item}</Text>
+  try {
+    const items = JSON.parse(cardItems);
+    const textItems = items.filter((item: any) => item.type === "text");
+    const stickerItems = items.filter((item: any) => item.type === "sticker");
+
+    return (
+      <View style={{ backgroundColor: cardColor, borderRadius: 10, padding: 10, minWidth: 160, minHeight: 90 }}>
+        {textItems.slice(0, 2).map((item: any, i: number) => (
+          <Text key={i} style={{ color: '#5a2a20', fontSize: 12, marginBottom: 2 }}>
+            {item.content}
+          </Text>
+        ))}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+          {stickerItems.slice(0, 4).map((item: any, i: number) => (
+            <Image
+              key={i}
+              source={{ uri: item.sticker }}
+              style={{ width: 32, height: 32 }}
+              resizeMode="contain"
+            />
           ))}
-          {items.length > 3 && (
-            <Text style={{ color: '#a07050', fontSize: 11 }}>+{items.length - 3} more…</Text>
-          )}
         </View>
-      );
-    } catch {
-      return <View style={{ backgroundColor: cardColor, borderRadius: 10, width: 160, height: 90 }} />;
-    }
-  };
+      </View>
+    );
+  } catch {
+    return <View style={{ backgroundColor: cardColor, borderRadius: 10, width: 160, height: 90 }} />;
+  }
+};
 
   return (
     <View style={{ flex: 1, backgroundColor: '#7a1a1a' }}>
@@ -162,11 +173,15 @@ export default function ChatRoom() {
       <ImageBackground
         source={require('../../assets/images/layered-vintage-paper.png')}
         style={{ flex: 1 }}
+        resizeMode="cover"
       >
         {/* Background Illustrations Layer */}
-        <View style={[StyleSheet.absoluteFillObject]} pointerEvents="none">
+        <View
+          style={[StyleSheet.absoluteFillObject, { zIndex: 0 }]}
+          pointerEvents="none"
+        >
           {/* Compass Rose */}
-          <Svg width="90" height="90" style={{ position: 'absolute', top: 10, left: 8 }} viewBox="0 0 90 90" fill="none">
+          <Svg width="90" height="90" style={{ position: 'absolute', top: 10, left: 8 }} viewBox="0 0 90 90">
             <G opacity={0.10}>
               <Circle cx="45" cy="45" r="44" stroke="#8B6A3E" strokeWidth="2" />
               <Path d="M45 10 L45 80" stroke="#8B6A3E" strokeWidth="2" />
@@ -175,20 +190,21 @@ export default function ChatRoom() {
               <Circle cx="45" cy="45" r="6" stroke="#8B6A3E" strokeWidth="2" fill="none" />
             </G>
           </Svg>
+
           {/* Sailing Ship */}
-          <Svg width="90" height="70" style={{ position: 'absolute', top: 120, right: -5 }} viewBox="0 0 90 70" fill="none">
+          <Svg width="90" height="70" style={{ position: 'absolute', top: 120, right: -5 }} viewBox="0 0 90 70">
             <G opacity={0.10}>
               <Path d="M10 60 Q45 10 80 60 Z" stroke="#8B6A3E" strokeWidth="2" fill="none" />
               <Path d="M45 60 L45 20" stroke="#8B6A3E" strokeWidth="2" />
-              <Path d="M45 20 L60 40 L45 40 Z" fill="#8B6A3E" fillOpacity="0.10" stroke="#8B6A3E" strokeWidth="1.5" />
-              <Path d="M45 20 L30 35 L45 35 Z" fill="#8B6A3E" fillOpacity="0.10" stroke="#8B6A3E" strokeWidth="1.5" />
+              <Path d="M45 20 L60 40 L45 40 Z" fill="#8B6A3E" fillOpacity={0.10} stroke="#8B6A3E" strokeWidth="1.5" />
+              <Path d="M45 20 L30 35 L45 35 Z" fill="#8B6A3E" fillOpacity={0.10} stroke="#8B6A3E" strokeWidth="1.5" />
             </G>
           </Svg>
+
           {/* Dotted Travel Path with Crosshairs */}
-          <Svg width="60" height="180" style={{ position: 'absolute', top: 250, left: 40 }} viewBox="0 0 60 180" fill="none">
+          <Svg width="60" height="180" style={{ position: 'absolute', top: 250, left: 40 }} viewBox="0 0 60 180">
             <G opacity={0.10}>
               <Path d="M30 10 Q10 60 30 110 Q50 160 30 170" stroke="#8B6A3E" strokeWidth="2" strokeDasharray="4 6" fill="none" />
-              {/* Crosshair markers */}
               <G>
                 <Circle cx="30" cy="10" r="5" stroke="#8B6A3E" strokeWidth="1.5" fill="none" />
                 <Line x1="30" y1="5" x2="30" y2="15" stroke="#8B6A3E" strokeWidth="1" />
@@ -206,6 +222,7 @@ export default function ChatRoom() {
               </G>
             </G>
           </Svg>
+
           {/* Coordinates Text */}
           <Svg width="120" height="30" style={{ position: 'absolute', top: 470, right: 12 }}>
             <SvgText
@@ -220,22 +237,25 @@ export default function ChatRoom() {
               43°N · 12°E
             </SvgText>
           </Svg>
-          {/* ATLAS Oval Frame with Scrollwork */}
-          <Svg width="120" height="80" style={{ position: 'absolute', bottom: 90, left: 0 }} viewBox="0 0 120 80" fill="none">
+
+          {/* ATLAS Oval Frame */}
+          <Svg width="120" height="80" style={{ position: 'absolute', bottom: 90, left: 0 }} viewBox="0 0 120 80">
             <G opacity={0.10}>
               <Ellipse cx="60" cy="40" rx="55" ry="32" stroke="#8B6A3E" strokeWidth="2" fill="none" />
               <Path d="M20 40 Q10 60 30 70" stroke="#8B6A3E" strokeWidth="1.5" fill="none" />
               <Path d="M100 40 Q110 60 90 70" stroke="#8B6A3E" strokeWidth="1.5" fill="none" />
-              <SvgText x="60" y="48" fontSize="18" fontWeight="bold" fill="#8B6A3E" opacity="0.18" textAnchor="middle">ATLAS</SvgText>
+              <SvgText x="60" y="48" fontSize="18" fontWeight="bold" fill="#8B6A3E" opacity={0.18} textAnchor="middle">ATLAS</SvgText>
             </G>
           </Svg>
-          {/* Wave Border Dashed Path */}
-          <Svg width="340" height="30" style={{ position: 'absolute', bottom: 60, left: 0 }} viewBox="0 0 340 30" fill="none">
+
+          {/* Wave Border */}
+          <Svg width="340" height="30" style={{ position: 'absolute', bottom: 60, left: 0 }} viewBox="0 0 340 30">
             <G opacity={0.10}>
               <Path d="M0 15 Q40 0 80 15 T160 15 T240 15 T320 15" stroke="#8B6A3E" strokeWidth="2" fill="none" strokeDasharray="8 8" />
             </G>
           </Svg>
-          {/* ~ est. 2026 ~ Text */}
+
+          {/* est. 2026 */}
           <Svg width="160" height="30" style={{ position: 'absolute', bottom: 38, left: 18 }}>
             <SvgText
               x="50%"
@@ -249,8 +269,9 @@ export default function ChatRoom() {
               ~ est. 2026 ~
             </SvgText>
           </Svg>
-          {/* Decorative Divider with Diamonds and Tick Marks */}
-          <Svg width="180" height="18" style={{ position: 'absolute', bottom: 18, left: 10 }} viewBox="0 0 180 18" fill="none">
+
+          {/* Decorative Divider */}
+          <Svg width="180" height="18" style={{ position: 'absolute', bottom: 18, left: 10 }} viewBox="0 0 180 18">
             <G opacity={0.10}>
               <Path d="M10 9 H170" stroke="#8B6A3E" strokeWidth="2" />
               <Path d="M90 3 L96 9 L90 15 L84 9 Z" fill="#8B6A3E" />
@@ -262,117 +283,129 @@ export default function ChatRoom() {
           </Svg>
         </View>
 
-        {loading ? (
-          <ActivityIndicator size="small" color="#7a1a1a" style={{ marginTop: 40 }} />
-        ) : (
-          <ScrollView ref={scrollViewRef} style={{ flex: 1 }} contentContainerStyle={{ padding: 10 }}>
-            {messages.map(message => {
-              if (message.type === "card") {
+        {/* Messages */}
+        <View style={{ flex: 1, zIndex: 1 }}>
+          {loading ? (
+            <ActivityIndicator size="small" color="#7a1a1a" style={{ marginTop: 40 }} />
+          ) : (
+            <ScrollView
+              ref={scrollViewRef}
+              style={{ flex: 1 }}
+              contentContainerStyle={{ padding: 10 }}
+            >
+              {messages.map(message => {
+                if (message.type === "card") {
+                  return (
+                    <View
+                      key={message.id}
+                      style={{ alignSelf: message.sent ? 'flex-end' : 'flex-start', marginBottom: 8, maxWidth: '75%' }}
+                    >
+                      <View style={{
+                        backgroundColor: '#fffaf4',
+                        borderRadius: 16,
+                        padding: 12,
+                        borderWidth: 1,
+                        borderColor: "rgba(122,26,26,0.15)",
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.15,
+                        shadowRadius: 4,
+                        elevation: 3,
+                      }}>
+                        <Text style={{ fontSize: 11, color: "#a07050", marginBottom: 6 }}>
+                          🎴 Card from {message.sent ? "you" : partnerName}
+                        </Text>
+
+                        {message.cardColor && message.cardItems
+                          ? renderCardPreview(message.cardItems, message.cardColor)
+                          : <View style={{ backgroundColor: message.cardColor ?? '#e8d5b7', borderRadius: 10, width: 160, height: 90 }} />
+                        }
+
+                        {!message.sent && (
+                          <TouchableOpacity
+                            onPress={() => setPinConfirmTarget(message)}
+                            style={{
+                              marginTop: 10,
+                              alignSelf: "flex-end",
+                              backgroundColor: "#557263",
+                              borderRadius: 20,
+                              paddingHorizontal: 12,
+                              paddingVertical: 5,
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 4,
+                            }}
+                          >
+                            <Feather name="plus" size={14} color="#fff" />
+                            <Text style={{ color: "#fff", fontSize: 12, fontFamily: "Inter" }}>Add to board</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  );
+                }
+
                 return (
                   <View
                     key={message.id}
                     style={{ alignSelf: message.sent ? 'flex-end' : 'flex-start', marginBottom: 8, maxWidth: '75%' }}
                   >
                     <View style={{
-                      backgroundColor: '#fffaf4',
-                      borderRadius: 16,
-                      padding: 12,
-                      borderWidth: 1,
-                      borderColor: "rgba(122,26,26,0.15)",
-                      shadowColor: "#000",
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.15,
-                      shadowRadius: 4,
+                      backgroundColor: message.sent ? '#7a1a1a' : '#fff8f0',
+                      borderRadius: 12,
+                      padding: 10,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.5,
+                      shadowRadius: 2,
+                      elevation: 2,
                     }}>
-                      <Text style={{ fontSize: 11, color: "#a07050", marginBottom: 6 }}>
-                        🎴 Card from {message.sent ? "you" : partnerName}
+                      <Text style={{ color: message.sent ? '#F5EEE1' : 'black', fontSize: hp(1.8) }}>
+                        {message.text}
                       </Text>
-
-                      {/* Mini card preview */}
-                      {message.cardColor && message.cardItems
-                        ? renderCardPreview(message.cardItems, message.cardColor)
-                        : <View style={{ backgroundColor: message.cardColor ?? '#e8d5b7', borderRadius: 10, width: 160, height: 90 }} />
-                      }
-
-                      {/* + pin button — only shown to recipient */}
-                      {!message.sent && (
-                        <TouchableOpacity
-                          onPress={() => setPinConfirmTarget(message)}
-                          style={{
-                            marginTop: 10,
-                            alignSelf: "flex-end",
-                            backgroundColor: "#557263",
-                            borderRadius: 20,
-                            paddingHorizontal: 12,
-                            paddingVertical: 5,
-                            flexDirection: "row",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
-                          <Feather name="plus" size={14} color="#fff" />
-                          <Text style={{ color: "#fff", fontSize: 12, fontFamily: "Inter" }}>Add to board</Text>
-                        </TouchableOpacity>
-                      )}
                     </View>
                   </View>
                 );
-              }
+              })}
+            </ScrollView>
+          )}
 
-              // Plain text bubble
-              return (
-                <View
-                  key={message.id}
-                  style={{ alignSelf: message.sent ? 'flex-end' : 'flex-start', marginBottom: 8, maxWidth: '75%' }}
-                >
-                  <View style={{
-                    backgroundColor: message.sent ? '#7a1a1a' : '#fff8f0',
-                    borderRadius: 12,
-                    padding: 10,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.5,
-                    shadowRadius: 2,
-                  }}>
-                    <Text style={{ color: message.sent ? '#F5EEE1' : 'black', fontSize: hp(1.8) }}>
-                      {message.text}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-          </ScrollView>
-        )}
-
-        {/* Input bar */}
-        <View style={{
-          flexDirection: 'row',
-          marginHorizontal: 10,
-          marginBottom: 20,
-          backgroundColor: '#7a1a1a',
-          borderRadius: 20,
-          paddingHorizontal: 15,
-          paddingVertical: 10,
-          gap: 10,
-        }}>
-          <TextInput
-            placeholder="Type your message..."
-            value={inputText}
-            onChangeText={setInputText}
-            placeholderTextColor="white"
-            style={{ color: '#f5e8d8', fontSize: 16, flex: 1, marginRight: 2 }}
-          />
-          <TouchableOpacity
-            onPress={handleSendMessage}
-            style={{ backgroundColor: '#F5EEE1', borderRadius: 20, padding: 10 }}
-          >
-            <Feather name="send" size={20} color="#590502" />
-          </TouchableOpacity>
+          {/* Input bar */}
+          <View style={{
+            flexDirection: 'row',
+            marginHorizontal: 10,
+            marginBottom: 20,
+            backgroundColor: '#7a1a1a',
+            borderRadius: 20,
+            paddingHorizontal: 15,
+            paddingVertical: 10,
+            gap: 10,
+            zIndex: 2,
+          }}>
+            <TextInput
+              placeholder="Type your message..."
+              value={inputText}
+              onChangeText={setInputText}
+              placeholderTextColor="white"
+              style={{ color: '#f5e8d8', fontSize: 16, flex: 1, marginRight: 2 }}
+            />
+            <TouchableOpacity
+              onPress={handleSendMessage}
+              style={{ backgroundColor: '#F5EEE1', borderRadius: 20, padding: 10 }}
+            >
+              <Feather name="send" size={20} color="#590502" />
+            </TouchableOpacity>
+          </View>
         </View>
       </ImageBackground>
 
-      {/* ── Pin confirmation modal ── */}
-      <Modal transparent animationType="fade" visible={!!pinConfirmTarget} onRequestClose={() => setPinConfirmTarget(null)}>
+      {/* Pin confirmation modal */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={!!pinConfirmTarget}
+        onRequestClose={() => setPinConfirmTarget(null)}
+      >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' }}>
           <View style={{
             backgroundColor: '#fffaf4',
@@ -383,6 +416,7 @@ export default function ChatRoom() {
             shadowColor: '#000',
             shadowOpacity: 0.25,
             shadowRadius: 12,
+            elevation: 10,
           }}>
             <Text style={{ fontSize: 22 }}>📌</Text>
             <Text style={{ fontSize: 16, fontWeight: '600', color: '#5a2a20', marginTop: 10, textAlign: 'center' }}>

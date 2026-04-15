@@ -62,11 +62,6 @@ export async function deleteItem(itemType: string, id: string) {
   if (error) throw error;
 }
 
-export async function updateNoteContent(id: string, content: string) {
-  const { error } = await supabase.from('notes').update({ content }).eq('id', id);
-  if (error) throw error;
-}
-
 export async function addNote(folderId: string, color: string) {
   const { data, error } = await supabase.from('notes')
     .insert({ folder_id: folderId, content: 'New note', color, x: 80, y: 100, rotation: 0, scale: 1 })
@@ -122,6 +117,8 @@ export async function pinCustomCard(cardId: string) {
   if (error) throw error;
 
   return { id: data.id, type: 'custom_card' as const, content: '', x: data.x, y: data.y, rotation: data.rotation, scale: data.scale, cardId: data.card_id };
+}
+
 export async function updateNoteContent(id: string, content: string) {
   const { error } = await supabase
     .from('notes')
