@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+const FLASK_URL = process.env.EXPO_PUBLIC_FLASK_URL;
 
 export interface TagFrequency {
   tag_id: string;
@@ -55,15 +56,15 @@ export async function getMostFrequentTags(
 
   if (error || !data) return { data: null, error };
 
-  const countMap = new Map<string, { name: string; count: number }>();
+  const countMap = new Map<string, { name: string; count: number }>(); // counts per tag_id with tag name
 
-  for (const row of data as any[]) {
+  for (const row of data as any[]) { // iterating through row 
     const id = row.tag_id;
     const name = row.tags?.name ?? 'Unknown';
     if (countMap.has(id)) {
-      countMap.get(id)!.count += 1;
+      countMap.get(id)!.count += 1; // second occurence + more !
     } else {
-      countMap.set(id, { name, count: 1 });
+      countMap.set(id, { name, count: 1 }); // first occurence 
     }
   }
 
@@ -214,7 +215,7 @@ Respond ONLY with a JSON object, no markdown, no explanation:
 
   try {
    
-  const response = await fetch("http://127.0.0.1:5000/persona", { // flask url
+  const response = await fetch(`${FLASK_URL}/persona`, { // flask url
   method: "POST",
   headers: {
     "Content-Type": "application/json",

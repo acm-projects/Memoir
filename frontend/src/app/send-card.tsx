@@ -52,20 +52,49 @@ export default function SendCard() {
     setShowAnimation(true);
   };
 
-  const handleAnimationComplete = () => {
-    setShowAnimation(false);
-    const selected = contacts.find(c => c.id === selectedId);
-    router.push({
-      pathname: "/chatRoom",
-      params: {
-        id: selectedId!,
-        name: selected?.name ?? '',
-        pendingCard: "true",
-        pendingCardColor: cardColor ?? "#fffaf4",
-        pendingCardItems: cardItems ?? "[]",
-      },
+  const handleAnimationComplete = async () => {
+  setShowAnimation(false);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const selected = contacts.find(c => c.id === selectedId);
+
+  // 1. Save the card
+  const { data: card, error: cardError } = await supabase
+    .from("custom_cards")
+    .insert({
+      card_color: cardColor ?? "#fffaf4",
+      card_items: cardItems ?? "[]",
+    })
+    .select()
+    .single();
+
+  if (cardError) { console.error("Failed to save card:", cardError); return; }
+
+  // 2. Send the message
+  const { error: msgError } = await supabase
+    .from("messages")
+    .insert({
+      conversation_id: selectedId,
+      sender_id: user.id,
+      content: "Shared a card",
+      shared_card_id: card.id,
     });
-  };
+
+  if (msgError) { console.error("Failed to send message:", msgError); return; }
+
+  router.push({
+    pathname: "/chatRoom",
+    params: {
+      id: selectedId!,
+      name: selected?.name ?? '',
+      pendingCard: "true",
+      pendingCardColor: cardColor ?? "#fffaf4",
+      pendingCardItems: cardItems ?? "[]",
+    },
+  });
+};
 
   return (
     <View style={[styles.container, { paddingTop: ios ? top : top + 10 }]}>

@@ -100,10 +100,11 @@ export async function getMessages(conversationId: string) {
       sender_id,
       created_at,
       shared_folder_id,
-      shared_card_id
+      shared_card_id,
+      custom_cards(id, card_color, card_items, created_by)
     `)
     .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true }); // removed get cards, causing issues, will handle later 
+    .order('created_at', { ascending: true }); 
 }
 
 // Inserts a new text message into the messages table

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Keyboard,
   ImageBackground,
-  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -29,16 +28,15 @@ export default function DraggableItem({
   onRotationChange,
   onScaleChange,
   accentColor,
-  caption,
-  onCaptionChange,
   onContentChange,
   boardWidth = 0,
   boardHeight = 0,
+  showControls = true, // ← pin + delete button only shown when true
 }: any) {
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
 
-  const isThumbtack = item.id.charCodeAt(0) % 2 === 0; // fix
+  const isThumbtack = item.id.charCodeAt(0) % 2 === 0;
   const pinSize = 14;
   const pinColor = accentColor;
 
@@ -46,9 +44,7 @@ export default function DraggableItem({
   const safeY = typeof item.y === "number" && !isNaN(item.y) ? item.y : 0;
   const safeId = item.id != null ? item.id : "0";
   const safeRotation =
-    typeof item.rotation === "number" && !isNaN(item.rotation)
-      ? item.rotation
-      : 0;
+    typeof item.rotation === "number" && !isNaN(item.rotation) ? item.rotation : 0;
   const safeScale =
     typeof item.scale === "number" && !isNaN(item.scale) ? item.scale : 1;
 
@@ -62,25 +58,11 @@ export default function DraggableItem({
   const startRotation = useSharedValue(safeRotation);
   const startScale = useSharedValue(safeScale);
 
+  useEffect(() => { scale.value = safeScale; }, [item.scale]);
+  useEffect(() => { rotation.value = safeRotation; }, [item.rotation]);
 
-  //BACKEND: replace with actual data from backend API
-  const COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
-
-
- //Backend: replace with actual data from backend API
-  const STICKERS: { [key: string]: any } = {
-    star: require("../../assets/images/star-stamp.png"),
-    heart: require("../../assets/images/costa-rica-stamp.png"),
-    flower: require("../../assets/images/Australia-Stamp.png"),
-  };
- //BACKEND: replace with actual data from backend API
   const TEXT_COLORS = [
-    "#5A390E",
-    "#6D1B12",
-    "#2C5F2E",
-    "#1A1A2E",
-    "#FF6B6B",
-    "#000000",
+    "#5A390E", "#6D1B12", "#2C5F2E", "#1A1A2E", "#FF6B6B", "#000000",
   ];
 
   const isSelected = selectedId === item.id;
@@ -93,6 +75,10 @@ export default function DraggableItem({
   const clamp = (value: number, min: number, max: number) =>
     Math.max(min, Math.min(value, max));
 
+  let zIndex = 1, scaleBoost = 1;
+  if (isDragging) { zIndex = 100; scaleBoost = 1.04; }
+  else if (selectedId === item.id) { zIndex = 50; }
+
   const pan = Gesture.Pan()
     .enabled(!!isEditing)
     .onBegin(() => {
@@ -103,142 +89,69 @@ export default function DraggableItem({
     })
     .onUpdate((event) => {
       if (!isEditing) return;
-
       let newX = startX.value + event.translationX;
       let newY = startY.value + event.translationY;
-
-      const scaledWidth = ITEM_WIDTH * scale.value;
-      const scaledHeight = ITEM_HEIGHT * scale.value;
-
-        // Clamp to board bounds if provided
-        if (boardWidth && boardHeight) {
-          newX = Math.max(0, Math.min(newX, boardWidth - ITEM_WIDTH));
-          newY = Math.max(0, Math.min(newY, boardHeight - ITEM_HEIGHT));
-        }
-
+      if (boardWidth && boardHeight) {
+        newX = Math.max(0, Math.min(newX, boardWidth - ITEM_WIDTH));
+        newY = Math.max(0, Math.min(newY, boardHeight - ITEM_HEIGHT));
+      }
       x.value = newX;
       y.value = newY;
-
-      if (onPositionChange) {
-        runOnJS(onPositionChange)(safeId, newX, newY);
-      }
+      if (onPositionChange) runOnJS(onPositionChange)(safeId, newX, newY);
     })
     .onEnd(() => {
       if (!isEditing) return;
       runOnJS(setIsDragging)(false);
-
-      if (onPositionChange) {
-        runOnJS(onPositionChange)(safeId, x.value, y.value);
-      }
+      if (onPositionChange) runOnJS(onPositionChange)(safeId, x.value, y.value);
     });
 
   const rotationGesture = Gesture.Rotation()
     .enabled(!!isEditing)
-    .onBegin(() => {
-      if (!isEditing) return;
-      startRotation.value = rotation.value;
-    })
+    .onBegin(() => { if (!isEditing) return; startRotation.value = rotation.value; })
     .onUpdate((event) => {
       if (!isEditing) return;
-
       const newDeg = startRotation.value + (event.rotation * 180) / Math.PI;
       rotation.value = newDeg;
-
-      if (onRotationChange) {
-        runOnJS(onRotationChange)(safeId, newDeg);
-      }
-
-      if (onPositionChange) {
-        runOnJS(onPositionChange)(safeId, x.value, y.value);
-      }
+      if (onRotationChange) runOnJS(onRotationChange)(safeId, newDeg);
+      if (onPositionChange) runOnJS(onPositionChange)(safeId, x.value, y.value);
     })
     .onEnd(() => {
       if (!isEditing) return;
-
-      if (onRotationChange) {
-        runOnJS(onRotationChange)(safeId, rotation.value);
-      }
-
-      if (onPositionChange) {
-        runOnJS(onPositionChange)(safeId, x.value, y.value);
-      }
+      if (onRotationChange) runOnJS(onRotationChange)(safeId, rotation.value);
+      if (onPositionChange) runOnJS(onPositionChange)(safeId, x.value, y.value);
     });
 
   const pinchGesture = Gesture.Pinch()
     .enabled(!!isEditing)
-    .onBegin(() => {
-      if (!isEditing) return;
-      startScale.value = scale.value;
-    })
+    .onBegin(() => { if (!isEditing) return; startScale.value = scale.value; })
     .onUpdate((event) => {
       if (!isEditing) return;
-
       const nextScale = clamp(startScale.value * event.scale, MIN_SCALE, MAX_SCALE);
       scale.value = nextScale;
-
       const scaledWidth = ITEM_WIDTH * nextScale;
       const scaledHeight = ITEM_HEIGHT * nextScale;
-
       let newX = x.value;
       let newY = y.value;
-
       if (boardWidth && boardHeight) {
         newX = clamp(newX, 0, Math.max(0, boardWidth - scaledWidth));
         newY = clamp(newY, 0, Math.max(0, boardHeight - scaledHeight));
       }
-
       x.value = newX;
       y.value = newY;
-
-      if (onScaleChange) {
-        runOnJS(onScaleChange)(safeId, nextScale);
-      }
-
-      if (onPositionChange) {
-        runOnJS(onPositionChange)(safeId, newX, newY);
-      }
+      if (onScaleChange) runOnJS(onScaleChange)(safeId, nextScale);
+      if (onPositionChange) runOnJS(onPositionChange)(safeId, newX, newY);
     })
     .onEnd(() => {
       if (!isEditing) return;
-
-      if (onScaleChange) {
-        runOnJS(onScaleChange)(safeId, scale.value);
-      }
-
-      if (onPositionChange) {
-        runOnJS(onPositionChange)(safeId, x.value, y.value);
-      }
+      if (onScaleChange) runOnJS(onScaleChange)(safeId, scale.value);
+      if (onPositionChange) runOnJS(onPositionChange)(safeId, x.value, y.value);
     });
 
   const tap = Gesture.Tap().onEnd(() => {
     runOnJS(setSelectedId)(selectedId === item.id ? null : item.id);
   });
 
-  const gesture = Gesture.Simultaneous(
-    pan,
-    rotationGesture,
-    pinchGesture,
-    tap
-  );
-
-  let zIndex = 1,
-    shadowOpacity = 0.35,
-    shadowRadius = 8,
-    elevation = 8,
-    scaleBoost = 1;
-
-  if (isDragging) {
-    zIndex = 100;
-    shadowOpacity = 0.55;
-    shadowRadius = 16;
-    elevation = 16;
-    scaleBoost = 1.04;
-  } else if (selectedId === item.id) {
-    zIndex = 50;
-    shadowOpacity = 0.4;
-    shadowRadius = 10;
-    elevation = 10;
-  }
+  const gesture = Gesture.Simultaneous(pan, rotationGesture, pinchGesture, tap);
 
   const animatedStyle = useAnimatedStyle(() => ({
     position: "absolute",
@@ -254,64 +167,25 @@ export default function DraggableItem({
     if (!isThumbtack) {
       return (
         <View style={{ position: "absolute", top: -10, alignSelf: "center", zIndex: 12 }}>
-          <View
-            style={{
-              width: pinSize,
-              height: pinSize,
-              borderRadius: pinSize / 2,
-              backgroundColor: pinColor,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <View
-              style={{
-                width: 5,
-                height: 5,
-                borderRadius: 999,
-                backgroundColor: "rgba(255,255,255,0.7)",
-              }}
-            />
+          <View style={{
+            width: pinSize, height: pinSize, borderRadius: pinSize / 2,
+            backgroundColor: pinColor, alignItems: "center", justifyContent: "center",
+          }}>
+            <View style={{ width: 5, height: 5, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.7)" }} />
           </View>
         </View>
       );
     }
-
     return (
-      <View
-        style={{
-          position: "absolute",
-          top: -10,
-          alignSelf: "center",
-          zIndex: 12,
-          alignItems: "center",
-        }}
-      >
-        <View
-          style={{
-            width: pinSize,
-            height: pinSize,
-            borderRadius: pinSize / 2,
-            backgroundColor: pinColor,
-          }}
-        />
-        <View
-          style={{
-            width: 3,
-            height: 8,
-            borderRadius: 2,
-            backgroundColor: pinColor,
-            marginTop: -2,
-          }}
-        />
+      <View style={{ position: "absolute", top: -10, alignSelf: "center", zIndex: 12, alignItems: "center" }}>
+        <View style={{ width: pinSize, height: pinSize, borderRadius: pinSize / 2, backgroundColor: pinColor }} />
+        <View style={{ width: 3, height: 8, borderRadius: 2, backgroundColor: pinColor, marginTop: -2 }} />
       </View>
     );
   }
 
   function renderContent() {
     if (item.type === "card") {
-      console.log('rendering item, item:', item); // add this
-      console.log('rendering card, image:', item.image); // add this
       if (item.image) {
         return (
           <TouchableOpacity
@@ -319,11 +193,7 @@ export default function DraggableItem({
             onPress={() => {
               router.push({
                 pathname: "/one-specific-card" as any,
-                params: { // **CHNAGED**
-                  id: item.cardId || item.id, // CHANGED: use real card id
-                  title: item.content,
-                  caption: "",
-                },
+                params: { id: item.cardId || item.id, title: item.content, caption: "" },
               });
             }}
           >
@@ -335,7 +205,6 @@ export default function DraggableItem({
           </TouchableOpacity>
         );
       }
-
       return (
         <View style={styles.card}>
           <Text>{item.content}</Text>
@@ -343,31 +212,22 @@ export default function DraggableItem({
       );
     }
 
-    if (item.type === "sticker") {
-      const isPhoto =
-        item.sticker?.startsWith("file") || item.sticker?.startsWith("http");
+    if (item.type === "sticker" || item.type === "gif" || item.type === "photo") {
+      const isUrl =
+        item.sticker?.startsWith("file") ||
+        item.sticker?.startsWith("http") ||
+        item.sticker?.startsWith("https");
 
-      if (isPhoto) {
+      if (isUrl && item.sticker) {
         return (
           <Image
             source={{ uri: item.sticker }}
-            style={{ width: 120, height: 120, borderRadius: 8 }}
-            resizeMode="cover"
+            style={{ width: 120, height: 120 }}
+            resizeMode="contain"
           />
         );
       }
-
-
-      {/*BACKEND: calls hardcoded array here in that source below */}
-      return (
-        
-        <Image
-          source={STICKERS[item.sticker]} 
-          style={{ width: 80, height: 80 }}
-          resizeMode="contain"
-        />
-       
-      );
+      return null;
     }
 
     if (item.type === "note") {
@@ -376,11 +236,7 @@ export default function DraggableItem({
           source={item.noteBackground || null}
           style={[
             styles.note,
-            {
-              backgroundColor: item.noteBackground
-                ? "transparent"
-                : item.color || "#FFF6A3",
-            },
+            { backgroundColor: item.noteBackground ? "transparent" : item.color || "#FFF6A3" },
             { borderColor: accentColor, borderWidth: 1.5 },
           ]}
           imageStyle={{ borderRadius: 10 }}
@@ -411,18 +267,13 @@ export default function DraggableItem({
               onChangeText={(text) => onContentChange(item.id, text)}
             />
           </View>
-
           {isSelected && (
             <View style={styles.colorPicker}>
               {TEXT_COLORS.map((color) => (
                 <TouchableOpacity
                   key={color}
                   onPress={() => onColorChange(item.id, color)}
-                  style={[
-                    styles.colorDot,
-                    { backgroundColor: color },
-                    item.color === color && styles.activeColor,
-                  ]}
+                  style={[styles.colorDot, { backgroundColor: color }, item.color === color && styles.activeColor]}
                 />
               ))}
             </View>
@@ -436,21 +287,13 @@ export default function DraggableItem({
 
   return (
     <GestureDetector gesture={gesture}>
-      <Animated.View
-        style={[
-          animatedStyle,
-          {
-            zIndex,
-            shadowColor: "#000",
-            shadowOpacity,
-            shadowRadius,
-            elevation,
-          },
-        ]}
-      >
-        {renderPin()}
+      <Animated.View style={[animatedStyle, { zIndex }]}>
 
-        {isEditing && (
+        {/* Pin — only when showControls is true (i.e. card type) */}
+        {showControls && renderPin()}
+
+        {/* Delete button — only when showControls is true, in edit mode */}
+        {showControls && isEditing && (
           <TouchableOpacity
             style={styles.deleteBtnStyle}
             onPress={() => deleteItem(item.id)}
@@ -480,18 +323,12 @@ const styles = StyleSheet.create({
     fontFamily: "Inter",
     minHeight: 100,
   },
-  sticker: {
-    fontSize: 40,
-  },
   card: {
     width: 160,
     height: 120,
     backgroundColor: "#fff",
     borderRadius: 14,
     padding: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
   },
   textContainer: {
     padding: 10,
@@ -546,9 +383,5 @@ const styles = StyleSheet.create({
     zIndex: 20,
     borderWidth: 2,
     borderColor: "#fff",
-    shadowColor: "#000",
-    shadowOpacity: 0.18,
-    shadowRadius: 2,
-    elevation: 2,
   },
 });

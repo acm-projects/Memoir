@@ -64,7 +64,6 @@ type Message = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const FLASK_URL = process.env.EXPO_PUBLIC_FLASK_URL;
-console.log("ENV:", process.env);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -87,11 +86,9 @@ function templateToItems(template: TemplateMatch): Item[] {
       const parsed = JSON.parse(raw!);
       const id = `tpl-text-${i}-${Date.now()}`;
       items.push({
-        id,
-        type: "text",
+        id, type: "text",
         content: parsed.content ?? "...",
-        x: parsed.x ?? 20,
-        y: parsed.y ?? 20,
+        x: parsed.x ?? 20, y: parsed.y ?? 20,
         color: parsed.color ?? "#5A390E",
         font: parsed.font,
         rotation: parsed.rotation ?? seededRotation(id),
@@ -105,12 +102,10 @@ function templateToItems(template: TemplateMatch): Item[] {
       const parsed = JSON.parse(raw!);
       const id = `tpl-sticker-${i}-${Date.now()}`;
       items.push({
-        id,
-        type: "sticker",
+        id, type: "sticker",
         content: parsed.sticker ?? "",
-        sticker: parsed.sticker ?? "",
-        x: parsed.x ?? 30,
-        y: parsed.y ?? 30,
+        sticker: parsed.image_url || parsed.sticker,
+        x: parsed.x ?? 30, y: parsed.y ?? 30,
         rotation: parsed.rotation ?? seededRotation(id),
         scale: parsed.scale ?? 1,
       });
@@ -130,7 +125,13 @@ function TemplateCard({
   onApply: (t: TemplateMatch) => void;
 }) {
   const previewTexts = [template.text_1, template.text_2, template.text_3].filter(Boolean);
-  const previewStickers = [template.sticker_1, template.sticker_2, template.sticker_3].filter(Boolean);
+  const previewStickers = [template.sticker_1, template.sticker_2, template.sticker_3]
+    .filter(Boolean)
+    .map((raw) => {
+      try { return JSON.parse(raw!).image_url; } catch { return null; }
+    })
+    .filter(Boolean) as string[];
+
   return (
     <View style={{
       backgroundColor: "#fdf6ed", borderRadius: 16, borderWidth: 1,
@@ -202,73 +203,70 @@ function AIChatModal({
   };
 
   const sendMessage = async () => {
-  const trimmed = input.trim();
-  if (!trimmed || loading) return;
-  const userMsg: Message = { id: Date.now().toString(), role: "user", text: trimmed };
-  setMessages((prev) => [...prev, userMsg]);
-  setInput("");
-  setLoading(true);
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const trimmed = input.trim();
+    if (!trimmed || loading) return;
+    const userMsg: Message = { id: Date.now().toString(), role: "user", text: trimmed };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+      const response = await fetch(`${FLASK_URL}/recommend-template`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({
+          prompt: trimmed,
+          user_id: session?.user?.id ?? userId,
+          match_count: 1,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error ?? "Backend error");
 
-    console.log("Sending request to:", `${FLASK_URL}/recommend-template`);
-    const response = await fetch(`${FLASK_URL}/recommend-template`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session?.access_token ?? ""}`,
-      },
-      body: JSON.stringify({
-        prompt: trimmed,
-        user_id: session?.user?.id ?? userId,
-        match_count: 1,
-      }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
+      const suggestions: TemplateMatch[] = data.suggested_templates ?? [];
+      const intent = data.design_intent ?? {};
 
-    const data = await response.json();
-    if (!data.success) throw new Error(data.error ?? "Backend error");
-
-    const suggestions: TemplateMatch[] = data.suggested_templates ?? [];
-    const intent = data.design_intent ?? {};
-
-    if (suggestions.length === 0) {
+      if (suggestions.length === 0) {
+        setMessages((prev) => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          text: "I couldn't find a matching template, but you can still build your card from scratch using the tools below! 🎨",
+        }]);
+      } else {
+        const occasionNote = intent.occasion ? ` for a ${intent.occasion}` : "";
+        const recipientNote = intent.recipient ? ` for ${intent.recipient}` : "";
+        const topTemplate: TemplateMatch = {
+          ...suggestions[0],
+          custom_card_id: data.custom_card_id ?? undefined,
+        };
+        setMessages((prev) => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          text: `Here's a template that fits${occasionNote}${recipientNote} — tap "Use this" to load it onto your card!`,
+          templatePreview: topTemplate,
+        }]);
+      }
+    } catch (err: any) {
+      const msg = err?.name === "AbortError"
+        ? "This is taking too long. Try again!"
+        : "Oops, something went wrong. Try again!";
       setMessages((prev) => [...prev, {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        text: "I couldn't find a matching template, but you can still build your card from scratch using the tools below! 🎨",
+        text: msg,
       }]);
-    } else {
-      const occasionNote = intent.occasion ? ` for a ${intent.occasion}` : "";
-      const recipientNote = intent.recipient ? ` for ${intent.recipient}` : "";
-      const topTemplate: TemplateMatch = {
-        ...suggestions[0],
-        custom_card_id: data.custom_card_id ?? undefined,
-      };
-      setMessages((prev) => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        text: `Here's a template that fits${occasionNote}${recipientNote} — tap "Use this" to load it onto your card!`,
-        templatePreview: topTemplate,
-      }]);
+    } finally {
+      setLoading(false);
     }
-  } catch (err: any) {
-    const msg = err?.name === "AbortError"
-      ? "This is taking too long. Try again!"
-      : "Oops, something went wrong. Try again!";
-    setMessages((prev) => [...prev, {
-      id: (Date.now() + 1).toString(),
-      role: "assistant",
-      text: msg,
-    }]);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const renderMessage = ({ item }: { item: Message }) => {
     const isUser = item.role === "user";
@@ -296,7 +294,6 @@ function AIChatModal({
           style={styles.modalSheet}
         >
           <View style={styles.handleBar} />
-
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderLeft}>
               <View style={styles.sparkleIcon}>
@@ -379,7 +376,6 @@ export default function CreateCard() {
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
   const [aiModalVisible, setAiModalVisible] = useState(false);
 
-  // Fetch real userId from session
   const [userId, setUserId] = useState<string>("guest");
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -408,23 +404,18 @@ export default function CreateCard() {
   const updateItemColor = (id: string, color: string) => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, color } : i)));
   };
-
   const handlePositionChange = (id: string, newX: number, newY: number) => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, x: newX, y: newY } : i)));
   };
-
   const handleRotationChange = (id: string, newRotation: number) => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, rotation: newRotation } : i)));
   };
-
   const handleScaleChange = (id: string, newScale: number) => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, scale: newScale } : i)));
   };
-
   const handleContentChange = (id: string, newContent: string) => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, content: newContent } : i)));
   };
-
   const handleFontChange = (id: string, font: string) => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, font } : i)));
   };
@@ -457,22 +448,78 @@ export default function CreateCard() {
       ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${query}&limit=50`
       : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=50`;
     const res = await fetch(url);
-    console.log("RAW RESPONSE:", res);
-
     const text = await res.text();
-    console.log("RAW TEXT:", text);
-
     const data = JSON.parse(text);
-    const json = await res.json();
-    setGifs(json.data || []);
+    setGifs(data.data || []);
   }
 
-  // When user taps "Use this" — load template onto card and set cardId
-  const handleApplyTemplate = (template: TemplateMatch) => {
+  const handleApplyTemplate = async (template: TemplateMatch) => {
     if (template.card_color) setCardColor(template.card_color);
-    setItems(templateToItems(template));
+
     if (template.custom_card_id) {
-      setCardId(template.custom_card_id);
+      const { data: card } = await supabase
+        .from("custom_cards")
+        .select("*")
+        .eq("id", template.custom_card_id)
+        .single();
+
+      if (card?.card_items) {
+        const cardItems = JSON.parse(card.card_items);
+        const newItems: Item[] = [];
+
+        cardItems.texts?.forEach((raw: string, i: number) => {
+          try {
+            const parsed = JSON.parse(raw);
+            const id = `tpl-text-${i}-${Date.now()}`;
+            newItems.push({
+              id, type: "text",
+              content: parsed.content ?? "...",
+              x: parsed.x ?? 20, y: parsed.y ?? 20,
+              color: parsed.color ?? "#5A390E",
+              font: parsed.font,
+              rotation: parsed.rotation ?? seededRotation(id),
+              scale: parsed.scale ?? 1,
+            });
+          } catch {}
+        });
+
+        cardItems.stickers?.forEach((raw: string, i: number) => {
+          try {
+            const parsed = JSON.parse(raw);
+            if (!parsed.image_url && !parsed.sticker) return;
+            const id = `tpl-sticker-${i}-${Date.now()}`;
+            newItems.push({
+              id, type: "sticker",
+              content: parsed.sticker ?? "",
+              sticker: parsed.image_url || parsed.sticker,
+              x: parsed.x ?? 30, y: parsed.y ?? 30,
+              rotation: parsed.rotation ?? seededRotation(id),
+              scale: parsed.scale ?? 1,
+            });
+          } catch {}
+        });
+
+        cardItems.gifs?.forEach((raw: string, i: number) => {
+          try {
+            const parsed = JSON.parse(raw);
+            if (!parsed.sticker) return;
+            const id = `tpl-gif-${i}-${Date.now()}`;
+            newItems.push({
+              id, type: "sticker",
+              content: parsed.sticker ?? "",
+              sticker: parsed.sticker,
+              x: parsed.x ?? 30, y: parsed.y ?? 30,
+              rotation: parsed.rotation ?? seededRotation(id),
+              scale: parsed.scale ?? 1,
+            });
+          } catch {}
+        });
+
+        setItems(newItems);
+        setCardId(template.custom_card_id ?? null);
+      }
+    } else {
+      setItems(templateToItems(template));
     }
   };
 
@@ -526,6 +573,7 @@ export default function CreateCard() {
                 onContentChange={handleContentChange}
                 onFontChange={handleFontChange}
                 accentColor="#8B6A3E"
+                showControls={false}
               />
             ))}
           </View>
@@ -639,7 +687,8 @@ export default function CreateCard() {
 
             <View style={styles.toolbarRow}>
               {selectedId ? (
-                <View style={styles.toolbar}>
+                // ── Selection toolbar — burgundy outline ──
+                <View style={[styles.toolbar, styles.toolbarSelected]}>
                   <TouchableOpacity style={styles.toolButton} onPress={() => {
                     const item = items.find((i) => i.id === selectedId);
                     if (item) handleScaleChange(selectedId, Math.max(0.5, (item.scale ?? 1) - 0.1));
@@ -686,6 +735,7 @@ export default function CreateCard() {
                   </TouchableOpacity>
                 </View>
               ) : (
+                // ── Normal toolbar ──
                 <View style={styles.toolbar}>
                   <Pressable
                     style={[styles.toolButton, activeTool === "background" && styles.activeToolBtn]}
@@ -785,6 +835,11 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: "rgba(139,26,26,0.15)",
     shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1, shadowRadius: 10, elevation: 5,
+  },
+  // ← applied on top of toolbar when item is selected
+  toolbarSelected: {
+    borderColor: "#7a1a1a",
+    borderWidth: 1,
   },
   plusButton: {
     width: 40, height: 40, borderRadius: 25, backgroundColor: "#4A7568",
