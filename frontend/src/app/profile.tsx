@@ -47,17 +47,23 @@ const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     fetchAll();
   }, []);
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('card-tags-feed')
+useEffect(() => {
+  let channel: any;
+  
+  supabase.auth.getUser().then(({ data: { user } }) => {
+    if (!user) return;
+    
+    channel = supabase.channel(`card-tags-feed-${user.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'card_tags' },
         () => { fetchAll(); }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+  });
+
+  return () => { if (channel) supabase.removeChannel(channel); };
+}, []);
 
   useEffect(() => {
     Animated.stagger(80, [

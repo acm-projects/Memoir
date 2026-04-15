@@ -1,5 +1,6 @@
-from curses import raw
+# from curses import raw
 import numpy as np
+import openai
 
 # THE MONKEY PATCH: This intercepts the NumPy crash
 # It forces NumPy to allow the "inhomogeneous" data the OCR library is sending.
@@ -273,6 +274,24 @@ def embed_card():
         }), 500
 
 # ================================================================
+# PERSONA ENDPOINT (for testing LLM responses)
+    
+@app.route("/persona", methods=["POST"])
+def persona():
+    prompt = request.json["prompt"]
+    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    res = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=150,
+    )
+
+    raw = res.choices[0].message.content
+
+    return jsonify({"raw": raw})
+
+# ================================================================
 # SEARCH ENDPOINT
 # ================================================================
 @app.route('/search', methods=['POST'])
@@ -449,10 +468,32 @@ def recommend_template():
         # ── Step 5: Copy best match into custom_cards ─────────────
         best = matches[0]
 
-        # Build card_items JSON from the template's text/sticker fields
+        # Fetch sticker URL map from Supabase
+        stickers_response = requests.get(
+            f"{SUPABASE_URL}/rest/v1/stickers?is_preset=eq.true&select=name,image_url",
+            headers=HEADERS
+        ).json()
+
+        # "balloon-sticker" → "https://..."
+        sticker_url_map = {}
+        for s in stickers_response:
+            sticker_url_map[s['name']] = s['image_url']
+
+        # Parse and resolve sticker fields
+        resolved_stickers = []
+        for i in range(1, 6):
+            raw = best.get(f"sticker_{i}")
+            if not raw:
+                continue
+            s = json.loads(raw)
+            sticker_id = s.get("sticker")
+            s["image_url"] = sticker_url_map.get(sticker_id, "")
+            resolved_stickers.append(json.dumps(s))
+
+        # Build card_items JSON
         card_items = json.dumps({
             "texts": [best.get(f"text_{i}") for i in range(1, 6) if best.get(f"text_{i}")],
-            "stickers": [best.get(f"sticker_{i}") for i in range(1, 6) if best.get(f"sticker_{i}")],
+            "stickers": resolved_stickers,
             "gifs": [best.get(f"gif_{i}") for i in range(1, 3) if best.get(f"gif_{i}")]
         })
 
