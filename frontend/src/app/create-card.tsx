@@ -356,6 +356,54 @@ function AIChatModal({
   );
 }
 
+function SendShareModal({
+  visible,
+  onClose,
+  onSend,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onSend: () => void;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.sendModalOverlay} onPress={onClose}>
+        {/* Stop tap-through so tapping inside the box doesn't close it */}
+        <Pressable style={styles.sendModalBox} onPress={() => {}}>
+          <View style={styles.sendModalHeader}>
+            <Text style={styles.sendModalTitle}>What would you like to do?</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons name="close" size={20} color="#7a2a2a" />
+            </TouchableOpacity>
+          </View>
+ 
+          {/* Send option — routes to send-card (same as before) */}
+          <TouchableOpacity style={styles.sendModalOption} onPress={onSend}>
+            <View style={styles.sendModalIconWrap}>
+              <Ionicons name="send-outline" size={20} color="#7a2a2a" />
+            </View>
+            <View>
+              <Text style={styles.sendModalOptionTitle}>Send</Text>
+              <Text style={styles.sendModalOptionDesc}>Send this card to someone</Text>
+            </View>
+          </TouchableOpacity>
+ 
+          {/* Share option — no route yet, just closes modal for now */}
+          <TouchableOpacity style={styles.sendModalOption} onPress={onClose}>
+            <View style={styles.sendModalIconWrap}>
+              <Ionicons name="share-social-outline" size={20} color="#7a2a2a" />
+            </View>
+            <View>
+              <Text style={styles.sendModalOptionTitle}>Save</Text>
+              <Text style={styles.sendModalOptionDesc}>Save this card</Text>
+            </View>
+          </TouchableOpacity>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function CreateCard() {
@@ -375,6 +423,8 @@ export default function CreateCard() {
   const [gifSearch, setGifSearch] = useState("");
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
   const [aiModalVisible, setAiModalVisible] = useState(false);
+
+  const [sendModalVisible, setSendModalVisible] = useState(false);
 
   const [userId, setUserId] = useState<string>("guest");
   useEffect(() => {
@@ -532,6 +582,18 @@ export default function CreateCard() {
         onClose={() => setAiModalVisible(false)}
         onApplyTemplate={handleApplyTemplate}
         userId={userId}
+      />
+      
+      <SendShareModal
+        visible={sendModalVisible}
+        onClose={() => setSendModalVisible(false)}
+        onSend={() => {
+          setSendModalVisible(false);
+          router.push({
+            pathname: "/send-card",
+            params: { cardId: cardId ?? "" },
+          } as any);
+        }}
       />
 
       <View style={styles.header}>
@@ -790,17 +852,16 @@ export default function CreateCard() {
               <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
-
+ 
+              {/* This button visually matches the old sendBtn but now opens the modal */}
               <TouchableOpacity
                 style={styles.sendBtn}
-                onPress={() => router.push({
-                  pathname: "/send-card",
-                  params: { cardId: cardId ?? "" },
-                } as any)}
+                onPress={() => setSendModalVisible(true)}
               >
-                <Text style={styles.sendText}>Send</Text>
+                <Ionicons name="ellipsis-horizontal" size={18} color="#f5ede0" />
               </TouchableOpacity>
             </View>
+
           </View>
         </View>
       </ImageBackground>
@@ -880,7 +941,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(139,26,26,0.3)", alignItems: "center", backgroundColor: "#ede0cc",
   },
   cancelText: { color: "#8b1a1a", fontSize: 14 },
-  sendBtn: { flex: 1, paddingVertical: 10, borderRadius: 20, backgroundColor: "#7a1a1a", alignItems: "center" },
+  sendBtn: { flex: 1, paddingVertical: 10, borderRadius: 20, backgroundColor: "#7a1a1a", alignItems: "center", justifyContent: "center" },
   sendText: { color: "#f5ede0", fontSize: 14 },
   gifInput: {
     backgroundColor: "#F5EEE1", borderWidth: 1, borderColor: "#c8b89a",
@@ -940,4 +1001,54 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   sendIconBtnDisabled: { backgroundColor: "#c8b89a" },
+  sendModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "flex-end",
+    paddingBottom: 110,        // sits above the bottom navbar
+    paddingHorizontal: 16,
+  },
+  sendModalBox: {
+    backgroundColor: "#fdf6ee",
+    borderRadius: 20,
+    padding: 20,
+  },
+  sendModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  sendModalTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#6D1B12",
+  },
+  sendModalOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    backgroundColor: "#f0e4d4",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+  },
+  sendModalIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: "#e9dccd",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sendModalOptionTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#6D1B12",
+  },
+  sendModalOptionDesc: {
+    fontSize: 12,
+    color: "#9b6b6b",
+    marginTop: 2,
+  },
 });
