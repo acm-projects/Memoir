@@ -17,7 +17,7 @@ const swirlyBg = require('../../assets/images/swirly-subtle.png');
 const paperTexture = require('../../assets/images/layered-vintage-paper.png');
 
 // ─ Store Flask URL in one place — swap to production URL when deploying
-const FLASK_URL = 'http://127.0.0.1:8000'; 
+const FLASK_URL = 'http://192.168.5.242:8000'; 
 
 const FOLDER_COLORS = [
   { color: '#6B4E7D', stripColor: '#573D68' },

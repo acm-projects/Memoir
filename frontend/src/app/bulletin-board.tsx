@@ -1,920 +1,379 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from 'expo-router';
+import { Settings } from 'lucide-react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Dimensions, Easing, ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
+import BottomNavbar from '../components/BottomNavbar';
+import { supabase } from '@/lib/supabase';
 import {
-  View, Text, StyleSheet, Pressable, ImageBackground, Image,
-  TouchableOpacity, ScrollView, Keyboard, TouchableWithoutFeedback,
-  TextInput, ActivityIndicator,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import Svg, { Path, Circle } from "react-native-svg";
-import DraggableItem from "../components/draggableItem";
-import BottomNavbar from "../components/BottomNavbar";
-import {
-  fetchBoardItems, addNote as addNoteService, addSticker as addStickerService,
-  addGif as addGifService, addPhoto as addPhotoService,
-  updateItemPosition, deleteItem as deleteItemService, updateNoteContent,
-  fetchStickers,
-} from "@/services/bulletin-board.services";
-import { supabase } from "@/lib/supabase";
+  getMostFrequentTags, TagFrequency,
+  getBoardContents, BoardContents,
+  getCardsByMonth, MonthlyCardData,
+  getProfileStats, ProfileStats,
+  getUserPersona, Persona, getUserProfile
+} from '@/services/analytics.services';
 
-type ItemType = "note" | "sticker" | "card" | "photo" | "gif" | "custom_card";
+const { width } = Dimensions.get('window');
 
-type Item = {
-  id: string;
-  type: ItemType;
-  fetchBoardItems,
-  addNote as addNoteService,
-  addSticker as addStickerService,
-  addGif as addGifService,
-  addPhoto as addPhotoService,
-  addMusic as addMusicService,   // ← new import
-  updateItemPosition,
-  deleteItem as deleteItemService,
-  updateNoteContent,
-} from "@/services/bulletin-board.services";
-import { supabase } from "@/lib/supabase";
+type SettingsIconProps = React.ComponentProps<typeof Settings>;
 
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
+export default function ProfilePage({ name = 'Tejasvi Annamaraju' }) {
 
-type Item = {
-  id: string;
-  type: "note" | "sticker" | "card" | "photo" | "gif" | "custom_card" | "music";
-  content: string;
-  x: number;
-  y: number;
-  color?: string;
-  sticker?: string;
-  image?: any;
-  rotation: number;
-  scale: number;
-  cardColor?: string;
-  cardItems?: string;
-  cardId?: string;
-  spotifyUrl?: string;
-  artistName?: string;
-};
+  const [topTags, setTopTags] = useState<TagFrequency[]>([]);
+  const [boardContents, setBoardContents] = useState<BoardContents>({
+    stickers: 0, photos: 0, notes: 0, templates: 0,
+  });
+  const [cardsByMonth, setCardsByMonth] = useState<MonthlyCardData[]>(
+    Array.from({ length: 12 }, (_, i) => ({ month: i + 1, created: 0 }))
+  );
+  const [profileStats, setProfileStats] = useState<ProfileStats>({
+    entries: 0, friends: 0, folders: 0,
+  });
+  const [persona, setPersona] = useState<Persona>({
+    title: 'Loading...', bio: '', emoji: '🕯️',
+  });
+const [username, setUsername] = useState('');
+const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-const NOTE_COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
-const ACCENT_COLORS = ["#557263", "#7B1D1D", "#8B6A3E", "#4A6741", "#6B4F6B"];
-
-
-function seededRotation(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  return (hash % 13) - 6;
-}
-
-function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
-  let timer: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
-}
-
-// ─────────────────────────────────────────────
-// Component
-// ─────────────────────────────────────────────
-
-export default function BulletinBoard() {
   const router = useRouter();
-  const { title, id } = useLocalSearchParams<{ title: string; id: string }>();
+  const iconColor = '#7B1D1D';
+  const tagColors = ['#557263', '#7B1D1D', '#8B6A3E', '#4A6741', '#6B4F6B'];
 
-  // ── Board state ──
-  const [items, setItems] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
-  const [activeTool, setActiveTool] = useState<"note" | "sticker" | "gif" | "photo" | "music" | null>(null);
-
-  // ── GIF state ──
-  const [gifs, setGifs] = useState<any[]>([]);
-  // Add state
-  const [availableStickers, setAvailableStickers] = useState<{id: string, name: string, image_url: string}[]>([]);
-  const [gifSearch, setGifSearch] = useState("");
-
-
-  useEffect(() => { loadItems(); 
-    fetchStickers().then(setAvailableStickers).catch(console.error); // added fix: fetch stickers
-  }, [id]);
-  // ── Music / Spotify state ──
-  const [tracks, setTracks] = useState<any[]>([]);
-  const [musicSearch, setMusicSearch] = useState("");
-  const [musicLoading, setMusicLoading] = useState(false);
-
-  // ─────────────────────────────────────────────
-  // Constants
-  // ─────────────────────────────────────────────
-
-  const NOTE_COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
-  const STICKERS = [
-    { key: "star", source: require("../../assets/images/star-stamp.png") },
-    { key: "heart", source: require("../../assets/images/costa-rica-stamp.png") },
-    { key: "flower", source: require("../../assets/images/Australia-Stamp.png") },
-  ];
-  const ACCENT_COLORS = ["#557263", "#7B1D1D", "#8B6A3E", "#4A6741", "#6B4F6B"];
-
-  // ─────────────────────────────────────────────
-  // Load + Realtime
-  // ─────────────────────────────────────────────
+  const barAnimPhotos = useRef(new Animated.Value(0)).current;
+  const barAnimStickers = useRef(new Animated.Value(0)).current;
+  const barAnimNotes = useRef(new Animated.Value(0)).current;
+  const barAnimTemplates = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (!id) return;
-    const channels = [
-      { channel: `notes:${id}`, table: 'notes', type: 'note' as ItemType },
-      { channel: `cards:${id}`, table: 'cards', type: 'card' as ItemType },
-      { channel: `folder_stickers:${id}`, table: 'folder_stickers', type: 'sticker' as ItemType },
-      { channel: `board_gifs:${id}`, table: 'board_gifs', type: 'gif' as ItemType },
-      { channel: `board_photos:${id}`, table: 'board_photos', type: 'photo' as ItemType },
-    ].map(({ channel, table, type }) =>
-      supabase.channel(channel)
-        .on('postgres_changes', { event: '*', schema: 'public', table, filter: `folder_id=eq.${id}` },
-          (payload) => handleRealtimeChange(type, payload))
-        .subscribe()
-    );
-    return () => { channels.forEach((c) => supabase.removeChannel(c)); };
-  }, [id]);
+    fetchAll();
+  }, []);
 
-  async function loadItems() {
-    try {
-      setLoading(true);
-      const data = await fetchBoardItems(id);
-      const deduped = data.filter((item, index, self) => index === self.findIndex(i => i.id === item.id));
-      setItems(deduped as Item[]);
-    } catch (e) {
-      console.error("Failed to load board items:", e);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    const channel = supabase
+      .channel('card-tags-feed-${Date.now()}')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'card_tags' },
+        () => { fetchAll(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  useEffect(() => {
+    Animated.stagger(80, [
+      Animated.timing(barAnimPhotos, { toValue: 1, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+      Animated.timing(barAnimStickers, { toValue: 1, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+      Animated.timing(barAnimNotes, { toValue: 1, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+      Animated.timing(barAnimTemplates, { toValue: 1, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+    ]).start();
+  }, [barAnimPhotos, barAnimStickers, barAnimNotes, barAnimTemplates]);
+
+  async function fetchAll() {
+    const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+    
+    const { data: profile } = await getUserProfile(user.id);
+    if (profile) {
+  setUsername(profile.username);
+  setAvatarUrl(profile.avatar_url);
+}
+
+    const [tagsRes, boardRes, cardsRes, statsRes] = await Promise.all([
+      getMostFrequentTags(user.id, 5),
+      getBoardContents(user.id),
+      getCardsByMonth(user.id),
+      getProfileStats(user.id),
+    ]);
+
+    const tags = tagsRes.data ?? [];
+    const board = boardRes.data ?? { stickers: 0, photos: 0, notes: 0, templates: 0 };
+    const cards = cardsRes.data ?? Array.from({ length: 12 }, (_, i) => ({ month: i + 1, created: 0 }));
+    const stats = statsRes.data ?? { entries: 0, friends: 0, folders: 0 };
+
+    setTopTags(tags);
+    setBoardContents(board);
+    setCardsByMonth(cards);
+    setProfileStats(stats);
+
+    // call persona after all data is ready
+    const { data: personaData } = await getUserPersona(tags, board, cards);
+    if (personaData) setPersona(personaData);
   }
 
-  function handleRealtimeChange(type: ItemType, payload: any) {
-    const { eventType, new: newRow, old: oldRow } = payload;
-    if (eventType === 'DELETE') {
-      setItems((prev) => prev.filter((item) => item.id !== oldRow.id));
-      return;
-    }
-    const mapped = mapRowToItem(type, newRow);
-    if (!mapped) return;
-    if (eventType === 'INSERT') {
-      setItems((prev) => prev.some((i) => i.id === mapped.id) ? prev.map((i) => i.id === mapped.id ? mapped : i) : [...prev, mapped]);
-    }
-    if (eventType === 'UPDATE') {
-      setItems((prev) => prev.map((i) => i.id === mapped.id ? { ...i, ...mapped } : i));
-    }
-  }
+  const BOARD_TOTAL = boardContents.photos + boardContents.stickers + boardContents.notes + boardContents.templates || 1;
+  const trackWidth = width - 40 - 72 - 36 - 16;
 
-  function mapRowToItem(type: ItemType, row: any): Item | null {
-    if (!row) return null;
-    const base = { id: row.id, type, content: '', x: row.x, y: row.y, rotation: row.rotation, scale: row.scale };
-    switch (type) {
-      case 'note': return { ...base, content: row.content, color: row.color };
-      case 'card': return { ...base, content: row.title, image: { uri: row.image_url } };
-      case 'sticker': return { ...base, sticker: row.image_url };
-      case 'gif': return { ...base, sticker: row.giphy_url };
-      case 'photo': return { ...base, sticker: row.image_url };
-      case 'custom_card': return { ...base, cardColor: row.custom_cards?.card_color, cardItems: row.custom_cards?.card_items, cardId: row.card_id };
-      default: return null;
-    }
-  }
+  const photoPercent = Math.round((boardContents.photos / BOARD_TOTAL) * 100);
+  const stickerPercent = Math.round((boardContents.stickers / BOARD_TOTAL) * 100);
+  const notesPercent = Math.round((boardContents.notes / BOARD_TOTAL) * 100);
+  const templatesPercent = Math.round((boardContents.templates / BOARD_TOTAL) * 100);
 
-  const debouncedSave = useCallback(
-    debounce((itemId: string, type: ItemType, fields: Partial<Item>) => {
-      updateItemPosition(type, itemId, fields).catch((e) => console.error("Failed to save:", e));
-    }, 600), []
-  );
-
-  const handlePositionChange = (itemId: string, newX: number, newY: number) => {
-    setItems((prev) => {
-      const item = prev.find((i) => i.id === itemId);
-      if (item) debouncedSave(itemId, item.type, { x: newX, y: newY });
-      return prev.map((i) => i.id === itemId ? { ...i, x: newX, y: newY } : i);
-    });
+  const getMonthColor = (value: number) => {
+    if (value === 0) return '#F5EDE0';
+    if (value <= 2) return '#D4A099';
+    if (value <= 5) return '#A84848';
+    return '#7B1D1D';
   };
-
-  const handleRotationChange = (itemId: string, newRotation: number) => {
-    setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, rotation: newRotation } : i));
-    const item = items.find((i) => i.id === itemId);
-    if (item) debouncedSave(itemId, item.type, { rotation: newRotation });
-  };
-
-  const handleScaleChange = (itemId: string, newScale: number) => {
-    setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, scale: newScale } : i));
-    const item = items.find((i) => i.id === itemId);
-    if (item) debouncedSave(itemId, item.type, { scale: newScale });
-  };
-
-  const debouncedContentSave = useCallback(
-    debounce((itemId: string, content: string) => {
-      updateNoteContent(itemId, content).catch((e) => console.error("Failed to save content:", e));
-    }, 800), []
-  );
-
-  const onContentChange = (itemId: string, newContent: string) => {
-    setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, content: newContent } : i));
-    debouncedContentSave(itemId, newContent);
-  };
-      case "note":
-        return {
-          id: row.id, type: "note",
-          content: row.content, color: row.color,
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-        };
-      case "card":
-        return {
-          id: row.id, type: "card",
-          content: row.content,
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-          image: { uri: row.image_url },
-        };
-      case "sticker":
-        return {
-          id: row.id, type: "sticker", content: "",
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-          sticker: row.image_url,
-        };
-      case "gif":
-        return {
-          id: row.id, type: "gif", content: "",
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-          sticker: row.giphy_url,
-        };
-      case "photo":
-        return {
-          id: row.id, type: "photo", content: "",
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-          sticker: row.image_url,
-        };
-      case "music":
-        return {
-          id: row.id, type: "music",
-          content: row.track_name ?? "",
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-          sticker: row.album_image_url,
-          spotifyUrl: row.spotify_url,
-          artistName: row.artist_name,
-        };
-      case "custom_card":
-        return {
-          id: row.id, type: "custom_card", content: "",
-          x: row.x, y: row.y,
-          rotation: row.rotation, scale: row.scale,
-          cardColor: row.custom_cards?.card_color,
-          cardItems: row.custom_cards?.card_items,
-          cardId: row.card_id,
-        };
-      default:
-        return null;
-    }
-  }
-
-  // ─────────────────────────────────────────────
-  // Add items
-  // ─────────────────────────────────────────────
-
-  const addNote = async (color: string) => {
-    try {
-      const newItem = await addNoteService(id, color);
-      setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
-    } catch (e) { console.error("Failed to add note:", e); }
-    setActiveTool(null);
-  };
-
-  const addSticker = async (stickerKey: string) => {
-   try {
-    const newItem = await addStickerService(id, stickerKey);
-    setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
-  } catch (e) { console.error("Failed to add sticker:", e); }
-  setActiveTool(null);
-  };
-
-  const addGif = async (gifUrl: string) => {
-    try {
-      const newItem = await addGifService(id, gifUrl);
-      setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
-    } catch (e) { console.error("Failed to add gif:", e); }
-    setActiveTool(null);
-  };
-
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") { alert("Permission required."); return; }
-    const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.8, mediaTypes: ImagePicker.MediaTypeOptions.Images });
-    if (!res.canceled && res.assets[0]?.uri) {
-      try {
-        const newItem = await addPhotoService(id, res.assets[0].uri);
-        setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
-      } catch (e) { console.error("Failed to add photo:", e); }
-      setActiveTool(null);
-    }
-  };
-
-  const deleteItem = async (itemId: string) => {
-    const item = items.find((i) => i.id === itemId);
-  // ─────────────────────────────────────────────
-  // Spotify
-  // ─────────────────────────────────────────────
-
-  async function searchSpotify(query: string) {
-    if (!query.trim()) {
-      setTracks([]);
-      return;
-    }
-
-    const clientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
-    const clientSecret = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_SECRET;
-
-    setMusicLoading(true);
-    try {
-      const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: "Basic " + btoa(`${clientId}:${clientSecret}`),
-        },
-        body: "grant_type=client_credentials",
-      });
-      const tokenData = await tokenRes.json();
-
-      const res = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`,
-        { headers: { Authorization: `Bearer ${tokenData.access_token}` } }
-      );
-      const data = await res.json();
-      setTracks(data.tracks?.items ?? []);
-    } catch (err) {
-      console.error("Spotify error:", err);
-    } finally {
-      setMusicLoading(false);
-    }
-  }
-
-  async function addMusicItem(track: any) {
-    try {
-      const newItem = await addMusicService(
-        folderId,
-        track.external_urls.spotify,
-        track.name,
-        track.artists?.[0]?.name ?? "",
-        track.album.images[0]?.url ?? ""
-      );
-      setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
-    } catch (e) {
-      console.error("Failed to add music item:", e);
-    }
-    setActiveTool(null);
-    setTracks([]);
-    setMusicSearch("");
-  }
-
-  // ─────────────────────────────────────────────
-  // Delete + position
-  // ─────────────────────────────────────────────
-
-  const deleteItem = async (id: string) => {
-    const item = items.find((i) => i.id === id);
-    if (!item) return;
-    setItems((prev) => prev.filter((i) => i.id !== itemId));
-    try {
-      await deleteItemService(item.type, itemId);
-    } catch (e) {
-      console.error("Failed to delete:", e);
-      setItems((prev) => [...prev, item]);
-    }
-  };
-
-  async function searchGifs(query: string) {
-    const apiKey = process.env.EXPO_PUBLIC_GIPHY_KEY;
-    const url = query
-      ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${query}&limit=20`
-      : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=20`;
-    const res = await fetch(url);
-    const json = await res.json();
-    setGifs(json.data || []);
-  }
 
   return (
-    <View style={styles.container}>
-      {/* ── Banner ── */}
-      <ImageBackground
-        source={require("../../assets/images/RED swirl subtle.png")}
-        style={styles.topBanner}
-        imageStyle={{ resizeMode: "cover" }}
+    <View style={styles.root}>
+      <TouchableOpacity
+        style={[styles.settingsButton, { left: undefined, right: 20, alignItems: 'flex-end' }]}
+        onPress={() => router.push('/settings' as any)}
       >
-        <TouchableOpacity onPress={() => router.back()} style={styles.bannerBack}>
-          <Text style={styles.bannerBackText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.bannerTitle} numberOfLines={1}>{title}</Text>
-        {!isEditing && (
-          <TouchableOpacity style={styles.bannerEditButton} onPress={() => setIsEditing(true)}>
-            <Text style={styles.bannerEditText}>Edit</Text>
-          </TouchableOpacity>
-        )}
-      </ImageBackground>
+        <View style={styles.settingsCircle}>
+          <Settings {...({ size: 22, color: iconColor } as SettingsIconProps)} />
+        </View>
+      </TouchableOpacity>
 
-      {/* ── Torn edge ── */}
-      <View style={styles.tornEdgeContainer}>
-        <Svg height="28" width="100%">
-          <Path
-            d="M0,10 Q20,0 40,20 Q60,0 80,20 Q100,0 120,20 Q140,0 160,20 Q180,0 200,20 Q220,0 240,20 Q260,0 280,20 Q300,0 320,20 Q340,0 360,20 Q380,0 400,20 Q420,0 440,20 Q460,0 480,20 Q500,0 520,20 Q540,0 560,20 Q580,0 600,20 Q620,0 640,20 Q660,0 680,20 Q700,0 720,20 Q740,0 760,20 Q780,0 800,20 Q820,0 840,20 Q860,0 880,20 Q900,0 920,20 Q940,0 960,20 Q980,0 1000,20 L1000,28 L0,28 Z"
-            fill="#F0E8D8"
-          />
-        </Svg>
+      <View style={styles.creamPanel}>
+        <View style={styles.outerCard}>
+          <View style={styles.innerCard}>
+            <View style={styles.avatarCircle}>
+        {avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={{ width: 72, height: 72, borderRadius: 36 }} />
+         ) : (
+          <Text style={styles.avatarEmoji}>🌷</Text>
+             )}
+          </View>
+            <Text style={styles.name}>{username || name}</Text>
+            <View style={styles.statsRow}>
+              <Text style={styles.statsText}>
+                <Text style={styles.statsNumber}>{profileStats.entries}</Text> Entries
+              </Text>
+              <Text style={styles.statsText}>
+                <Text style={styles.statsNumber}>{profileStats.friends}</Text> Friends
+              </Text>
+              <Text style={styles.statsText}>
+                <Text style={styles.statsNumber}>{profileStats.folders}</Text> Folders
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.dividerRow}>
+          <Text style={styles.dividerFlourish}>❧</Text>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerFlourish}>❧</Text>
+        </View>
+
+        <ScrollView
+          style={styles.analyticsScroll}
+          contentContainerStyle={styles.analyticsScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Persona card */}
+          <View style={styles.userCard}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+              <View style={{ backgroundColor: '#F2E8D0', borderRadius: 8, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 20 }}>{persona.emoji}</Text>
+              </View>
+              <Text style={styles.userName}>{persona.title}</Text>
+            </View>
+            <Text style={styles.userMessage}>{persona.bio}</Text>
+          </View>
+
+          {/* YOUR MEMORY THEMES */}
+          <Text style={[styles.sectionLabel, { marginTop: 8, marginHorizontal: 20 }]}>YOUR MEMORY THEMES</Text>
+          <View style={styles.statsCard}>
+            <View style={styles.tagsRow}>
+              {topTags.length > 0 ? (
+                topTags.map((tag, index) => (
+                  <View
+                    key={tag.tag_id}
+                    style={[styles.tagStyle, { backgroundColor: tagColors[index % tagColors.length] }]}
+                  >
+                    <Text style={styles.tagText}>{tag.name}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={{ color: '#a07050', fontSize: 13, paddingVertical: 6 }}>
+                  No tags yet
+                </Text>
+              )}
+            </View>
+          </View>
+
+          {/* WHAT FILLS YOUR BOARDS */}
+          <Text style={[styles.sectionLabel, { marginTop: 12 }]}>WHAT FILLS YOUR BOARDS</Text>
+          <View style={styles.analyticsCard}>
+            <View style={styles.barRow}>
+              <Text style={styles.barLabel}>Photos</Text>
+              <View style={styles.barTrack}>
+                <Animated.View style={[styles.barFill, {
+                  backgroundColor: '#4A7568',
+                  width: barAnimPhotos.interpolate({ inputRange: [0, 1], outputRange: [0, trackWidth * (photoPercent / 100)] }),
+                }]} />
+              </View>
+              <Text style={styles.barPercent}>{photoPercent}%</Text>
+            </View>
+
+            <View style={styles.barRow}>
+              <Text style={styles.barLabel}>Stickers</Text>
+              <View style={styles.barTrack}>
+                <Animated.View style={[styles.barFill, {
+                  backgroundColor: '#7B1D1D',
+                  width: barAnimStickers.interpolate({ inputRange: [0, 1], outputRange: [0, trackWidth * (stickerPercent / 100)] }),
+                }]} />
+              </View>
+              <Text style={styles.barPercent}>{stickerPercent}%</Text>
+            </View>
+
+            <View style={styles.barRow}>
+              <Text style={styles.barLabel}>Notes</Text>
+              <View style={styles.barTrack}>
+                <Animated.View style={[styles.barFill, {
+                  backgroundColor: '#8B6914',
+                  width: barAnimNotes.interpolate({ inputRange: [0, 1], outputRange: [0, trackWidth * (notesPercent / 100)] }),
+                }]} />
+              </View>
+              <Text style={styles.barPercent}>{notesPercent}%</Text>
+            </View>
+
+            <View style={styles.barRow}>
+              <Text style={styles.barLabel}>Templates</Text>
+              <View style={styles.barTrack}>
+                <Animated.View style={[styles.barFill, {
+                  backgroundColor: '#6B5B45',
+                  width: barAnimTemplates.interpolate({ inputRange: [0, 1], outputRange: [0, trackWidth * (templatesPercent / 100)] }),
+                }]} />
+              </View>
+              <Text style={styles.barPercent}>{templatesPercent}%</Text>
+            </View>
+          </View>
+
+          {/* CARDS BY MONTH */}
+          <Text style={[styles.sectionLabel, { marginTop: 8 }]}>CARDS BY MONTH</Text>
+          <View style={[styles.analyticsCard, { marginTop: 8 }]}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.heatmapScrollContent}>
+              <View>
+                <View style={styles.monthLabelsRow}>
+                  {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'].map((m, index) => (
+                    <Text key={`${m}-${index}`} style={[styles.monthLabel, { marginLeft: index === 0 ? 28 : 0 }]}>{m}</Text>
+                  ))}
+                </View>
+                <View style={styles.heatmapRowsWrapper}>
+                  <View style={styles.heatmapRow}>
+                    <Text style={styles.heatmapRowLabel}>created</Text>
+                    {cardsByMonth.map((month, idx) => (
+                      <View key={`c-${idx}`} style={{ width: 18, height: 18, borderRadius: 3, margin: 1, backgroundColor: getMonthColor(month.created) }} />
+                    ))}
+                  </View>
+                </View>
+                <View style={styles.legendRow}>
+                  <Text style={styles.legendText}>fewer</Text>
+                  {['#F5EDE0', '#D4A099', '#A84848', '#7B1D1D'].map((c, i) => (
+                    <View key={i} style={{ width: 18, height: 18, borderRadius: 3, marginHorizontal: 1, backgroundColor: c }} />
+                  ))}
+                  <Text style={styles.legendText}>more</Text>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        </ScrollView>
       </View>
 
-      {/* ── Board ── */}
-      <ImageBackground
-        source={require("../../assets/images/layered-vintage-paper.png")}
-        style={styles.paperBackground}
-      >
-        {loading ? (
-          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <ActivityIndicator size="large" color="#6D1B12" />
-          </View>
-        ) : (
-          <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setActiveTool(null); }}>
-            <View style={styles.corkboardFrame} onLayout={(e) => setBoardSize(e.nativeEvent.layout)}>
-              <ScrollView style={styles.board} contentContainerStyle={styles.boardContent} scrollEnabled={!isEditing}>
-                <Svg width="100%" height="1500" style={styles.absoluteFull}>
-                  {Array.from({ length: 60 }).map((_, i) => (
-                    <Circle key={i} cx={(i % 10) * 40 + 20} cy={Math.floor(i / 10) * 200 + 50} r={1.2} fill="#8B6A3E" opacity={0.12} />
-                  ))}
-                </Svg>
-
-                {items.map((item, idx) => (
-                  <DraggableItem
-                    key={item.id}
-                    item={item}
-                    deleteItem={deleteItem}
-                    isEditing={isEditing}
-                    selectedId={selectedId}
-                    setSelectedId={setSelectedId}
-                    onPositionChange={handlePositionChange}
-                    onRotationChange={handleRotationChange}
-                    onScaleChange={handleScaleChange}
-                    accentColor={ACCENT_COLORS[idx % ACCENT_COLORS.length]}
-                    onContentChange={onContentChange}
-                    boardWidth={boardSize.width}
-                    boardHeight={boardSize.height}
-                  />
-                ))}
-              </ScrollView>
-            </View>
-          </TouchableWithoutFeedback>
-        )}
-
-        {/* ── Edit mode footer ── */}
-        {isEditing && (
-          <View style={styles.footerWrapper}>
-
-            {/* ── Tool panel (only when no item selected) ── */}
-            {activeTool && !selectedId && (
-              <View style={styles.panel}>
-                <View style={styles.panelHeader}>
-                  <Text style={styles.panelTitle}>{activeTool.toUpperCase()}</Text>
-                  <TouchableOpacity onPress={() => setActiveTool(null)}>
-                    <Ionicons name="close-circle" size={22} color="#5A390E" />
-                  </TouchableOpacity>
-                </View>
-
-                {/* NOTE */}
-                {activeTool === "note" && (
-                  <View style={styles.colorRow}>
-                    {NOTE_COLORS.map((c) => (
-                      <TouchableOpacity key={c} style={[styles.colorDot, { backgroundColor: c }]} onPress={() => addNote(c)} />
-                    ))}
-                  </View>
-                )}
-
-                {/* STICKER */}
-                {activeTool === "sticker" && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stickerRow}>
-                    {availableStickers.map((s) => (
-                      <TouchableOpacity key={s.id} onPress={() => addSticker(s.id)}>
-                        <Image source={{ uri: s.image_url }} style={styles.stickerThumb} />
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                )}
-
-                {/* PHOTO */}
-                {activeTool === "photo" && (
-                  <TouchableOpacity style={styles.panelUploadArea} onPress={pickImage}>
-                    <Ionicons name="cloud-upload-outline" size={24} color="#8B7355" />
-                    <Text style={styles.uploadText}>Upload from Camera Roll</Text>
-                  </TouchableOpacity>
-                )}
-
-                {/* GIF */}
-                {activeTool === "gif" && (
-                  <View>
-                    <TextInput
-                      style={styles.searchInput}
-                      placeholder="Search GIFs..."
-                      placeholderTextColor="#9a7a60"
-                      value={gifSearch}
-                      onChangeText={(t) => { setGifSearch(t); searchGifs(t); }}
-                    />
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-                      {gifs.map((gif) => (
-                        <TouchableOpacity key={gif.id} onPress={() => addGif(gif.images.fixed_height.url)}>
-                          <Image source={{ uri: gif.images.fixed_height.url }} style={styles.gifThumb} />
-                        <TouchableOpacity
-                          key={gif.id}
-                          onPress={() => addGif(gif.images.fixed_height.url)}
-                        >
-                          <Image
-                            source={{ uri: gif.images.fixed_height.url }}
-                            style={styles.mediaThumb}
-                          />
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  </View>
-                )}
-
-                {/* MUSIC */}
-                {activeTool === "music" && (
-                  <View>
-                    <TextInput
-                      style={styles.searchInput}
-                      placeholder="Search a song..."
-                      placeholderTextColor="#9a7a60"
-                      value={musicSearch}
-                      onChangeText={(t) => { setMusicSearch(t); searchSpotify(t); }}
-                      returnKeyType="search"
-                      onSubmitEditing={() => searchSpotify(musicSearch)}
-                    />
-
-                    {musicLoading && (
-                      <ActivityIndicator
-                        size="small"
-                        color="#1DB954"
-                        style={{ marginVertical: 8 }}
-                      />
-                    )}
-
-                    {!musicLoading && tracks.length === 0 && musicSearch.length > 0 && (
-                      <Text style={styles.noResultsText}>No tracks found.</Text>
-                    )}
-
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={{ gap: 10, paddingVertical: 4 }}
-                    >
-                      {tracks.map((track) => (
-                        <TouchableOpacity
-                          key={track.id}
-                          style={styles.musicTrackCard}
-                          onPress={() => addMusicItem(track)}
-                        >
-                          {/* Album art */}
-                          <Image
-                            source={{ uri: track.album.images[0]?.url }}
-                            style={styles.musicAlbumArt}
-                          />
-                          {/* Spotify green dot */}
-                          <View style={styles.spotifyBadge}>
-                            <Ionicons name="musical-note" size={8} color="#fff" />
-                          </View>
-                          {/* Track info */}
-                          <Text style={styles.musicTrackName} numberOfLines={2}>
-                            {track.name}
-                          </Text>
-                          <Text style={styles.musicArtistName} numberOfLines={1}>
-                            {track.artists?.[0]?.name}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  </View>
-                )}
-              </View>
-            )}
-
-            <View style={styles.toolbar}>
-              {[
-                { tool: "note", icon: "document-text-outline" },
-                { tool: "photo", icon: "image-outline" },
-                { tool: "sticker", icon: "happy-outline" },
-                { tool: "gif", icon: "film-outline" },
-              ].map(({ tool, icon }) => (
-                <Pressable
-                  key={tool}
-                  style={[styles.toolButton, activeTool === tool && styles.activeToolBtn]}
-                  onPress={() => { setActiveTool(tool as any); if (tool === "gif") searchGifs(""); }}
-                >
-                  <Ionicons name={icon as any} size={24} color="#5A390E" />
-                </Pressable>
-              ))}
-              <View style={styles.toolbarDivider} />
-              <Pressable style={styles.doneButton} onPress={() => { setIsEditing(false); setActiveTool(null); }}>
-                <Ionicons name="checkmark" size={22} color="#F6E5CD" />
-              </Pressable>
-            </View>
-            {/* ── Toolbar: item selected vs default ── */}
-            {selectedId ? (
-              <View style={styles.toolbar}>
-                <TouchableOpacity
-                  style={styles.toolButton}
-                  onPress={() => {
-                    const item = items.find((i) => i.id === selectedId);
-                    if (item) handleScaleChange(selectedId, Math.max(0.5, (item.scale ?? 1) - 0.1));
-                  }}
-                >
-                  <Text style={styles.selBtnText}>−</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.toolButton}
-                  onPress={() => {
-                    const item = items.find((i) => i.id === selectedId);
-                    if (item) handleScaleChange(selectedId, Math.min(5, (item.scale ?? 1) + 0.1));
-                  }}
-                >
-                  <Text style={styles.selBtnText}>+</Text>
-                </TouchableOpacity>
-
-                <View style={styles.toolbarDivider} />
-
-                <TouchableOpacity
-                  style={styles.toolButton}
-                  onPress={() => {
-                    const item = items.find((i) => i.id === selectedId);
-                    if (item) handleRotationChange(selectedId, (item.rotation ?? 0) - 3);
-                  }}
-                >
-                  <Text style={styles.selBtnText}>↺</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.toolButton}
-                  onPress={() => {
-                    const item = items.find((i) => i.id === selectedId);
-                    if (item) handleRotationChange(selectedId, (item.rotation ?? 0) + 3);
-                  }}
-                >
-                  <Text style={styles.selBtnText}>↻</Text>
-                </TouchableOpacity>
-
-                <View style={styles.toolbarDivider} />
-
-                <TouchableOpacity
-                  style={styles.toolButton}
-                  onPress={() => {
-                    deleteItem(selectedId);
-                    setSelectedId(null);
-                  }}
-                >
-                  <Ionicons name="trash-outline" size={22} color="#7B1D1D" />
-                </TouchableOpacity>
-
-                <View style={styles.toolbarDivider} />
-
-                <TouchableOpacity style={styles.toolButton} onPress={() => setSelectedId(null)}>
-                  <Ionicons name="checkmark" size={24} color="#2C5F2E" />
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.toolbar}>
-                <Pressable
-                  style={[styles.toolButton, activeTool === "note" && styles.activeToolBtn]}
-                  onPress={() => setActiveTool("note")}
-                >
-                  <Ionicons name="document-text-outline" size={24} color="#5A390E" />
-                </Pressable>
-
-                <Pressable
-                  style={[styles.toolButton, activeTool === "photo" && styles.activeToolBtn]}
-                  onPress={() => setActiveTool("photo")}
-                >
-                  <Ionicons name="image-outline" size={24} color="#5A390E" />
-                </Pressable>
-
-                <Pressable
-                  style={[styles.toolButton, activeTool === "sticker" && styles.activeToolBtn]}
-                  onPress={() => setActiveTool("sticker")}
-                >
-                  <Ionicons name="happy-outline" size={24} color="#5A390E" />
-                </Pressable>
-
-                <Pressable
-                  style={[styles.toolButton, activeTool === "gif" && styles.activeToolBtn]}
-                  onPress={() => { setActiveTool("gif"); searchGifs(""); }}
-                >
-                  <Ionicons name="film-outline" size={24} color="#5A390E" />
-                </Pressable>
-
-                {/* ← Music button */}
-                <Pressable
-                  style={[styles.toolButton, activeTool === "music" && styles.activeToolBtn]}
-                  onPress={() => setActiveTool("music")}
-                >
-                  <Ionicons name="musical-notes-outline" size={24} color="#5A390E" />
-                </Pressable>
-
-                <View style={styles.toolbarDivider} />
-
-                <Pressable style={styles.doneButton} onPress={handleDone}>
-                  <Ionicons name="checkmark" size={22} color="#F6E5CD" />
-                </Pressable>
-              </View>
-            )}
-          </View>
-        )}
-      </ImageBackground>
-
-      <BottomNavbar />
+      <View style={styles.navbarContainer}>
+        <BottomNavbar />
+      </View>
     </View>
   );
 }
 
-// ─────────────────────────────────────────────
-// Styles
-// ─────────────────────────────────────────────
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F5F3EE" },
-
-  topBanner: {
-    height: 150,
-    width: "105%",
-    flexDirection: "row",
-    alignItems: "flex-end",
-    paddingTop: 40,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
+  root: { flex: 1, backgroundColor: '#7B1D1D' },
+  creamPanel: {
+    flex: 1, backgroundColor: '#EDE8D9',
+    borderTopLeftRadius: 40, borderTopRightRadius: 40,
+    marginTop: 160, paddingTop: 0, alignItems: 'center', zIndex: 1,
   },
-  bannerBack: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(246,229,205,0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 8,
-    marginBottom: 8,
+  mainContent: { flex: 1, alignItems: 'center', paddingTop: 150, paddingBottom: 80 },
+  settingsButton: { position: 'absolute', top: 50, right: 20, zIndex: 20, alignItems: 'flex-end' },
+  settingsCircle: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: '#EDE8D9',
+    alignItems: 'center', justifyContent: 'center', borderWidth: 1,
+    borderColor: '#C4504A33', shadowColor: '#C4504A', shadowOpacity: 0.08,
+    shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
   },
-  bannerBackText: { fontSize: 20, color: "#F6E5CD" },
-  bannerTitle: { flex: 1, fontSize: 24, fontWeight: "700", color: "#F6E5CD", fontFamily: "Calistoga", marginBottom: 8 },
-  bannerEditButton: { backgroundColor: "rgba(246,229,205,0.25)", borderRadius: 12, paddingVertical: 3, paddingHorizontal: 14, marginBottom: 10, alignItems: "center", justifyContent: "center", marginRight: 20 },
-  bannerEditText: { color: "#F6E5CD", fontSize: 13, fontWeight: "600" },
-
-  tornEdgeContainer: { marginTop: -18, zIndex: 10 },
-
-  paperBackground: { flex: 1, width: "100%" },
-
-  corkboardFrame: {
-    flex: 1,
-    borderWidth: 12,
-    borderColor: "#8B6A3E",
-    borderRadius: 24,
-    margin: 10,
-    overflow: "hidden",
-    backgroundColor: "rgba(139,106,62,0.04)",
-    marginTop: 16,
+  outerCard: {
+    backgroundColor: '#4F7C6E', borderRadius: 24, padding: 16,
+    width: width * 0.88, shadowColor: '#000', shadowOpacity: 0.08,
+    shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, zIndex: 2, marginTop: -50,
   },
-  board: { flex: 1 },
-  boardContent: { height: 1500, paddingTop: 20 },
-  absoluteFull: { position: "absolute", top: 0, left: 0 },
-
-  footerWrapper: {
-    position: "absolute",
-    bottom: 100,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    gap: 10,
-    zIndex: 100,
+  innerCard: {
+    backgroundColor: '#EDE8D9', borderRadius: 18, paddingVertical: 35,
+    paddingHorizontal: 24, alignItems: 'center', width: '100%',
+    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 }, position: 'relative',
   },
-
-  toolbar: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    backgroundColor: "#ede0cc",
-    height: 60,
-    width: "90%",
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: "#6D1B12",
-    elevation: 5,
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    paddingHorizontal: 8,
+  avatarCircle: {
+    width: 80, height: 80, borderRadius: 40, borderWidth: 4,
+    borderColor: '#7B1D1D', backgroundColor: '#EDE8D9',
+    alignItems: 'center', justifyContent: 'center', marginTop: -20,
+    marginBottom: 8, shadowColor: '#000', shadowOpacity: 0.10,
+    shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, zIndex: 3, alignSelf: 'center',
   },
-  toolButton: { padding: 10, borderRadius: 25 },
-  activeToolBtn: { backgroundColor: "rgba(90, 57, 14, 0.15)" },
-  toolbarDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: "rgba(109,27,18,0.25)",
-    marginHorizontal: 2,
+  avatarEmoji: { fontSize: 36, textAlign: 'center' },
+  name: { marginTop: 8, fontSize: 22, color: '#7B1D1D', fontFamily: 'serif', fontWeight: 'bold', textAlign: 'center' },
+  statsRow: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 13, width: '100%' },
+  statsText: { fontSize: 13, color: '#7B1D1D', textAlign: 'center', marginHorizontal: 12 },
+  statsNumber: { fontWeight: 'bold', color: '#7B1D1D', fontSize: 13 },
+  dividerRow: {
+    flexDirection: 'row', alignItems: 'center', marginTop: 8, marginBottom: 3,
+    width: width * 0.88, alignSelf: 'center', zIndex: 2,
   },
-  doneButton: {
-    backgroundColor: "#6D1B12",
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
+  dividerFlourish: { color: '#7B1D1D', fontSize: 20, marginHorizontal: 6 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#7B1D1D', opacity: 0.6 },
+  buttonStack: { marginTop: 8, gap: 10, width: '100%', alignItems: 'center', zIndex: 1 },
+  button: {
+    width: width * 0.72, paddingVertical: 14, borderRadius: 999,
+    backgroundColor: '#7B1D1D', shadowColor: '#000', shadowOpacity: 0.10,
+    shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
   },
-  selBtnText: { fontSize: 22, color: "#5A390E", fontWeight: "700", lineHeight: 26 },
-
-  panel: {
-    backgroundColor: "#ede0cc",
-    width: "92%",
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#d7c3ac",
+  buttonText: { color: '#FFF9F2', fontSize: 18, fontFamily: 'serif', textAlign: 'center', fontWeight: '600' },
+  navbarContainer: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 10 },
+  userCard: {
+    backgroundColor: '#7B1D1D', borderRadius: 8, padding: 18,
+    marginBottom: 15, marginHorizontal: 16, marginTop: 12, elevation: 3, width: 350,
   },
-  panelHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
+  statsOuter: { backgroundColor: '#7B1D1D', padding: 8, marginTop: 28, width: 300, alignItems: 'center', height: 120, borderRadius: 8 },
+  statsCard: {
+    backgroundColor: '#EDE8D9', borderColor: '#C8B89A', borderWidth: 0.5,
+    borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16,
+    width: width - 40, alignSelf: 'center', marginTop: 8,
   },
-  panelTitle: { fontWeight: "bold", fontSize: 12, color: "#5A390E", letterSpacing: 1 },
-
-  colorRow: { flexDirection: "row", justifyContent: "center", gap: 12 },
-  colorDot: { width: 36, height: 36, borderRadius: 18 },
-
-  stickerRow: { gap: 15, paddingVertical: 5 },
-  stickerThumb: { width: 60, height: 60, resizeMode: "contain" },
-
-  panelUploadArea: {
-    borderWidth: 1.5,
-    borderColor: "#C8B89A",
-    borderStyle: "dashed",
-    borderRadius: 12,
-    padding: 25,
-    alignItems: "center",
-    gap: 8,
+  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: 5, marginTop: 5, width: '100%' },
+  tagStyle: {
+    backgroundColor: '#557263', borderRadius: 10, paddingVertical: 6,
+    paddingHorizontal: 12, opacity: 0.75, alignItems: 'center', justifyContent: 'center',
   },
-  uploadText: { fontSize: 13, color: "#8B7355" },
-
-  searchInput: {
-    backgroundColor: "#F5EEE1",
-    borderWidth: 1,
-    borderColor: "#C8B89A",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-    color: "#3D2B1F",
+  userName: { fontSize: 16, color: '#f5f0e8', textAlign: 'left', fontWeight: '700' },
+  userMessage: { fontSize: 13, color: '#f5f0e8', textAlign: 'left', marginTop: 4 },
+  tagText: { color: '#FDFAF4', fontSize: 12, fontWeight: '500' },
+  sectionLabel: {
+    fontSize: 11, color: '#8B7355', fontWeight: '600', letterSpacing: 1,
+    textTransform: 'uppercase', marginHorizontal: 20, marginBottom: 6, alignSelf: 'flex-start',
   },
-
-  mediaThumb: { width: 90, height: 90, borderRadius: 8 },
-
-  // ── Music-specific styles ──
-  musicTrackCard: {
-    width: 80,
-    alignItems: "center",
-    position: "relative",
+  analyticsCard: {
+    backgroundColor: '#EDE8D9', borderRadius: 16, borderWidth: 0.5,
+    borderColor: '#C8B89A', padding: 16, marginHorizontal: 20, marginTop: 20, width: width - 40,
   },
-  musicAlbumArt: {
-    width: 76,
-    height: 76,
-    borderRadius: 10,
-    backgroundColor: "#d7c3ac",
+  barRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  barLabel: { width: 72, fontSize: 13, color: '#5A390E', fontWeight: '500', fontFamily: 'serif' },
+  barTrack: {
+    flex: 1, height: 10, borderRadius: 5,
+    backgroundColor: 'rgba(123,29,29,0.1)', marginHorizontal: 8, overflow: 'hidden',
   },
-  spotifyBadge: {
-    position: "absolute",
-    top: 4,
-    right: 4,
-    backgroundColor: "#1DB954",
-    borderRadius: 8,
-    width: 16,
-    height: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  musicTrackName: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: "#3D2B1F",
-    textAlign: "center",
-    marginTop: 5,
-    lineHeight: 13,
-  },
-  musicArtistName: {
-    fontSize: 9,
-    color: "#7A5C3E",
-    textAlign: "center",
-    marginTop: 2,
-  },
-  noResultsText: {
-    fontSize: 12,
-    color: "#9a7a60",
-    textAlign: "center",
-    marginVertical: 8,
-  },
+  barFill: { height: 10, borderRadius: 5 },
+  barPercent: { width: 36, fontSize: 12, color: '#5A390E', textAlign: 'right', fontFamily: 'serif' },
+  monthLabelsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  monthLabel: { fontSize: 10, color: '#8B7355', textAlign: 'center', flex: 1, fontFamily: 'serif' },
+  heatmapScrollContent: { paddingRight: 16 },
+  heatmapRowsWrapper: { marginTop: 4 },
+  heatmapRow: { flexDirection: 'row', alignItems: 'center' },
+  heatmapRowLabel: { fontSize: 9, color: '#8B7355', width: 36, fontFamily: 'serif' },
+  legendRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 8 },
+  legendText: { fontSize: 9, color: '#8B7355', marginHorizontal: 4, fontFamily: 'serif' },
+  analyticsScroll: { flex: 1, width: '100%' },
+  analyticsScrollContent: { paddingBottom: 120, alignItems: 'center' },
 });
