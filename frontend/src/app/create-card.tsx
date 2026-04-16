@@ -138,20 +138,20 @@ function TemplateCard({
     }}>
       <View style={[{
         padding: 12, minHeight: 90, justifyContent: "center",
-        alignItems: "center", gap: 4,
+        alignItems: "center"
       }, { backgroundColor: template.card_color || "#fffaf4" }]}>
         {previewTexts.slice(0, 2).map((t, i) => (
           <Text key={i} style={{ fontSize: 11, color: "#5A390E", fontStyle: "italic", textAlign: "center" }} numberOfLines={1}>{t}</Text>
         ))}
-        <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>
+        <View style={{ flexDirection: "row", marginTop: 4 }}>
           {previewStickers.slice(0, 3).map((s, i) => (
-            <Image key={i} source={{ uri: s }} style={{ width: 28, height: 28 }} resizeMode="contain" />
+            <Image key={i} source={{ uri: s }} style={{ width: 28, height: 28, marginLeft: i === 0 ? 0 : 6 }} resizeMode="contain" />
           ))}
         </View>
       </View>
       <View style={{
         flexDirection: "row", alignItems: "center", paddingHorizontal: 12,
-        paddingVertical: 10, borderTopWidth: 1, borderTopColor: "#ede0cc", gap: 8,
+        paddingVertical: 10, borderTopWidth: 1, borderTopColor: "#ede0cc"
       }}>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 12, fontWeight: "600", color: "#3a2010" }}>{template.name}</Text>
@@ -163,7 +163,7 @@ function TemplateCard({
         </View>
         <TouchableOpacity
           onPress={() => onApply(template)}
-          style={{ backgroundColor: "#7a1a1a", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}
+          style={{ backgroundColor: "#7a1a1a", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, marginLeft: 8 }}
         >
           <Text style={{ color: "#f5ede0", fontSize: 12, fontWeight: "600" }}>Use this</Text>
         </TouchableOpacity>
@@ -706,41 +706,33 @@ const handleApplyTemplate = async (template: TemplateMatch) => {
                   }}>
                     <Text style={styles.selBtnText}>−</Text>
                   </TouchableOpacity>
-
                   <TouchableOpacity style={styles.toolButton} onPress={() => {
                     const item = items.find((i) => i.id === selectedId);
                     if (item) handleScaleChange(selectedId, Math.min(5, (item.scale ?? 1) + 0.1));
                   }}>
                     <Text style={styles.selBtnText}>+</Text>
                   </TouchableOpacity>
-
                   <View style={styles.selDivider} />
-
                   <TouchableOpacity style={styles.toolButton} onPress={() => {
                     const item = items.find((i) => i.id === selectedId);
                     if (item) handleRotationChange(selectedId, (item.rotation ?? 0) - 3);
                   }}>
                     <Text style={styles.selBtnText}>↺</Text>
                   </TouchableOpacity>
-
                   <TouchableOpacity style={styles.toolButton} onPress={() => {
                     const item = items.find((i) => i.id === selectedId);
                     if (item) handleRotationChange(selectedId, (item.rotation ?? 0) + 3);
                   }}>
                     <Text style={styles.selBtnText}>↻</Text>
                   </TouchableOpacity>
-
                   <View style={styles.selDivider} />
-
                   <TouchableOpacity style={styles.toolButton} onPress={() => {
                     deleteItem(selectedId);
                     setSelectedId(null);
                   }}>
                     <Ionicons name="trash-outline" size={22} color="#7B1D1D" />
                   </TouchableOpacity>
-
                   <View style={styles.selDivider} />
-
                   <TouchableOpacity style={styles.toolButton} onPress={() => setSelectedId(null)}>
                     <Ionicons name="checkmark" size={24} color="#2C5F2E" />
                   </TouchableOpacity>
@@ -753,28 +745,24 @@ const handleApplyTemplate = async (template: TemplateMatch) => {
                   >
                     <Ionicons name="color-palette-outline" size={24} color="#5A390E" />
                   </Pressable>
-
                   <Pressable
                     style={[styles.toolButton, activeTool === "text" && styles.activeToolBtn]}
                     onPress={() => setActiveTool(activeTool === "text" ? null : "text")}
                   >
                     <Ionicons name="text-outline" size={24} color="#5A390E" />
                   </Pressable>
-
                   <Pressable
                     style={[styles.toolButton, activeTool === "sticker" && styles.activeToolBtn]}
                     onPress={() => setActiveTool(activeTool === "sticker" ? null : "sticker")}
                   >
                     <Ionicons name="happy-outline" size={24} color="#5A390E" />
                   </Pressable>
-
                   <Pressable
                     style={[styles.toolButton, activeTool === "gif" && styles.activeToolBtn]}
                     onPress={() => { setActiveTool(activeTool === "gif" ? null : "gif"); searchGifs(""); }}
                   >
                     <Ionicons name="film-outline" size={24} color="#5A390E" />
                   </Pressable>
-
                   <Pressable
                     style={[styles.toolButton, activeTool === "photo" && styles.activeToolBtn]}
                     onPress={() => setActiveTool(activeTool === "photo" ? null : "photo")}
@@ -800,7 +788,6 @@ const handleApplyTemplate = async (template: TemplateMatch) => {
               <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={styles.sendBtn}
                 onPress={() => router.push({
@@ -838,7 +825,7 @@ const styles = StyleSheet.create({
   },
   previewText: { fontSize: 18, color: "#5A390E" },
   footerWrapper: { position: "absolute", bottom: 80, left: 0, right: 0, alignItems: "center", gap: 10 },
-  toolbarRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 20 },
+  toolbarRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20 },
   toolbar: {
     flexDirection: "row", justifyContent: "space-around", alignItems: "center",
     backgroundColor: "#ede0cc", height: 50, flex: 1, borderRadius: 30,
@@ -862,7 +849,7 @@ const styles = StyleSheet.create({
   },
   panelHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
   panelTitle: { fontWeight: "bold", fontSize: 12, color: "#5A390E" },
-  colorRow: { flexDirection: "row", justifyContent: "center", gap: 15 },
+  colorRow: { flexDirection: "row", justifyContent: "center" }, // removed gap
   colorDot: { width: 35, height: 35, borderRadius: 18, borderWidth: 2, borderColor: "white" },
   activeColor: { borderColor: "#5A390E", transform: [{ scale: 1.1 }] },
   addTextButton: {
@@ -871,15 +858,15 @@ const styles = StyleSheet.create({
     borderRadius: 25, marginTop: 10, elevation: 3,
   },
   buttonText: { color: "#F8E5CF", fontSize: 16, fontWeight: "600", marginLeft: 8 },
-  stickerRow: { flexDirection: "row", gap: 12, paddingVertical: 4, paddingHorizontal: 8, alignItems: "center" },
+  stickerRow: { flexDirection: "row", paddingVertical: 4, paddingHorizontal: 8, alignItems: "center" }, // removed gap
   stickerThumb: { width: 55, height: 55, resizeMode: "contain" },
-  compactStrip: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 10, paddingVertical: 6 },
+  compactStrip: { flexDirection: "row", alignItems: "center", paddingHorizontal: 10, paddingVertical: 6 }, // removed gap
   stickerChip: {
     width: 48, height: 48, borderRadius: 12, backgroundColor: "#fffaf4",
     borderWidth: 1, borderColor: "#d7c3ac", alignItems: "center", justifyContent: "center",
   },
   stickerThumbSmall: { width: 34, height: 34, resizeMode: "contain" },
-  headerButtons: { flexDirection: "row", width: "85%", gap: 10, marginTop: 8 },
+  headerButtons: { flexDirection: "row", width: "85%", marginTop: 8 }, // removed gap
   cancelBtn: {
     flex: 1, paddingVertical: 10, borderRadius: 20, borderWidth: 1,
     borderColor: "rgba(139,26,26,0.3)", alignItems: "center", backgroundColor: "#ede0cc",
