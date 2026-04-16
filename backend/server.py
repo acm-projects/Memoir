@@ -466,6 +466,7 @@ def recommend_template():
             }), 200
 
         # ── Step 5: Copy best match into custom_cards ─────────────
+        # ── Step 5: Copy best match into custom_cards ─────────────
         best = matches[0]
 
         # Fetch sticker URL map from Supabase
@@ -474,7 +475,6 @@ def recommend_template():
             headers=HEADERS
         ).json()
 
-        # "balloon-sticker" → "https://..."
         sticker_url_map = {}
         for s in stickers_response:
             sticker_url_map[s['name']] = s['image_url']
@@ -483,18 +483,37 @@ def recommend_template():
         resolved_stickers = []
         for i in range(1, 6):
             raw = best.get(f"sticker_{i}")
-            if not raw:
+            if not raw or not raw.strip():
                 continue
-            s = json.loads(raw)
+            try:
+                s = json.loads(raw)
+            except (json.JSONDecodeError, TypeError):
+                continue
             sticker_id = s.get("sticker")
             s["image_url"] = sticker_url_map.get(sticker_id, "")
             resolved_stickers.append(json.dumps(s))
 
+        # Parse text fields safely
+        resolved_texts = []
+        for i in range(1, 6):
+            raw = best.get(f"text_{i}")
+            if not raw or not raw.strip():
+                continue
+            resolved_texts.append(raw)
+
+        # Parse gif fields safely
+        resolved_gifs = []
+        for i in range(1, 3):
+            raw = best.get(f"gif_{i}")
+            if not raw or not raw.strip():
+                continue
+            resolved_gifs.append(raw)
+
         # Build card_items JSON
         card_items = json.dumps({
-            "texts": [best.get(f"text_{i}") for i in range(1, 6) if best.get(f"text_{i}")],
+            "texts": resolved_texts,
             "stickers": resolved_stickers,
-            "gifs": [best.get(f"gif_{i}") for i in range(1, 3) if best.get(f"gif_{i}")]
+            "gifs": resolved_gifs,
         })
 
         custom_card_response = requests.post(
