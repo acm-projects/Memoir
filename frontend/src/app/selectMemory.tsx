@@ -17,7 +17,7 @@ const swirlyBg = require('../../assets/images/swirly-subtle.png');
 const paperTexture = require('../../assets/images/layered-vintage-paper.png');
 
 // ─ Store Flask URL in one place — swap to production URL when deploying
-const FLASK_URL = 'http://192.168.5.242:8000'; 
+const FLASK_URL = process.env.EXPO_PUBLIC_FLASK_URL;
 
 const FOLDER_COLORS = [
   { color: '#6B4E7D', stripColor: '#573D68' },
@@ -80,6 +80,7 @@ export default function SelectMemory() {
     return folder.name.toLowerCase().includes(search.trim().toLowerCase());
   });
 
+
   async function handleContinue() {
     if (!selectedFolderId) {
       alert('Please select a folder');
@@ -104,20 +105,22 @@ export default function SelectMemory() {
       return;
     }
 
-    // ── Step 2: Upload all images in parallel and create card_images rows ─
-    // CRITICAL: Path MUST be {user_id}/{card_id}/{filename}
-    // Flask backend locates images by this exact path for OCR
+    // ── Step 2: Upload all images in parallel ─────────────────────────────
     const uploadPromises = images.map(async (uri, i) => {
       const fileName = `image-${Date.now()}-${i}.jpg`;
-      const storagePath = `${user.id}/${card.id}/${fileName}`; 
+      const storagePath = `${user.id}/${card.id}/${fileName}`;
 
       try {
-        const response = await fetch(uri);
-        const blob = await response.blob();
+        const formData = new FormData();
+        formData.append('file', {
+          uri,
+          name: fileName,
+          type: 'image/jpeg',
+        } as any);
 
         const { error: uploadError } = await supabase.storage
           .from('cards')
-          .upload(storagePath, blob, { contentType: 'image/jpeg' });
+          .upload(storagePath, formData, { contentType: 'image/jpeg' });
 
         if (uploadError) {
           console.error(`Failed to upload image ${i}:`, uploadError);
@@ -131,7 +134,7 @@ export default function SelectMemory() {
         await supabase.from('card_images').insert({
           card_id: card.id,
           image_url: urlData.publicUrl,
-          order_index: i, // ─ correct column name (not "order")
+          order_index: i,
         });
 
       } catch (error) {
@@ -139,49 +142,79 @@ export default function SelectMemory() {
       }
     });
 
-    // was sequential for loop — now waits for ALL images to finish
-    // before navigating, so Flask has card_images rows to read for OCR
     await Promise.all(uploadPromises);
 
-    // ── Step 3: Navigate IMMEDIATELY to one-specific-card ────────────────
-    // Pass isProcessing: true so the card screen shows OCR loading state
-    // Flask /process-card runs in the BACKGROUND after navigation
-    // User can edit caption, title etc while OCR is processing
+    // ── Step 3: Confirm all card_images rows exist before calling Flask ───
+    let retries = 0;
+    let imagesReady = false;
+
+    while (retries < 5 && !imagesReady) {
+      const { data: checkImages } = await supabase
+        .from('card_images')
+        .select('image_url')
+        .eq('card_id', card.id);
+
+      console.log(`Retry ${retries}: found ${checkImages?.length ?? 0}/${images.length} images in DB`);
+
+      if (checkImages && checkImages.length === images.length) {
+        imagesReady = true;
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        retries++;
+      }
+    }
+
+    if (!imagesReady) {
+      console.warn('Images not fully in DB after retries — Flask may fail');
+    }
+
+    // ── Step 4: Fire XHR BEFORE navigating ───────────────────────────────
+    const cardId = card.id;
+    const userId = user.id;
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${FLASK_URL}/process-card`);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = 120000;
+
+    xhr.onload = () => {
+      try {
+        const result = JSON.parse(xhr.responseText);
+        if (result.success) {
+          console.log('Process card success:', result.results);
+        } else {
+          console.warn('Process card partial failure:', result.results?.errors);
+        }
+      } catch (e) {
+        console.error('Failed to parse Flask response:', e);
+      }
+    };
+
+    xhr.ontimeout = () => {
+      console.error('Flask /process-card timed out after 2 minutes');
+    };
+
+    xhr.onerror = () => {
+      console.error('Flask /process-card network error');
+    };
+
+    xhr.send(JSON.stringify({
+      card_id: cardId,
+      user_id: userId,
+      use_mock: false,
+    }));
+
+    // ── Step 5: Navigate after XHR is sent ───────────────────────────────
     setSaving(false);
     router.replace({
       pathname: '/one-specific-card',
       params: {
         id: card.id,
         title: card.title,
-        isProcessing: 'true', // ─ ADDED: tells one-specific-card OCR is running
-        fromUpload: 'true'
+        isProcessing: 'true',
+        fromUpload: 'true',
       },
     });
-
-    // ── Step 4: Call Flask /process-card in background AFTER navigation ───
-    // Fire and forget — one-specific-card polls Supabase for ocr_text
-    // Non-blocking: if Flask fails, card is still saved and usable
-    fetch(`${FLASK_URL}/process-card`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        card_id: card.id,
-        user_id: user.id,
-        use_mock: false,
-      }),
-    })
-      .then(res => res.json())
-      .then(result => {
-        if (result.success) {
-          console.log('Process card success:', result.results);
-        } else {
-          console.warn('Process card partial failure:', result.results?.errors);
-        }
-      })
-      .catch(error => {
-        // Flask being down does NOT block the user — card is already saved
-        console.error('Flask /process-card failed (non-blocking):', error);
-      });
   }
 
   const renderItem = ({ item, index }: { item: Folder; index: number }) => {

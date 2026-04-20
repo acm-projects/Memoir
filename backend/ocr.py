@@ -34,15 +34,30 @@ def update_card_ocr(card_id, ocr_text):
     return response
 
 def process_ocr(image_url):
-    # Download image
-    image_response = requests.get(image_url)
-    image = Image.open(io.BytesIO(image_response.content)).convert('RGB')
-    print(f"Image downloaded successfully from: {image_url}")
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
 
-    # ============================================================
-    # MOCK OCR - **TEJU** REPLACE THIS WITH REAL MODEL
+    image_response = requests.get(image_url)
+    print(f"Image fetch status: {image_response.status_code} for {image_url}", flush=True)
+    print(f"Content length: {len(image_response.content)} bytes", flush=True)
+    print(f"Response headers: {dict(image_response.headers)}", flush=True)
+
+    if image_response.status_code != 200:
+        raise Exception(f"Failed to download image: {image_response.status_code} — {image_url}")
+
+    if len(image_response.content) == 0:
+        raise Exception(f"Image downloaded but empty: {image_url}")
+
+    image_bytes = io.BytesIO(image_response.content)
+    image = Image.open(image_bytes).convert('RGB')
+    print(f"Image opened successfully, size: {image.size}", flush=True)
+
     import TrOCR_Inference as trocr
-    text, confidence = trocr.ocr(image)
+    result = trocr.ocr(image)
+
+    if isinstance(result, tuple):
+        text, confidence = result
+    else:
+        text = result
+
     return text
-    # ============================================================
-    # return "Mock OCR text - image downloaded successfully!"
