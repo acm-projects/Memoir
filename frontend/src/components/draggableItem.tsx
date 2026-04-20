@@ -8,14 +8,13 @@ import {
   TouchableOpacity,
   Keyboard,
   ImageBackground,
-  
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  runOnJS,
+  useSharedValue,
+  useAnimatedStyle,
+  runOnJS,
 } from "react-native-reanimated";
 
 export default function DraggableItem({
@@ -33,10 +32,10 @@ export default function DraggableItem({
   boardWidth = 0,
   boardHeight = 0,
 }: any) {
-  const router = useRouter();
-  const [isDragging, setIsDragging] = useState(false);
+  const router = useRouter();
+  const [isDragging, setIsDragging] = useState(false);
 
-  const isThumbtack = item.id.charCodeAt(0) % 2 === 0; // fix
+  const isThumbtack = item.id.charCodeAt(0) % 2 === 0;
   const pinSize = 14;
   const pinColor = accentColor;
 
@@ -50,27 +49,24 @@ export default function DraggableItem({
   const safeScale =
     typeof item.scale === "number" && !isNaN(item.scale) ? item.scale : 1;
 
-  const x = useSharedValue(safeX);
-  const y = useSharedValue(safeY);
-  const scale = useSharedValue(safeScale);
-  const rotation = useSharedValue(safeRotation);
+  const x = useSharedValue(safeX);
+  const y = useSharedValue(safeY);
+  const scale = useSharedValue(safeScale);
+  const rotation = useSharedValue(safeRotation);
 
-  const startX = useSharedValue(0);
-  const startY = useSharedValue(0);
-  const startRotation = useSharedValue(safeRotation);
-  const startScale = useSharedValue(safeScale);
+  const startX = useSharedValue(0);
+  const startY = useSharedValue(0);
+  const startRotation = useSharedValue(safeRotation);
+  const startScale = useSharedValue(safeScale);
 
-// Inside the component, after the shared values are declared:
-useEffect(() => {
-  scale.value = safeScale;
-}, [item.scale]);
+  useEffect(() => {
+    scale.value = safeScale;
+  }, [item.scale]);
 
-useEffect(() => {
-  rotation.value = safeRotation;
-}, [item.rotation]);
+  useEffect(() => {
+    rotation.value = safeRotation;
+  }, [item.rotation]);
 
-
-  //BACKEND: replace with actual data from backend API
   const COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
 
   const TEXT_COLORS = [
@@ -82,17 +78,18 @@ useEffect(() => {
     "#000000",
   ];
 
-  const isSelected = selectedId === item.id;
+  const isSelected = selectedId === item.id;
 
-  const ITEM_WIDTH = 160;
-  const ITEM_HEIGHT = 160;
-  const MIN_SCALE = 0.5;
-  const MAX_SCALE = 2.5;
+  const ITEM_WIDTH = 160;
+  const ITEM_HEIGHT = 160;
+  const MIN_SCALE = 0.5;
+  const MAX_SCALE = 2.5;
 
-  const clamp = (value: number, min: number, max: number) =>
-    Math.max(min, Math.min(value, max));
+  const clamp = (value: number, min: number, max: number) =>
+    Math.max(min, Math.min(value, max));
 
-  let zIndex = 1, scaleBoost = 1;
+  let zIndex = 1,
+    scaleBoost = 1;
   if (isDragging) {
     zIndex = 100;
     scaleBoost = 1.04;
@@ -114,14 +111,10 @@ useEffect(() => {
       let newX = startX.value + event.translationX;
       let newY = startY.value + event.translationY;
 
-      const scaledWidth = ITEM_WIDTH * scale.value;
-      const scaledHeight = ITEM_HEIGHT * scale.value;
-
-        // Clamp to board bounds if provided
-        if (boardWidth && boardHeight) {
-          newX = Math.max(0, Math.min(newX, boardWidth - ITEM_WIDTH));
-          newY = Math.max(0, Math.min(newY, boardHeight - ITEM_HEIGHT));
-        }
+      if (boardWidth && boardHeight) {
+        newX = Math.max(0, Math.min(newX, boardWidth - ITEM_WIDTH));
+        newY = Math.max(0, Math.min(newY, boardHeight - ITEM_HEIGHT));
+      }
 
       x.value = newX;
       y.value = newY;
@@ -161,7 +154,11 @@ useEffect(() => {
     })
     .onUpdate((event) => {
       if (!isEditing) return;
-      const nextScale = clamp(startScale.value * event.scale, MIN_SCALE, MAX_SCALE);
+      const nextScale = clamp(
+        startScale.value * event.scale,
+        MIN_SCALE,
+        MAX_SCALE
+      );
       scale.value = nextScale;
 
       const scaledWidth = ITEM_WIDTH * nextScale;
@@ -187,60 +184,84 @@ useEffect(() => {
       if (onPositionChange) runOnJS(onPositionChange)(safeId, x.value, y.value);
     });
 
-  const tap = Gesture.Tap().onEnd(() => {
-    runOnJS(setSelectedId)(selectedId === item.id ? null : item.id);
-  });
+  const tap = Gesture.Tap().onEnd(() => {
+    runOnJS(setSelectedId)(selectedId === item.id ? null : item.id);
+  });
 
-  const gesture = Gesture.Simultaneous(pan, rotationGesture, pinchGesture, tap);
+  const gesture = Gesture.Simultaneous(pan, rotationGesture, pinchGesture, tap);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    position: "absolute",
-    transform: [
-      { translateX: x.value },
-      { translateY: y.value },
-      { scale: scale.value * scaleBoost },
-      { rotate: `${rotation.value}deg` },
-    ],
-  }));
+  const animatedStyle = useAnimatedStyle(() => ({
+    position: "absolute",
+    transform: [
+      { translateX: x.value },
+      { translateY: y.value },
+      { scale: scale.value * scaleBoost },
+      { rotate: `${rotation.value}deg` },
+    ],
+  }));
 
   function renderPin() {
     if (!isThumbtack) {
       return (
-        <View style={{ position: "absolute", top: -10, alignSelf: "center", zIndex: 12 }}>
-          <View style={{
-            width: pinSize, height: pinSize, borderRadius: pinSize / 2,
-            backgroundColor: pinColor, alignItems: "center", justifyContent: "center",
-          }}>
-            <View style={{
-              width: 5, height: 5, borderRadius: 999,
-              backgroundColor: "rgba(255,255,255,0.7)",
-            }} />
+        <View
+          style={{ position: "absolute", top: -10, alignSelf: "center", zIndex: 12 }}
+        >
+          <View
+            style={{
+              width: pinSize,
+              height: pinSize,
+              borderRadius: pinSize / 2,
+              backgroundColor: pinColor,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <View
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: 999,
+                backgroundColor: "rgba(255,255,255,0.7)",
+              }}
+            />
           </View>
         </View>
       );
     }
 
     return (
-      <View style={{
-        position: "absolute", top: -10, alignSelf: "center",
-        zIndex: 12, alignItems: "center",
-      }}>
-        <View style={{
-          width: pinSize, height: pinSize,
-          borderRadius: pinSize / 2, backgroundColor: pinColor,
-        }} />
-        <View style={{
-          width: 3, height: 8, borderRadius: 2,
-          backgroundColor: pinColor, marginTop: -2,
-        }} />
+      <View
+        style={{
+          position: "absolute",
+          top: -10,
+          alignSelf: "center",
+          zIndex: 12,
+          alignItems: "center",
+        }}
+      >
+        <View
+          style={{
+            width: pinSize,
+            height: pinSize,
+            borderRadius: pinSize / 2,
+            backgroundColor: pinColor,
+          }}
+        />
+        <View
+          style={{
+            width: 3,
+            height: 8,
+            borderRadius: 2,
+            backgroundColor: pinColor,
+            marginTop: -2,
+          }}
+        />
       </View>
     );
   }
 
   function renderContent() {
     if (item.type === "card") {
-      console.log('rendering item, item:', item); // add this
-      console.log('rendering card, image:', item.image); // add this
       if (item.image) {
         return (
           <TouchableOpacity
@@ -266,7 +287,7 @@ useEffect(() => {
       }
       return (
         <View style={styles.card}>
-          <Text>{item.content}</Text>
+          <Text>{item.content ?? ""}</Text>
         </View>
       );
     }
@@ -287,8 +308,66 @@ useEffect(() => {
         );
       }
 
-      // fallback — sticker id with no URL (shouldn't happen if backend is working)
       return null;
+    }
+
+    if (item.type === "gif") {
+      return (
+        <Image
+          source={{ uri: item.sticker }}
+          style={{ width: 120, height: 120, borderRadius: 8 }}
+          resizeMode="contain"
+        />
+      );
+    }
+
+    if (item.type === "music") {
+      return (
+        <View style={{ width: 120, alignItems: "center" }}>
+          {item.sticker ? (
+            <Image
+              source={{ uri: item.sticker }}
+              style={{ width: 80, height: 80, borderRadius: 10 }}
+              resizeMode="cover"
+            />
+          ) : (
+            <View
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 10,
+                backgroundColor: "#d7c3ac",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            />
+          )}
+          <Text
+            style={{
+              fontSize: 10,
+              fontWeight: "600",
+              color: "#3D2B1F",
+              textAlign: "center",
+              marginTop: 5,
+              lineHeight: 13,
+            }}
+            numberOfLines={2}
+          >
+            {item.content ?? ""}
+          </Text>
+          <Text
+            style={{
+              fontSize: 9,
+              color: "#7A5C3E",
+              textAlign: "center",
+              marginTop: 2,
+            }}
+            numberOfLines={1}
+          >
+            {item.artistName ?? ""}
+          </Text>
+        </View>
+      );
     }
 
     if (item.type === "note") {
@@ -352,8 +431,8 @@ useEffect(() => {
       );
     }
 
-    return null;
-  }
+    return null;
+  }
 
   return (
     <GestureDetector gesture={gesture}>
@@ -365,90 +444,92 @@ useEffect(() => {
             style={styles.deleteBtnStyle}
             onPress={() => deleteItem(item.id)}
           >
-            <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 14 }}>✕</Text>
+            <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 14 }}>
+              ✕
+            </Text>
           </TouchableOpacity>
         )}
 
-        {renderContent()}
-      </Animated.View>
-    </GestureDetector>
-  );
+        {renderContent()}
+      </Animated.View>
+    </GestureDetector>
+  );
 }
 
 const styles = StyleSheet.create({
-  note: {
-    width: 140,
-    minHeight: 100,
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-  noteInput: {
-    flex: 1,
-    padding: 10,
-    fontSize: 13,
-    color: "#3a2010",
-    fontFamily: "Inter",
-    minHeight: 100,
-  },
-  card: {
-    width: 160,
-    height: 120,
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 12,
-  },
-  textContainer: {
-    padding: 10,
-    minWidth: 100,
-    maxWidth: 250,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  draggableText: {
-    fontSize: 24,
-    fontFamily: "Calistoga",
-    textAlign: "center",
-    minHeight: 40,
-    padding: 5,
-    borderWidth: 1,
-    borderColor: "rgba(90, 57, 14, 0.2)",
-    borderStyle: "dashed",
-    borderRadius: 5,
-  },
-  colorPicker: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#F8E5CF",
-    borderRadius: 20,
-    padding: 8,
-    marginTop: 6,
-    borderWidth: 1,
-    borderColor: "#d7c3ac",
-  },
-  colorDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "white",
-  },
-  activeColor: {
-    borderColor: "#5A390E",
-    transform: [{ scale: 1.2 }],
-  },
-  deleteBtnStyle: {
-    position: "absolute",
-    top: -8,
-    right: -8,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: "#7B1D1D",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 20,
-    borderWidth: 2,
-    borderColor: "#fff",
-  },
+  note: {
+    width: 140,
+    minHeight: 100,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  noteInput: {
+    flex: 1,
+    padding: 10,
+    fontSize: 13,
+    color: "#3a2010",
+    fontFamily: "Inter",
+    minHeight: 100,
+  },
+  card: {
+    width: 160,
+    height: 120,
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 12,
+  },
+  textContainer: {
+    padding: 10,
+    minWidth: 100,
+    maxWidth: 250,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  draggableText: {
+    fontSize: 24,
+    fontFamily: "Calistoga",
+    textAlign: "center",
+    minHeight: 40,
+    padding: 5,
+    borderWidth: 1,
+    borderColor: "rgba(90, 57, 14, 0.2)",
+    borderStyle: "dashed",
+    borderRadius: 5,
+  },
+  colorPicker: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#F8E5CF",
+    borderRadius: 20,
+    padding: 8,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: "#d7c3ac",
+  },
+  colorDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "white",
+  },
+  activeColor: {
+    borderColor: "#5A390E",
+    transform: [{ scale: 1.2 }],
+  },
+  deleteBtnStyle: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#7B1D1D",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 20,
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
 });
