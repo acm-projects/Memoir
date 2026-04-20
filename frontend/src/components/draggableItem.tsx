@@ -156,7 +156,11 @@ export default function DraggableItem({
     })
     .onUpdate((event) => {
       if (!isEditing) return;
-      const nextScale = clamp(startScale.value * event.scale, MIN_SCALE, MAX_SCALE);
+      const nextScale = clamp(
+        startScale.value * event.scale,
+        MIN_SCALE,
+        MAX_SCALE
+      );
       scale.value = nextScale;
 
       const scaledWidth = ITEM_WIDTH * nextScale;
@@ -283,7 +287,7 @@ export default function DraggableItem({
       }
       return (
         <View style={styles.card}>
-          <Text>{item.content}</Text>
+          <Text>{item.content ?? ""}</Text>
         </View>
       );
     }
@@ -315,6 +319,65 @@ export default function DraggableItem({
       }
 
       return null;
+    }
+
+    if (item.type === "gif") {
+      return (
+        <Image
+          source={{ uri: item.sticker }}
+          style={{ width: 120, height: 120, borderRadius: 8 }}
+          resizeMode="contain"
+        />
+      );
+    }
+
+    if (item.type === "music") {
+      return (
+        <View style={{ width: 120, alignItems: "center" }}>
+          {item.sticker ? (
+            <Image
+              source={{ uri: item.sticker }}
+              style={{ width: 80, height: 80, borderRadius: 10 }}
+              resizeMode="cover"
+            />
+          ) : (
+            <View
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 10,
+                backgroundColor: "#d7c3ac",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            />
+          )}
+          <Text
+            style={{
+              fontSize: 10,
+              fontWeight: "600",
+              color: "#3D2B1F",
+              textAlign: "center",
+              marginTop: 5,
+              lineHeight: 13,
+            }}
+            numberOfLines={2}
+          >
+            {item.content ?? ""}
+          </Text>
+          <Text
+            style={{
+              fontSize: 9,
+              color: "#7A5C3E",
+              textAlign: "center",
+              marginTop: 2,
+            }}
+            numberOfLines={1}
+          >
+            {item.artistName ?? ""}
+          </Text>
+        </View>
+      );
     }
 
     if (item.type === "note") {
