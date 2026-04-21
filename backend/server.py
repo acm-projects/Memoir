@@ -65,6 +65,79 @@ def process_card():
         user_id = data['user_id']
         use_mock = data.get('use_mock', True)
 
+        card_title = "Unknown"
+        card_caption = ""
+
+        results = {
+            'card_id': card_id,
+            'ocr': None,
+            'tagging': None,
+            'embedding': None,
+            'errors': []
+        }
+
+        # ── Step 1: OCR ──────────────────────────────────────────
+        try:
+            card_images = get_card_images(card_id)
+            if not card_images:
+                results['errors'].append('OCR: No images found')
+            else:
+                all_ocr_text = []
+                for image in card_images:
+                    ocr_result = process_ocr(image['image_url'])
+                    if isinstance(ocr_result, tuple):
+                        text, confidence = ocr_result
+                    else:
+                        text = ocr_result
+                    all_ocr_text.append(text)
+                combined_ocr_text = "\n".join(all_ocr_text)
+                update_card_ocr(card_id, combined_ocr_text)
+                results['ocr'] = {'success': True, 'images_processed': len(card_images), 'ocr_text': combined_ocr_text}
+        except Exception as e:
+            results['errors'].append(f'OCR failed: {str(e)}')
+
+        # ── Step 2: Tagging ──────────────────────────────────────
+        try:
+            card_response = requests.get(
+                f"{SUPABASE_URL}/rest/v1/cards?id=eq.{card_id}&select=ocr_text,caption,title",
+                headers=HEADERS
+            ).json()
+            if card_response:
+                card = card_response[0]
+                card_title = card.get('title', 'Untitled Card')
+                card_caption = card.get('caption', '')
+                tags = generate_tags(card.get('ocr_text', ''), card_caption, card_title, use_mock)
+                saved_tags = save_tags_to_supabase(card_id, user_id, tags)
+                results['tagging'] = {'success': True, 'tags': [t['name'] for t in saved_tags]}
+        except Exception as e:
+            results['errors'].append(f'Tagging failed: {str(e)}')
+
+        # ── Step 3: Embedding ────────────────────────────────────
+        try:
+            combined_text, card = get_card_text(card_id)
+            if combined_text:
+                embedding = generate_embedding(combined_text)
+                save_embedding(card_id, embedding)
+                results['embedding'] = {'success': True, 'dimensions': len(embedding)}
+        except Exception as e:
+            results['errors'].append(f'Embedding failed: {str(e)}')
+
+        return jsonify({
+            'success': len(results['errors']) == 0,
+            'card_id': card_id,
+            'card_name': card_title,
+            'caption': card_caption,
+            'results': results
+        }), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    try:
+        data = request.json
+        card_id = data['card_id']
+        user_id = data['user_id']
+        use_mock = data.get('use_mock', True)
+
         # Initialize placeholders for the response
         card_title = "Unknown"
         card_caption = ""

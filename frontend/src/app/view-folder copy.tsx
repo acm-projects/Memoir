@@ -26,7 +26,7 @@ const CARD_WIDTH = (SCREEN_WIDTH - 32 - CARD_MARGIN) / 2; // 16px padding each s
 
 // ─── Store Flask URL in one place so it can be swapped for production ─────────
 
-const FLASK_URL = 'http://192.168.5.242:8000';
+const FLASK_URL = process.env.EXPO_PUBLIC_FLASK_URL;
 
 interface Folder {
   id: string;

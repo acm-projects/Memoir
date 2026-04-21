@@ -30,7 +30,7 @@ export default function DraggableItem({
   accentColor,
   onContentChange,
   boardWidth = 0,
-  boardHeight = 0,
+  boardHeight = 1500,
 }: any) {
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
@@ -112,8 +112,10 @@ export default function DraggableItem({
       let newY = startY.value + event.translationY;
 
       if (boardWidth && boardHeight) {
-        newX = Math.max(0, Math.min(newX, boardWidth - ITEM_WIDTH));
-        newY = Math.max(0, Math.min(newY, boardHeight - ITEM_HEIGHT));
+        const scaledW = ITEM_WIDTH * scale.value;
+        const scaledH = ITEM_HEIGHT * scale.value;
+        newX = Math.max(0, Math.min(newX, boardWidth - scaledW));
+        newY = Math.max(0, Math.min(newY, boardHeight - scaledH));
       }
 
       x.value = newX;
@@ -203,9 +205,7 @@ export default function DraggableItem({
   function renderPin() {
     if (!isThumbtack) {
       return (
-        <View
-          style={{ position: "absolute", top: -10, alignSelf: "center", zIndex: 12 }}
-        >
+        <View style={{ position: "absolute", top: -10, alignSelf: "center", zIndex: 12 }}>
           <View
             style={{
               width: pinSize,
@@ -289,6 +289,16 @@ export default function DraggableItem({
         <View style={styles.card}>
           <Text>{item.content ?? ""}</Text>
         </View>
+      );
+    }
+
+    if (item.type === "gif") {
+      return (
+        <Image
+          source={{ uri: item.sticker }}
+          style={{ width: 120, height: 120, borderRadius: 8 }}
+          resizeMode="contain"
+        />
       );
     }
 
@@ -436,21 +446,23 @@ export default function DraggableItem({
 
   return (
     <GestureDetector gesture={gesture}>
+      {/* ✅ FIX: GestureDetector requires exactly one child.
+          Wrap all children (pin, delete button, content) in a single View. */}
       <Animated.View style={[animatedStyle, { zIndex }]}>
-        {renderPin()}
+        <View>
+          {renderPin()}
 
-        {isEditing && (
-          <TouchableOpacity
-            style={styles.deleteBtnStyle}
-            onPress={() => deleteItem(item.id)}
-          >
-            <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 14 }}>
-              ✕
-            </Text>
-          </TouchableOpacity>
-        )}
+          {isEditing && (
+            <TouchableOpacity
+              style={styles.deleteBtnStyle}
+              onPress={() => deleteItem(item.id)}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 14 }}>✕</Text>
+            </TouchableOpacity>
+          )}
 
-        {renderContent()}
+          {renderContent()}
+        </View>
       </Animated.View>
     </GestureDetector>
   );
