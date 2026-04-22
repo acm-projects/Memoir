@@ -142,7 +142,9 @@ function TemplateCard({
         alignItems: "center", gap: 4,
       }, { backgroundColor: template.card_color || "#fffaf4" }]}>
         {previewTexts.slice(0, 2).map((t, i) => (
-          <Text key={i} style={{ fontSize: 11, color: "#5A390E", fontStyle: "italic", textAlign: "center" }} numberOfLines={1}>{t}</Text>
+          <Text key={i} style={{ fontSize: 11, color: "#5A390E", fontStyle: "italic", textAlign: "center" }} numberOfLines={1}>
+            {String(t ?? "")}
+          </Text>
         ))}
         <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>
           {previewStickers.slice(0, 3).map((s, i) => (
@@ -155,10 +157,12 @@ function TemplateCard({
         paddingVertical: 10, borderTopWidth: 1, borderTopColor: "#ede0cc", gap: 8,
       }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: "#3a2010" }}>{template.name}</Text>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: "#3a2010" }}>
+            {String(template.name ?? "")}
+          </Text>
           {template.similarity !== undefined && (
             <Text style={{ fontSize: 10, color: "#9a7a60", marginTop: 1 }}>
-              {Math.round(template.similarity * 100)}% match
+              {`${Math.round(template.similarity * 100)}% match`}
             </Text>
           )}
         </View>
@@ -193,7 +197,7 @@ function AIChatModal({
       text: "Hey! I'm your card assistant ✨ Tell me about the card you want to make — who's it for, what's the occasion?",
     },
   ]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(""); // input state for user message
   const [loading, setLoading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
@@ -275,7 +279,7 @@ function AIChatModal({
         <View style={{ maxWidth: "78%" }}>
           <View style={[styles.bubbleContent, isUser ? styles.userBubbleContent : styles.assistantBubbleContent]}>
             <Text style={[styles.bubbleText, isUser ? styles.userBubbleText : styles.assistantBubbleText]}>
-              {item.text}
+              {String(item.text ?? "")}
             </Text>
           </View>
           {!isUser && item.templatePreview && (
@@ -590,9 +594,12 @@ export default function CreateCard() {
         onSend={() => {
           setSendModalVisible(false);
           router.push({
-            pathname: "/send-card",
-            params: { cardId: cardId ?? "" },
-          } as any);
+           pathname: "/send-card",
+           params: {
+          cardColor: cardColor,
+          cardItems: JSON.stringify(items),
+          },
+  } as any);
         }}
       />
 

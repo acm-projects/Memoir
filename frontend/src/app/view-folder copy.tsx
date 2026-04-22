@@ -240,14 +240,14 @@ export default function ViewFolder() {
               // ─── Real cover image from Supabase Storage
               <Image
                 source={{ uri: item.cover_image_url }}
-                style={[styles.stampImage, { width: '60%', height: '90%' }]}
+                style={[styles.stampImage, { width: '85%', height: '95%' }]}
                 resizeMode="contain"
               />
             ) : (
               // ─── Fallback image if no cover set
               <Image
                 source={require('../../assets/images/star-stamp.png')}
-                style={[styles.stampImage, { width: '60%', height: '90%' }]}
+                style={[styles.stampImage, { width: '85%', height: '95%' }]}
                 resizeMode="contain"
               />
             )}
