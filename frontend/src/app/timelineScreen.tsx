@@ -304,14 +304,18 @@ const BackgroundIllustrations = () => (
 function getLineartImage(title: string) {
   const t = title.toLowerCase();
   if (t.includes('birthday') || t.includes('bday') || t.includes('party')) return cakeArt;
-  if (t.includes('cake') || t.includes('celebration') || t.includes('dessert')) return cakeSlice;
+  if (t.includes('cake') || t.includes("mom's birthday") || t.includes('dessert')) return cakeSlice;
   if (t.includes('graduation') || t.includes('grad') || t.includes('university') || t.includes('college')) return capArt;
-  if (t.includes('dog') || t.includes('pet') || t.includes('animal') || t.includes('cat')) return dogArt;
-  if (t.includes('flower') || t.includes('mom') || t.includes('garden') || t.includes('anniversary') || t.includes('bouquet')) return flowersArt;
-  if (t.includes('photo') || t.includes('photography') || t.includes('trip') || t.includes('travel') || t.includes('vacation') || t.includes('prague')) return cameraArt;
+  if (t.includes('dog') || t.includes('puppy') || t.includes('animal') || t.includes('cat')) return dogArt;
+  if (t.includes('flower') || t.includes('mom')  || t.includes('anniversary') || t.includes('bouquet')) return flowersArt;
+  if (t.includes('photo') || t.includes('photography') ||  t.includes('travel') || t.includes('vacation')) return cameraArt;
   if (t.includes('concert') || t.includes('movie') || t.includes('event') || t.includes('show') || t.includes('festival') || t.includes('flight') || t.includes('ticket')) return ticketsArt;
-  if (t.includes('achievement') || t.includes('award') || t.includes('win') || t.includes('sport') || t.includes('match')) return starArt;
-  if (t.includes('home') || t.includes('family')) return house;
+  if (t.includes('achievement') || t.includes('award') || t.includes('win') || t.includes('thank') || t.includes('match')) return starArt;
+  if (t.includes('disco') || t.includes('prom') || t.includes('dance')) return discoArt;
+  if (t.includes('water') || t.includes('garden') || t.includes('plant')) return canArt;
+  if (t.includes('world') || t.includes('travel') || t.includes('trip')) return worldArt;
+
+
   return null;
 }
 
@@ -629,6 +633,10 @@ const capArt = require('../../assets/images/cap-art.png');
 const dogArt = require('../../assets/images/dog-art.png');
 const flowersArt = require('../../assets/images/flowers-art.png');
 const cameraArt = require('../../assets/images/camera-art.png');
-const ticketsArt = require('../../assets/images/tickets-art.png');
+const ticketsArt = require('../../assets/images/tickets-art(1).png');
 const starArt = require('../../assets/images/star-art.png');
-const house = require('../../assets/images/house.png');
+const discoArt = require('../../assets/images/discoball-art.png');
+const canArt = require('../../assets/images/watercan-art.png');
+const worldArt = require('../../assets/images/world-art.png');
+
+
