@@ -1,11 +1,13 @@
 import { Feather } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
   ImageBackground,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -15,7 +17,7 @@ import {
   View,
 } from "react-native";
 import { heightPercentageToDP as hp } from 'react-native-responsive-screen';
-import ChatRoomHeader from "../components/ChatRoomHeader";
+import { ChatRoomHeader } from "../components/ChatRoomHeader";
 import { supabase } from '@/lib/supabase';
 import {
   getConversationPartner,
@@ -27,23 +29,34 @@ import {
 import { pinCustomCard } from '@/services/bulletin-board.services';
 import { Svg, Path, Circle, Line, Ellipse, G, Text as SvgText } from 'react-native-svg';
 
-interface Message {
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type CardItem = {
+  type: 'text' | 'sticker';
+  content?: string;
+  sticker?: string;
+};
+
+type Message = {
   id: string;
   text: string;
   sent: boolean;
-  type: "text" | "card";
+  type: 'text' | 'card';
   cardColor?: string;
   cardItems?: string;
   cardId?: string;
-}
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function ChatRoom() {
-  const { id, pendingCard, pendingCardColor, pendingCardItems } = useLocalSearchParams<{
-    id: string;
-    pendingCard?: string;
-    pendingCardColor?: string;
-    pendingCardItems?: string;
-  }>();
+  const { id, pendingCard, pendingCardColor, pendingCardItems } =
+    useLocalSearchParams<{
+      id: string;
+      pendingCard: string;
+      pendingCardColor: string;
+      pendingCardItems: string;
+    }>();
 
   const router = useRouter();
   const [messages, setMessages]           = useState<Message[]>([]);
@@ -53,8 +66,10 @@ export default function ChatRoom() {
   const [partnerName, setPartnerName]     = useState('');
   const [partnerAvatar, setPartnerAvatar] = useState<string | null>(null);
   const [pinConfirmTarget, setPinConfirmTarget] = useState<Message | null>(null);
+  const [previewCard, setPreviewCard] = useState<{ cardItems: string; cardColor: string } | null>(null);
+
   const cardSentRef   = useRef(false);
-  const scrollViewRef = useRef<ScrollView | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => { fetchMessages(); }, []);
 
@@ -81,7 +96,6 @@ export default function ChatRoom() {
     setCurrentUserId(user.id);
 
     const { data: partner } = await getConversationPartner(id, user.id);
-    console.log('partner raw:', partner);
 
     if (partner) {
       const profile = Array.isArray(partner.profiles) ? partner.profiles[0] : partner.profiles;
@@ -95,15 +109,25 @@ export default function ChatRoom() {
     await markConversationAsRead(id, user.id);
 
     if (data) {
-      const mapped: Message[] = data.map((msg: any) => ({
-        id: msg.id,
-        text: msg.content,
-        sent: msg.sender_id === user.id,
-        type: msg.shared_card_id ? "card" : "text",
-        cardColor: msg.custom_cards?.card_color ?? undefined,
-        cardItems: msg.custom_cards?.card_items ?? undefined,
-        cardId: msg.shared_card_id ?? undefined,
-      }));
+      const mapped: Message[] = data.map((msg: any) => {
+        const customCard = Array.isArray(msg.custom_cards)
+          ? msg.custom_cards[0]
+          : msg.custom_cards;
+
+        return {
+          id: msg.id,
+          text: msg.content,
+          sent: msg.sender_id === user.id,
+          type: msg.shared_card_id ? "card" : "text",
+          cardColor: customCard?.card_color ?? undefined,
+          cardItems: customCard?.card_items != null
+            ? typeof customCard.card_items === 'string'
+              ? customCard.card_items
+              : JSON.stringify(customCard.card_items)
+            : undefined,
+          cardId: msg.shared_card_id ?? undefined,
+        };
+      });
       setMessages(mapped);
     }
 
@@ -136,37 +160,41 @@ export default function ChatRoom() {
   };
 
   const renderCardPreview = (cardItems: string, cardColor: string) => {
-  try {
-    const items = JSON.parse(cardItems);
-    const textItems = items.filter((item: any) => item.type === "text");
-    const stickerItems = items.filter((item: any) => item.type === "sticker");
+    try {
+      const parsed = typeof cardItems === 'string' ? JSON.parse(cardItems) : cardItems;
+      const items: CardItem[] = parsed;
+      const textItems    = items.filter((item) => item.type === "text");
+      const stickerItems = items.filter((item) => item.type === "sticker");
 
-    return (
-      <View style={{ backgroundColor: cardColor, borderRadius: 10, padding: 10, minWidth: 160, minHeight: 90 }}>
-        {textItems.slice(0, 2).map((item: any, i: number) => (
-          <Text key={i} style={{ color: '#5a2a20', fontSize: 12, marginBottom: 2 }}>
-            {item.content}
-          </Text>
-        ))}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
-          {stickerItems.slice(0, 4).map((item: any, i: number) => (
-            <Image
-              key={i}
-              source={{ uri: item.sticker }}
-              style={{ width: 32, height: 32 }}
-              resizeMode="contain"
-            />
+      return (
+        <View style={{ backgroundColor: cardColor, borderRadius: 10, padding: 10, minWidth: 160, minHeight: 90 }}>
+          {textItems.slice(0, 2).map((item, i) => (
+            // FIX: guard item.content so undefined never renders as a bare value
+            <Text key={i} style={{ color: '#5a2a20', fontSize: 12, marginBottom: 2 }}>
+              {item.content ?? ''}
+            </Text>
           ))}
+          {/* FIX: replaced gap with marginRight to avoid RN compatibility issues */}
+          <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 4 }}>
+            {stickerItems.slice(0, 4).map((item, i) => (
+              <Image
+                key={i}
+                source={{ uri: item.sticker }}
+                style={{ width: 32, height: 32, marginRight: 4, marginBottom: 4 }}
+                resizeMode="contain"
+              />
+            ))}
+          </View>
         </View>
-      </View>
-    );
-  } catch {
-    return <View style={{ backgroundColor: cardColor, borderRadius: 10, width: 160, height: 90 }} />;
-  }
-};
+      );
+    } catch {
+      return <View style={{ backgroundColor: cardColor, borderRadius: 10, width: 160, height: 90 }} />;
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#7a1a1a' }}>
+      <Stack.Screen options={{ headerShown: false }} />
       <StatusBar barStyle="light-content" />
       <ChatRoomHeader name={partnerName} avatar={partnerAvatar} router={router} />
 
@@ -201,7 +229,7 @@ export default function ChatRoom() {
             </G>
           </Svg>
 
-          {/* Dotted Travel Path with Crosshairs */}
+          {/* Dotted Travel Path */}
           <Svg width="60" height="180" style={{ position: 'absolute', top: 250, left: 40 }} viewBox="0 0 60 180">
             <G opacity={0.10}>
               <Path d="M30 10 Q10 60 30 110 Q50 160 30 170" stroke="#8B6A3E" strokeWidth="2" strokeDasharray="4 6" fill="none" />
@@ -225,15 +253,7 @@ export default function ChatRoom() {
 
           {/* Coordinates Text */}
           <Svg width="120" height="30" style={{ position: 'absolute', top: 470, right: 12 }}>
-            <SvgText
-              x="100%"
-              y="22"
-              fontSize="18"
-              fontWeight="bold"
-              fill="#8B6A3E"
-              opacity={0.11}
-              textAnchor="end"
-            >
+            <SvgText x="100%" y="22" fontSize="18" fontWeight="bold" fill="#8B6A3E" opacity={0.11} textAnchor="end">
               43°N · 12°E
             </SvgText>
           </Svg>
@@ -257,15 +277,7 @@ export default function ChatRoom() {
 
           {/* est. 2026 */}
           <Svg width="160" height="30" style={{ position: 'absolute', bottom: 38, left: 18 }}>
-            <SvgText
-              x="50%"
-              y="22"
-              fontSize="16"
-              fontWeight="bold"
-              fill="#8B6A3E"
-              opacity={0.11}
-              textAnchor="middle"
-            >
+            <SvgText x="50%" y="22" fontSize="16" fontWeight="bold" fill="#8B6A3E" opacity={0.11} textAnchor="middle">
               ~ est. 2026 ~
             </SvgText>
           </Svg>
@@ -283,8 +295,12 @@ export default function ChatRoom() {
           </Svg>
         </View>
 
-        {/* Messages */}
-        <View style={{ flex: 1, zIndex: 1 }}>
+        {/* Messages + Input */}
+        <KeyboardAvoidingView
+          style={{ flex: 1, zIndex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
           {loading ? (
             <ActivityIndicator size="small" color="#7a1a1a" style={{ marginTop: 40 }} />
           ) : (
@@ -313,13 +329,22 @@ export default function ChatRoom() {
                         elevation: 3,
                       }}>
                         <Text style={{ fontSize: 11, color: "#a07050", marginBottom: 6 }}>
-                          🎴 Card from {message.sent ? "you" : partnerName}
+                          {`🎴 Card from ${message.sent ? "you" : partnerName}`}
                         </Text>
 
-                        {message.cardColor && message.cardItems
-                          ? renderCardPreview(message.cardItems, message.cardColor)
-                          : <View style={{ backgroundColor: message.cardColor ?? '#e8d5b7', borderRadius: 10, width: 160, height: 90 }} />
-                        }
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          onPress={() => {
+                            if (message.cardItems && message.cardColor) {
+                              setPreviewCard({ cardItems: message.cardItems, cardColor: message.cardColor });
+                            }
+                          }}
+                        >
+                          {message.cardColor && message.cardItems
+                            ? renderCardPreview(message.cardItems, message.cardColor)
+                            : <View style={{ backgroundColor: message.cardColor ?? '#e8d5b7', borderRadius: 10, width: 160, height: 90 }} />
+                          }
+                        </TouchableOpacity>
 
                         {!message.sent && (
                           <TouchableOpacity
@@ -333,11 +358,11 @@ export default function ChatRoom() {
                               paddingVertical: 5,
                               flexDirection: "row",
                               alignItems: "center",
-                              gap: 4,
                             }}
                           >
-                            <Feather name="plus" size={14} color="#fff" />
-                            <Text style={{ color: "#fff", fontSize: 12, fontFamily: "Inter" }}>Add to board</Text>
+                            {/* FIX: replaced gap with marginRight on the icon */}
+                            <Feather name="plus" size={14} color="#fff" style={{ marginRight: 4 }} />
+                            <Text style={{ color: "#fff", fontSize: 12 }}>Add to board</Text>
                           </TouchableOpacity>
                         )}
                       </View>
@@ -371,33 +396,97 @@ export default function ChatRoom() {
           )}
 
           {/* Input bar */}
+          {!loading && (
+            <View style={{
+              marginHorizontal: 12,
+              marginBottom: 24,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+              {/* Text input — cream pill */}
+              <View style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: 'rgb(248, 240, 228)',
+                borderRadius: 30,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                borderWidth: 1.5,
+                borderColor: 'rgba(122,26,26,0.2)',
+                shadowColor: '#7a1a1a',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 4,
+                elevation: 2,
+                marginRight: 8, // FIX: replaced gap with marginRight
+              }}>
+                <TextInput
+                  placeholder="write a little note..."
+                  value={inputText}
+                  onChangeText={setInputText}
+                  placeholderTextColor="#c9a98a"
+                  style={{
+                    flex: 1,
+                    color: '#5a2a20',
+                    fontSize: 15,
+                  }}
+                />
+              </View>
+
+              {/* Send button */}
+              <TouchableOpacity
+                onPress={handleSendMessage}
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 23,
+                  backgroundColor: '#7a1a1a',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  shadowColor: '#7a1a1a',
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: 0.35,
+                  shadowRadius: 5,
+                  elevation: 4,
+                }}
+              >
+                <Feather name="send" size={18} color="#f5e8d8" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </KeyboardAvoidingView>
+      </ImageBackground>
+
+      {/* Card preview modal */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={!!previewCard}
+        onRequestClose={() => setPreviewCard(null)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' }}>
           <View style={{
-            flexDirection: 'row',
-            marginHorizontal: 10,
-            marginBottom: 20,
-            backgroundColor: '#7a1a1a',
-            borderRadius: 20,
-            paddingHorizontal: 15,
-            paddingVertical: 10,
-            gap: 10,
-            zIndex: 2,
+            backgroundColor: '#fffaf4',
+            borderRadius: 24,
+            padding: 20,
+            width: '85%',
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOpacity: 0.25,
+            shadowRadius: 12,
+            elevation: 10,
           }}>
-            <TextInput
-              placeholder="Type your message..."
-              value={inputText}
-              onChangeText={setInputText}
-              placeholderTextColor="white"
-              style={{ color: '#f5e8d8', fontSize: 16, flex: 1, marginRight: 2 }}
-            />
             <TouchableOpacity
-              onPress={handleSendMessage}
-              style={{ backgroundColor: '#F5EEE1', borderRadius: 20, padding: 10 }}
+              onPress={() => setPreviewCard(null)}
+              style={{ alignSelf: 'flex-end', marginBottom: 12 }}
             >
-              <Feather name="send" size={20} color="#590502" />
+              <Feather name="x" size={22} color="#7a1a1a" />
             </TouchableOpacity>
+            {previewCard && renderCardPreview(previewCard.cardItems, previewCard.cardColor)}
           </View>
         </View>
-      </ImageBackground>
+      </Modal>
 
       {/* Pin confirmation modal */}
       <Modal
@@ -426,7 +515,8 @@ export default function ChatRoom() {
               This card will be pinned to your board.
             </Text>
 
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 22 }}>
+            {/* FIX: replaced gap with marginLeft on second button */}
+            <View style={{ flexDirection: 'row', marginTop: 22 }}>
               <TouchableOpacity
                 onPress={() => setPinConfirmTarget(null)}
                 style={{ flex: 1, borderRadius: 14, borderWidth: 1, borderColor: '#c9a98a', paddingVertical: 10, alignItems: 'center' }}
@@ -435,7 +525,7 @@ export default function ChatRoom() {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handlePinToBoard}
-                style={{ flex: 1, borderRadius: 14, backgroundColor: '#557263', paddingVertical: 10, alignItems: 'center' }}
+                style={{ flex: 1, borderRadius: 14, backgroundColor: '#557263', paddingVertical: 10, alignItems: 'center', marginLeft: 12 }}
               >
                 <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Add</Text>
               </TouchableOpacity>

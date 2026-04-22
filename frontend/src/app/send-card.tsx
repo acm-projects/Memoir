@@ -15,11 +15,9 @@ import BackButton from "../components/back-Button";
 import BottomNavbar from "../components/BottomNavbar";
 import CardSentAnimation from "../components/CardSentAnimation";
 import { supabase } from "@/lib/supabase";
-import { getContacts, Contact } from "@/services/messages.service";
+import { getContacts, Contact, sendCardMessage } from "@/services/messages.service";
 
 const ios = Platform.OS === "ios";
-
-// ← removed local Contact interface, using the imported one
 
 export default function SendCard() {
   const { top } = useSafeAreaInsets();
@@ -29,8 +27,8 @@ export default function SendCard() {
   const [loading, setLoading] = useState(false);
 
   const { cardColor, cardItems } = useLocalSearchParams<{
-    cardColor?: string;
-    cardItems?: string;
+    cardColor: string;
+    cardItems: string;
   }>();
 
   useEffect(() => {
@@ -53,48 +51,21 @@ export default function SendCard() {
   };
 
   const handleAnimationComplete = async () => {
-  setShowAnimation(false);
+    setShowAnimation(false);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+    const { error } = await sendCardMessage(
+      selectedId!,
+      user.id,
+      cardColor ?? "#fffaf4",
+      cardItems ?? "[]",
+    );
 
-  const selected = contacts.find(c => c.id === selectedId);
+    if (error) { console.error("Failed to send card:", error); return; }
 
-  // 1. Save the card
-  const { data: card, error: cardError } = await supabase
-    .from("custom_cards")
-    .insert({
-      card_color: cardColor ?? "#fffaf4",
-      card_items: cardItems ?? "[]",
-    })
-    .select()
-    .single();
-
-  if (cardError) { console.error("Failed to save card:", cardError); return; }
-
-  // 2. Send the message
-  const { error: msgError } = await supabase
-    .from("messages")
-    .insert({
-      conversation_id: selectedId,
-      sender_id: user.id,
-      content: "Shared a card",
-      shared_card_id: card.id,
-    });
-
-  if (msgError) { console.error("Failed to send message:", msgError); return; }
-
-  router.push({
-    pathname: "/chatRoom",
-    params: {
-      id: selectedId!,
-      name: selected?.name ?? '',
-      pendingCard: "true",
-      pendingCardColor: cardColor ?? "#fffaf4",
-      pendingCardItems: cardItems ?? "[]",
-    },
-  });
-};
+    router.push({ pathname: "/chatRoom", params: { id: selectedId! } } as any);
+  };
 
   return (
     <View style={[styles.container, { paddingTop: ios ? top : top + 10 }]}>
@@ -157,7 +128,8 @@ export default function SendCard() {
           </ScrollView>
         )}
 
-        {selectedId && !showAnimation && (
+        {/* FIX: use !! to ensure a proper boolean so React Native never renders a bare string */}
+        {!!(selectedId && !showAnimation) && (
           <TouchableOpacity style={styles.floatingSendBtn} onPress={handleSend}>
             <Text style={styles.sendText}>Send Card</Text>
           </TouchableOpacity>

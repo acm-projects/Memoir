@@ -138,7 +138,9 @@ function TemplateCard({ template, onApply }: { template: TemplateMatch; onApply:
     }}>
       <View style={[{ padding: 12, minHeight: 90, justifyContent: "center", alignItems: "center", gap: 4 }, { backgroundColor: template.card_color || "#fffaf4" }]}>
         {previewTexts.slice(0, 2).map((t, i) => (
-          <Text key={i} style={{ fontSize: 11, color: "#5A390E", fontStyle: "italic", textAlign: "center" }} numberOfLines={1}>{t}</Text>
+          <Text key={i} style={{ fontSize: 11, color: "#5A390E", fontStyle: "italic", textAlign: "center" }} numberOfLines={1}>
+            {String(t ?? "")}
+          </Text>
         ))}
         <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>
           {previewStickers.slice(0, 3).map((s, i) => (
@@ -148,9 +150,13 @@ function TemplateCard({ template, onApply }: { template: TemplateMatch; onApply:
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: "#ede0cc", gap: 8 }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: "#3a2010" }}>{template.name}</Text>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: "#3a2010" }}>
+            {String(template.name ?? "")}
+          </Text>
           {template.similarity !== undefined && (
-            <Text style={{ fontSize: 10, color: "#9a7a60", marginTop: 1 }}>{Math.round(template.similarity * 100)}% match</Text>
+            <Text style={{ fontSize: 10, color: "#9a7a60", marginTop: 1 }}>
+              {`${Math.round(template.similarity * 100)}% match`}
+            </Text>
           )}
         </View>
         <TouchableOpacity onPress={() => onApply(template)} style={{ backgroundColor: "#7a1a1a", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
@@ -169,11 +175,14 @@ function AIChatModal({
   visible: boolean; onClose: () => void;
   onApplyTemplate: (template: TemplateMatch) => void; userId: string;
 }) {
-  const [messages, setMessages] = useState<Message[]>([{
-    id: "0", role: "assistant",
-    text: "Hey! I'm your card assistant ✨ Tell me about the card you want to make — who's it for, what's the occasion?",
-  }]);
-  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "0",
+      role: "assistant",
+      text: "Hey! I'm your card assistant ✨ Tell me about the card you want to make — who's it for, what's the occasion?",
+    },
+  ]);
+  const [input, setInput] = useState(""); // input state for user message
   const [loading, setLoading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
@@ -227,7 +236,9 @@ function AIChatModal({
       <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.assistantBubble]}>
         <View style={{ maxWidth: "78%" }}>
           <View style={[styles.bubbleContent, isUser ? styles.userBubbleContent : styles.assistantBubbleContent]}>
-            <Text style={[styles.bubbleText, isUser ? styles.userBubbleText : styles.assistantBubbleText]}>{item.text}</Text>
+            <Text style={[styles.bubbleText, isUser ? styles.userBubbleText : styles.assistantBubbleText]}>
+              {String(item.text ?? "")}
+            </Text>
           </View>
           {!isUser && item.templatePreview && <TemplateCard template={item.templatePreview} onApply={handleApplyTemplate} />}
         </View>
