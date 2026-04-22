@@ -80,14 +80,6 @@ export default function BulletinBoard() {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [boardSize, setBoardSize] = useState({ width: 0, height: BOARD_CONTENT_HEIGHT });
-  // ── Board state ──
-  const [items, setItems] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  const [boardSize, setBoardSize] = useState({ width: 0, height: BOARD_CONTENT_HEIGHT });
-
   const [activeTool, setActiveTool] = useState<"note" | "sticker" | "gif" | "photo" | "music" | null>(null);
 
   // ── Sticker / GIF state ──
@@ -248,7 +240,7 @@ export default function BulletinBoard() {
     const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.8, mediaTypes: ImagePicker.MediaTypeOptions.Images });
     if (!res.canceled && res.assets[0]?.uri) {
       try {
-          const newItem = await addPhotoService(id, res.assets[0].uri);
+        const newItem = await addPhotoService(id, res.assets[0].uri);
         setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
       } catch (e) { console.error("Failed to add photo:", e); }
       setActiveTool(null);
@@ -331,23 +323,6 @@ export default function BulletinBoard() {
     setTracks([]);
     setMusicSearch("");
   }
-  async function addMusicItem(track: any) {
-    try {
-      const newItem = await addMusicService(
-        id,
-        track.external_urls.spotify,
-        track.name,
-        track.artists?.[0]?.name ?? "",
-        track.album.images[0]?.url ?? ""
-      );
-      setItems((prev) => [...prev, { ...newItem, rotation: seededRotation(newItem.id) }]);
-    } catch (e) {
-      console.error("Failed to add music item:", e);
-    }
-    setActiveTool(null);
-    setTracks([]);
-    setMusicSearch("");
-  }
 
   // ─────────────────────────────────────────────
   // GIFs
@@ -369,6 +344,7 @@ export default function BulletinBoard() {
 
   return (
     <View style={styles.container}>
+      {/* Banner */}
       <ImageBackground
         source={require("../../assets/images/RED swirl subtle.png")}
         style={styles.topBanner}
@@ -378,7 +354,6 @@ export default function BulletinBoard() {
           <Text style={styles.bannerBackText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.bannerTitle} numberOfLines={1}>{title ?? ""}</Text>
-        <Text style={styles.bannerTitle} numberOfLines={1}>{title ?? ""}</Text>
         {!isEditing && (
           <TouchableOpacity style={styles.bannerEditButton} onPress={() => setIsEditing(true)}>
             <Text style={styles.bannerEditText}>Edit</Text>
@@ -386,6 +361,7 @@ export default function BulletinBoard() {
         )}
       </ImageBackground>
 
+      {/* Torn edge */}
       <View style={styles.tornEdgeContainer}>
         <Svg height="28" width="100%">
           <Path
@@ -395,34 +371,11 @@ export default function BulletinBoard() {
         </Svg>
       </View>
 
+      {/* Board */}
       <ImageBackground
         source={require("../../assets/images/layered-vintage-paper.png")}
         style={styles.paperBackground}
       >
-        <View style={{ flex: 1 }}>
-          {loading ? (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-              <ActivityIndicator size="large" color="#6D1B12" />
-            </View>
-          ) : (
-            <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setActiveTool(null); }}>
-              <View style={{ flex: 1 }}>
-                <View
-                  style={styles.corkboardFrame}
-                  onLayout={(e) =>
-                    setBoardSize({ width: e.nativeEvent.layout.width, height: BOARD_CONTENT_HEIGHT })
-                  }
-                >
-                  <ScrollView
-                    style={styles.board}
-                    contentContainerStyle={styles.boardContent}
-                    scrollEnabled={!isEditing}
-                  >
-                    <Svg width="100%" height={BOARD_CONTENT_HEIGHT} style={styles.absoluteFull}>
-                      {Array.from({ length: 60 }).map((_, i) => (
-                        <Circle key={i} cx={(i % 10) * 40 + 20} cy={Math.floor(i / 10) * 200 + 50} r={1.2} fill="#8B6A3E" opacity={0.12} />
-                      ))}
-                    </Svg>
         <View style={{ flex: 1 }}>
           {loading ? (
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -470,25 +423,6 @@ export default function BulletinBoard() {
               </View>
             </TouchableWithoutFeedback>
           )}
-                    {items.map((item, idx) => (
-                      <DraggableItem
-                        key={item.id}
-                        item={item}
-                        deleteItem={deleteItem}
-                        isEditing={isEditing}
-                        selectedId={selectedId}
-                        setSelectedId={setSelectedId}
-                        onPositionChange={handlePositionChange}
-                        onRotationChange={handleRotationChange}
-                        onScaleChange={handleScaleChange}
-                        accentColor={ACCENT_COLORS[idx % ACCENT_COLORS.length]}
-                        onContentChange={onContentChange}
-                        boardWidth={boardSize.width}
-                        boardHeight={boardSize.height}
-                      />
-                    ))}
-                  </ScrollView>
-                </View>
 
           {/* Edit mode footer */}
           {isEditing && (
@@ -503,16 +437,6 @@ export default function BulletinBoard() {
                       <Ionicons name="close-circle" size={22} color="#5A390E" />
                     </TouchableOpacity>
                   </View>
-                {isEditing && (
-                  <View style={styles.footerWrapper}>
-                    {activeTool && !selectedId && (
-                      <View style={styles.panel}>
-                        <View style={styles.panelHeader}>
-                          <Text style={styles.panelTitle}>{activeTool.toUpperCase()}</Text>
-                          <TouchableOpacity onPress={() => setActiveTool(null)}>
-                            <Ionicons name="close-circle" size={22} color="#5A390E" />
-                          </TouchableOpacity>
-                        </View>
 
                   {activeTool === "note" && (
                     <View style={styles.colorRow}>
@@ -521,13 +445,6 @@ export default function BulletinBoard() {
                       ))}
                     </View>
                   )}
-                        {activeTool === "note" && (
-                          <View style={styles.colorRow}>
-                            {NOTE_COLORS.map((c) => (
-                              <TouchableOpacity key={c} style={[styles.colorDot, { backgroundColor: c }]} onPress={() => addNote(c)} />
-                            ))}
-                          </View>
-                        )}
 
                   {activeTool === "sticker" && (
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stickerRow}>
@@ -538,15 +455,6 @@ export default function BulletinBoard() {
                       ))}
                     </ScrollView>
                   )}
-                        {activeTool === "sticker" && (
-                          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stickerRow}>
-                            {availableStickers.map((s) => (
-                              <TouchableOpacity key={s.id} onPress={() => addSticker(s.id)}>
-                                <Image source={{ uri: s.image_url }} style={styles.stickerThumb} />
-                              </TouchableOpacity>
-                            ))}
-                          </ScrollView>
-                        )}
 
                   {activeTool === "photo" && (
                     <TouchableOpacity style={styles.panelUploadArea} onPress={pickImage}>
@@ -554,12 +462,6 @@ export default function BulletinBoard() {
                       <Text style={styles.uploadText}>Upload from Camera Roll</Text>
                     </TouchableOpacity>
                   )}
-                        {activeTool === "photo" && (
-                          <TouchableOpacity style={styles.panelUploadArea} onPress={pickImage}>
-                            <Ionicons name="cloud-upload-outline" size={24} color="#8B7355" />
-                            <Text style={styles.uploadText}>Upload from Camera Roll</Text>
-                          </TouchableOpacity>
-                        )}
 
                   {activeTool === "gif" && (
                     <View>
@@ -579,24 +481,6 @@ export default function BulletinBoard() {
                       </ScrollView>
                     </View>
                   )}
-                        {activeTool === "gif" && (
-                          <View>
-                            <TextInput
-                              style={styles.searchInput}
-                              placeholder="Search GIFs..."
-                              placeholderTextColor="#9a7a60"
-                              value={gifSearch}
-                              onChangeText={(t) => { setGifSearch(t); searchGifs(t); }}
-                            />
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-                              {gifs.map((gif) => (
-                                <TouchableOpacity key={gif.id} onPress={() => addGif(gif.images.fixed_height.url)}>
-                                  <Image source={{ uri: gif.images.fixed_height.url }} style={styles.mediaThumb} />
-                                </TouchableOpacity>
-                              ))}
-                            </ScrollView>
-                          </View>
-                        )}
 
                   {activeTool === "music" && (
                     <View>
@@ -631,39 +515,6 @@ export default function BulletinBoard() {
                   )}
                 </View>
               )}
-                        {activeTool === "music" && (
-                          <View>
-                            <TextInput
-                              style={styles.searchInput}
-                              placeholder="Search a song..."
-                              placeholderTextColor="#9a7a60"
-                              value={musicSearch}
-                              onChangeText={(t) => { setMusicSearch(t); searchSpotify(t); }}
-                              returnKeyType="search"
-                              onSubmitEditing={() => searchSpotify(musicSearch)}
-                            />
-                            {musicLoading && (
-                              <ActivityIndicator size="small" color="#1DB954" style={{ marginVertical: 8 }} />
-                            )}
-                            {!musicLoading && tracks.length === 0 && musicSearch.length > 0 && (
-                              <Text style={styles.noResultsText}>No tracks found.</Text>
-                            )}
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-                              {tracks.map((track) => (
-                                <TouchableOpacity key={track.id} style={styles.musicTrackCard} onPress={() => addMusicItem(track)}>
-                                  <Image source={{ uri: track.album.images[0]?.url }} style={styles.musicAlbumArt} />
-                                  <View style={styles.spotifyBadge}>
-                                    <Ionicons name="musical-note" size={8} color="#fff" />
-                                  </View>
-                                  <Text style={styles.musicTrackName} numberOfLines={2}>{track.name}</Text>
-                                  <Text style={styles.musicArtistName} numberOfLines={1}>{track.artists?.[0]?.name}</Text>
-                                </TouchableOpacity>
-                              ))}
-                            </ScrollView>
-                          </View>
-                        )}
-                      </View>
-                    )}
 
               {/* Toolbar: item selected vs default */}
               {selectedId ? (
@@ -677,17 +528,6 @@ export default function BulletinBoard() {
                   >
                     <Text style={styles.selBtnText}>−</Text>
                   </TouchableOpacity>
-                    {selectedId ? (
-                      <View style={styles.toolbar}>
-                        <TouchableOpacity
-                          style={styles.toolButton}
-                          onPress={() => {
-                            const item = items.find((i) => i.id === selectedId);
-                            if (item) handleScaleChange(selectedId, Math.max(0.5, (item.scale ?? 1) - 0.1));
-                          }}
-                        >
-                          <Text style={styles.selBtnText}>−</Text>
-                        </TouchableOpacity>
 
                   <TouchableOpacity
                     style={styles.toolButton}
@@ -698,18 +538,8 @@ export default function BulletinBoard() {
                   >
                     <Text style={styles.selBtnText}>+</Text>
                   </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.toolButton}
-                          onPress={() => {
-                            const item = items.find((i) => i.id === selectedId);
-                            if (item) handleScaleChange(selectedId, Math.min(5, (item.scale ?? 1) + 0.1));
-                          }}
-                        >
-                          <Text style={styles.selBtnText}>+</Text>
-                        </TouchableOpacity>
 
                   <View style={styles.toolbarDivider} />
-                        <View style={styles.toolbarDivider} />
 
                   <TouchableOpacity
                     style={styles.toolButton}
@@ -720,15 +550,6 @@ export default function BulletinBoard() {
                   >
                     <Text style={styles.selBtnText}>↺</Text>
                   </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.toolButton}
-                          onPress={() => {
-                            const item = items.find((i) => i.id === selectedId);
-                            if (item) handleRotationChange(selectedId, (item.rotation ?? 0) - 3);
-                          }}
-                        >
-                          <Text style={styles.selBtnText}>↺</Text>
-                        </TouchableOpacity>
 
                   <TouchableOpacity
                     style={styles.toolButton}
@@ -739,18 +560,8 @@ export default function BulletinBoard() {
                   >
                     <Text style={styles.selBtnText}>↻</Text>
                   </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.toolButton}
-                          onPress={() => {
-                            const item = items.find((i) => i.id === selectedId);
-                            if (item) handleRotationChange(selectedId, (item.rotation ?? 0) + 3);
-                          }}
-                        >
-                          <Text style={styles.selBtnText}>↻</Text>
-                        </TouchableOpacity>
 
                   <View style={styles.toolbarDivider} />
-                        <View style={styles.toolbarDivider} />
 
                   <TouchableOpacity
                     style={styles.toolButton}
@@ -758,15 +569,8 @@ export default function BulletinBoard() {
                   >
                     <Ionicons name="trash-outline" size={22} color="#7B1D1D" />
                   </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.toolButton}
-                          onPress={() => { deleteItem(selectedId); setSelectedId(null); }}
-                        >
-                          <Ionicons name="trash-outline" size={22} color="#7B1D1D" />
-                        </TouchableOpacity>
 
                   <View style={styles.toolbarDivider} />
-                        <View style={styles.toolbarDivider} />
 
                   <TouchableOpacity style={styles.toolButton} onPress={() => setSelectedId(null)}>
                     <Ionicons name="checkmark" size={24} color="#2C5F2E" />
@@ -789,30 +593,8 @@ export default function BulletinBoard() {
                       <Ionicons name={icon as any} size={24} color="#5A390E" />
                     </Pressable>
                   ))}
-                        <TouchableOpacity style={styles.toolButton} onPress={() => setSelectedId(null)}>
-                          <Ionicons name="checkmark" size={24} color="#2C5F2E" />
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <View style={styles.toolbar}>
-                        {[
-                          { tool: "note", icon: "document-text-outline" },
-                          { tool: "photo", icon: "image-outline" },
-                          { tool: "sticker", icon: "happy-outline" },
-                          { tool: "gif", icon: "film-outline" },
-                          { tool: "music", icon: "musical-notes-outline" },
-                        ].map(({ tool, icon }) => (
-                          <Pressable
-                            key={tool}
-                            style={[styles.toolButton, activeTool === tool && styles.activeToolBtn]}
-                            onPress={() => { setActiveTool(tool as any); if (tool === "gif") searchGifs(""); }}
-                          >
-                            <Ionicons name={icon as any} size={24} color="#5A390E" />
-                          </Pressable>
-                        ))}
 
                   <View style={styles.toolbarDivider} />
-                        <View style={styles.toolbarDivider} />
 
                   <Pressable style={styles.doneButton} onPress={() => { setIsEditing(false); setActiveTool(null); }}>
                     <Ionicons name="checkmark" size={22} color="#F6E5CD" />
@@ -820,17 +602,6 @@ export default function BulletinBoard() {
                 </View>
               )}
             </View>
-          )}
-        </View>
-                        <Pressable style={styles.doneButton} onPress={() => { setIsEditing(false); setActiveTool(null); }}>
-                          <Ionicons name="checkmark" size={22} color="#F6E5CD" />
-                        </Pressable>
-                      </View>
-                    )}
-                  </View>
-                )}
-              </View>
-            </TouchableWithoutFeedback>
           )}
         </View>
       </ImageBackground>
