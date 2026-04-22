@@ -49,7 +49,7 @@ type Item = {
   sticker?: string;
   image?: any;
   color?: string;
-  font?: string;
+  font?: string;       // ← kept so template fonts still apply
   rotation: number;
   scale: number;
 };
@@ -64,14 +64,6 @@ type Message = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const FLASK_URL = process.env.EXPO_PUBLIC_FLASK_URL;
-
-const FONTS = [
-  { label: "Default",       value: undefined,                      preview: "Aa" },
-  { label: "Dancing",       value: "DancingScript_400Regular",     preview: "Aa" },
-  { label: "Pacifico",      value: "Pacifico_400Regular",          preview: "Aa" },
-  { label: "Caveat",        value: "Caveat_400Regular",            preview: "Aa" },
-  { label: "Playfair",      value: "PlayfairDisplay_400Regular",   preview: "Aa" },
-];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -97,7 +89,7 @@ function templateToItems(template: TemplateMatch): Item[] {
         content: parsed.content ?? "...",
         x: parsed.x ?? 20, y: parsed.y ?? 20,
         color: parsed.color ?? "#5A390E",
-        font: parsed.font,
+        font: parsed.font,   // ← preserved from template
         rotation: parsed.rotation ?? seededRotation(id),
         scale: parsed.scale ?? 1,
       });
@@ -150,13 +142,9 @@ function TemplateCard({ template, onApply }: { template: TemplateMatch; onApply:
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: "#ede0cc", gap: 8 }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: "#3a2010" }}>
-            {String(template.name ?? "")}
-          </Text>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: "#3a2010" }}>{String(template.name ?? "")}</Text>
           {template.similarity !== undefined && (
-            <Text style={{ fontSize: 10, color: "#9a7a60", marginTop: 1 }}>
-              {`${Math.round(template.similarity * 100)}% match`}
-            </Text>
+            <Text style={{ fontSize: 10, color: "#9a7a60", marginTop: 1 }}>{`${Math.round(template.similarity * 100)}% match`}</Text>
           )}
         </View>
         <TouchableOpacity onPress={() => onApply(template)} style={{ backgroundColor: "#7a1a1a", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
@@ -175,14 +163,11 @@ function AIChatModal({
   visible: boolean; onClose: () => void;
   onApplyTemplate: (template: TemplateMatch) => void; userId: string;
 }) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "0",
-      role: "assistant",
-      text: "Hey! I'm your card assistant ✨ Tell me about the card you want to make — who's it for, what's the occasion?",
-    },
-  ]);
-  const [input, setInput] = useState(""); // input state for user message
+  const [messages, setMessages] = useState<Message[]>([{
+    id: "0", role: "assistant",
+    text: "Hey! I'm your card assistant ✨ Tell me about the card you want to make — who's it for, what's the occasion?",
+  }]);
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
@@ -338,6 +323,7 @@ function SendShareModal({ visible, onClose, onSend }: { visible: boolean; onClos
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function CreateCard() {
+  // Fonts loaded so template text renders correctly
   const [fontsLoaded] = useFonts({
     DancingScript_400Regular,
     Pacifico_400Regular,
@@ -363,10 +349,6 @@ export default function CreateCard() {
     });
   }, []);
 
-  // Derived: is the selected item a text item?
-  const selectedItem = items.find((i) => i.id === selectedId);
-  const selectedIsText = selectedItem?.type === "text";
-
   const STICKERS = [
     { id: "star",      image: require("../../assets/images/star-sticker.png") },
     { id: "heart",     image: require("../../assets/images/heart-sticker.png") },
@@ -385,12 +367,11 @@ export default function CreateCard() {
 
   const COLORS = ["#FFF6A3", "#FFD6D6", "#D6F5FF", "#E6D6FF", "#D6FFD6"];
 
-  const updateItemColor    = (id: string, color: string)     => setItems((p) => p.map((i) => i.id === id ? { ...i, color } : i));
+  const updateItemColor      = (id: string, color: string)     => setItems((p) => p.map((i) => i.id === id ? { ...i, color } : i));
   const handlePositionChange = (id: string, x: number, y: number) => setItems((p) => p.map((i) => i.id === id ? { ...i, x, y } : i));
   const handleRotationChange = (id: string, rotation: number)     => setItems((p) => p.map((i) => i.id === id ? { ...i, rotation } : i));
   const handleScaleChange    = (id: string, scale: number)        => setItems((p) => p.map((i) => i.id === id ? { ...i, scale } : i));
   const handleContentChange  = (id: string, content: string)      => setItems((p) => p.map((i) => i.id === id ? { ...i, content } : i));
-  const handleFontChange     = (id: string, font: string | undefined) => setItems((p) => p.map((i) => i.id === id ? { ...i, font } : i));
 
   const addText = () => {
     const id = Date.now().toString();
@@ -494,7 +475,6 @@ export default function CreateCard() {
               return false;
             }}
           >
-            
             {items.length === 0 && <Text style={styles.previewText}>Card preview</Text>}
             {items.map((item) => (
               <DraggableItem
@@ -509,7 +489,6 @@ export default function CreateCard() {
                 onRotationChange={handleRotationChange}
                 onScaleChange={handleScaleChange}
                 onContentChange={handleContentChange}
-                onFontChange={handleFontChange}
                 accentColor="#8B6A3E"
                 showControls={false}
               />
@@ -517,32 +496,6 @@ export default function CreateCard() {
           </View>
 
           <View style={styles.footerWrapper}>
-
-            {/* ── Font picker panel (only when a text item is selected) ── */}
-            {selectedId && selectedIsText && (
-              <View style={styles.panel}>
-                <View style={styles.panelHeader}>
-                  <Text style={styles.panelTitle}>FONT</Text>
-                </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fontStrip}>
-                  {FONTS.map((f) => {
-                    const isActive = (selectedItem?.font ?? undefined) === f.value;
-                    return (
-                      <TouchableOpacity
-                        key={f.label}
-                        style={[styles.fontChip, isActive && styles.fontChipActive]}
-                        onPress={() => handleFontChange(selectedId, f.value as string)}
-                      >
-                        <Text style={[styles.fontChipPreview, f.value ? { fontFamily: f.value } : {}, isActive && styles.fontChipPreviewActive]}>
-                          {f.preview}
-                        </Text>
-                        <Text style={[styles.fontChipLabel, isActive && styles.fontChipLabelActive]}>{f.label}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            )}
 
             {/* ── Tool panels (only when no item is selected) ── */}
             {activeTool && !selectedId && (
@@ -775,19 +728,7 @@ const styles = StyleSheet.create({
   cancelBtn: { flex: 1, paddingVertical: 10, borderRadius: 20, borderWidth: 1, borderColor: "rgba(139,26,26,0.3)", alignItems: "center", backgroundColor: "#ede0cc" },
   cancelText: { color: "#8b1a1a", fontSize: 14 },
   sendBtn: { flex: 1, paddingVertical: 10, borderRadius: 20, backgroundColor: "#7a1a1a", alignItems: "center", justifyContent: "center" },
-  sendText: { color: "#f5ede0", fontSize: 14 },
   gifInput: { backgroundColor: "#F5EEE1", borderWidth: 1, borderColor: "#c8b89a", borderRadius: 10, padding: 10, fontSize: 14, color: "#3a2010", marginBottom: 8 },
-
-  // ── Font picker ──
-  fontStrip: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 4, paddingVertical: 4 },
-  fontChip: { alignItems: "center", justifyContent: "center", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14, borderWidth: 1.5, borderColor: "#d7c3ac", backgroundColor: "#fffaf4", minWidth: 60 },
-  fontChipActive: { borderColor: "#7a1a1a", backgroundColor: "#7a1a1a" },
-  fontChipPreview: { fontSize: 20, color: "#5A390E" },
-  fontChipPreviewActive: { color: "#f5ede0" },
-  fontChipLabel: { fontSize: 9, color: "#9a7a60", marginTop: 2 },
-  fontChipLabelActive: { color: "#f5ede0" },
-
-  // ── AI modal ──
   modalOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.45)" },
   modalSheet: { backgroundColor: "#fdf6ed", borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: Platform.OS === "ios" ? 34 : 16, maxHeight: "95%" },
   handleBar: { width: 40, height: 4, backgroundColor: "#d7c3ac", borderRadius: 2, alignSelf: "center", marginTop: 10, marginBottom: 6 },
@@ -814,8 +755,6 @@ const styles = StyleSheet.create({
   chatInput: { flex: 1, backgroundColor: "#ede0cc", borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: "#3a2010", maxHeight: 100 },
   sendIconBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#7a1a1a", alignItems: "center", justifyContent: "center" },
   sendIconBtnDisabled: { backgroundColor: "#c8b89a" },
-
-  // ── Send/Share modal ──
   sendModalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end", paddingBottom: 110, paddingHorizontal: 16 },
   sendModalBox: { backgroundColor: "#fdf6ee", borderRadius: 20, padding: 20 },
   sendModalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
@@ -824,8 +763,4 @@ const styles = StyleSheet.create({
   sendModalIconWrap: { width: 40, height: 40, borderRadius: 10, backgroundColor: "#e9dccd", alignItems: "center", justifyContent: "center" },
   sendModalOptionTitle: { fontSize: 15, fontWeight: "600", color: "#6D1B12" },
   sendModalOptionDesc: { fontSize: 12, color: "#9b6b6b", marginTop: 2 },
-
-  // keep unused style refs to avoid TS errors
-  stickerRow: { flexDirection: "row", gap: 12, paddingVertical: 4, paddingHorizontal: 8, alignItems: "center" },
-  stickerThumb: { width: 55, height: 55, resizeMode: "contain" },
 });

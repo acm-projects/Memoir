@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Keyboard,
   ImageBackground,
-  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -18,25 +17,6 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 
-const TEXT_COLORS = [
-  "#5A390E",
-  "#6D1B12",
-  "#2C5F2E",
-  "#1A1A2E",
-  "#FF6B6B",
-  "#000000",
-  "#ffffff",
-  "#C8A84B",
-];
-
-const FONTS = [
-  { label: "Default",  value: undefined },
-  { label: "Dancing",  value: "DancingScript_400Regular" },
-  { label: "Pacifico", value: "Pacifico_400Regular" },
-  { label: "Caveat",   value: "Caveat_400Regular" },
-  { label: "Playfair", value: "PlayfairDisplay_400Regular" },
-];
-
 export default function DraggableItem({
   item,
   deleteItem,
@@ -44,7 +24,6 @@ export default function DraggableItem({
   selectedId,
   setSelectedId,
   onColorChange,
-  onFontChange,
   onPositionChange,
   onRotationChange,
   onScaleChange,
@@ -93,7 +72,7 @@ export default function DraggableItem({
   } else if (isSelected) {
     zIndex = item.type === "text" ? 150 : 100;
   } else if (item.type === "text") {
-    zIndex = 20;  // text always above stickers at rest
+    zIndex = 20;
   } else {
     zIndex = 1;
   }
@@ -269,11 +248,11 @@ export default function DraggableItem({
             multiline
             editable={isSelected}
             style={[
-              styles.draggableText,
-              { color: item.color || "#5A390E" },
-              item.font ? { fontFamily: item.font } : {},
-              !isSelected && { borderColor: "transparent" },
-            ]}
+                styles.draggableText,
+                { color: item.color || "#5A390E" },
+                item.font ? { fontFamily: item.font } : {},  // ← add this
+                !isSelected && { borderColor: "transparent" },
+              ]}
             placeholder="Type here..."
             onChangeText={(text) => onContentChange(item.id, text)}
           />
@@ -344,8 +323,4 @@ const styles = StyleSheet.create({
     borderRadius: 11, backgroundColor: "#7B1D1D", alignItems: "center",
     justifyContent: "center", zIndex: 20, borderWidth: 2, borderColor: "#fff",
   },
-  colorRow: { flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 10, paddingHorizontal: 12, paddingTop: 10 },
-  colorDot: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: "white" },
-  colorDotWhite: { borderColor: "#d7c3ac" },
-  activeColor: { borderColor: "#5A390E", transform: [{ scale: 1.2 }] },
 });
