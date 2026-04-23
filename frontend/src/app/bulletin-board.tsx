@@ -350,7 +350,7 @@ export default function BulletinBoard() {
         style={styles.topBanner}
         imageStyle={{ resizeMode: "cover" }}
       >
-        <TouchableOpacity onPress={() => router.back()} style={styles.bannerBack}>
+        <TouchableOpacity onPress={() => router.replace('/timelineScreen')} style={styles.bannerBack}>
           <Text style={styles.bannerBackText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.bannerTitle} numberOfLines={1}>{title ?? ""}</Text>
