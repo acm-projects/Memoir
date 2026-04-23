@@ -49,16 +49,9 @@ type Item = {
   sticker?: string;
   image?: any;
   color?: string;
-  font?: string;       // ← kept so template fonts still apply
+  font?: string;
   rotation: number;
   scale: number;
-};
-
-type Message = {
-  id: string;
-  role: "user" | "assistant";
-  text: string;
-  templatePreview?: TemplateMatch | null;
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -89,7 +82,7 @@ function templateToItems(template: TemplateMatch): Item[] {
         content: parsed.content ?? "...",
         x: parsed.x ?? 20, y: parsed.y ?? 20,
         color: parsed.color ?? "#5A390E",
-        font: parsed.font,   // ← preserved from template
+        font: parsed.font,
         rotation: parsed.rotation ?? seededRotation(id),
         scale: parsed.scale ?? 1,
       });
@@ -114,180 +107,271 @@ function templateToItems(template: TemplateMatch): Item[] {
   return items;
 }
 
-// ─── TemplateCard Component ───────────────────────────────────────────────────
+// ─── Template Search Modal ────────────────────────────────────────────────────
 
-function TemplateCard({ template, onApply }: { template: TemplateMatch; onApply: (t: TemplateMatch) => void }) {
-  const previewTexts = [template.text_1, template.text_2, template.text_3].filter(Boolean);
-  const previewStickers = [template.sticker_1, template.sticker_2, template.sticker_3]
-    .filter(Boolean)
-    .map((raw) => { try { return JSON.parse(raw!).image_url; } catch { return null; } })
-    .filter(Boolean) as string[];
-
-  return (
-    <View style={{
-      backgroundColor: "#fdf6ed", borderRadius: 16, borderWidth: 1,
-      borderColor: "#d7c3ac", overflow: "hidden", marginTop: 8, width: 240,
-    }}>
-      <View style={[{ padding: 12, minHeight: 90, justifyContent: "center", alignItems: "center", gap: 4 }, { backgroundColor: template.card_color || "#fffaf4" }]}>
-        {previewTexts.slice(0, 2).map((t, i) => (
-          <Text key={i} style={{ fontSize: 11, color: "#5A390E", fontStyle: "italic", textAlign: "center" }} numberOfLines={1}>
-            {String(t ?? "")}
-          </Text>
-        ))}
-        <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>
-          {previewStickers.slice(0, 3).map((s, i) => (
-            <Image key={i} source={{ uri: s }} style={{ width: 28, height: 28 }} resizeMode="contain" />
-          ))}
-        </View>
-      </View>
-      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: "#ede0cc", gap: 8 }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: "#3a2010" }}>{String(template.name ?? "")}</Text>
-          {template.similarity !== undefined && (
-            <Text style={{ fontSize: 10, color: "#9a7a60", marginTop: 1 }}>{`${Math.round(template.similarity * 100)}% match`}</Text>
-          )}
-        </View>
-        <TouchableOpacity onPress={() => onApply(template)} style={{ backgroundColor: "#7a1a1a", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
-          <Text style={{ color: "#f5ede0", fontSize: 12, fontWeight: "600" }}>Use this</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
-// ─── AI Chat Modal ────────────────────────────────────────────────────────────
-
-function AIChatModal({
-  visible, onClose, onApplyTemplate, userId,
+function TemplateSearchModal({
+  visible,
+  onClose,
+  onApplyTemplate,
 }: {
-  visible: boolean; onClose: () => void;
-  onApplyTemplate: (template: TemplateMatch) => void; userId: string;
+  visible: boolean;
+  onClose: () => void;
+  onApplyTemplate: (template: TemplateMatch) => void;
 }) {
-  const [messages, setMessages] = useState<Message[]>([{
-    id: "0", role: "assistant",
-    text: "Hey! I'm your card assistant ✨ Tell me about the card you want to make — who's it for, what's the occasion?",
-  }]);
-  const [input, setInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [templates, setTemplates] = useState<TemplateMatch[]>([]);
   const [loading, setLoading] = useState(false);
-  const flatListRef = useRef<FlatList>(null);
 
-  const handleApplyTemplate = (template: TemplateMatch) => { onApplyTemplate(template); onClose(); };
+  useEffect(() => {
+    if (!visible) return;
+    const timer = setTimeout(() => fetchTemplates(search), 300);
+    return () => clearTimeout(timer);
+  }, [visible, search]);
 
-  const sendMessage = async () => {
-    const trimmed = input.trim();
-    if (!trimmed || loading) return;
-    const userMsg: Message = { id: Date.now().toString(), role: "user", text: trimmed };
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
+  const fetchTemplates = async (query: string) => {
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000);
-      const response = await fetch(`${FLASK_URL}/recommend-template`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token ?? ""}` },
-        body: JSON.stringify({ prompt: trimmed, user_id: session?.user?.id ?? userId, match_count: 1 }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error ?? "Backend error");
-      const suggestions: TemplateMatch[] = data.suggested_templates ?? [];
-      const intent = data.design_intent ?? {};
-      if (suggestions.length === 0) {
-        setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", text: "I couldn't find a matching template, but you can still build your card from scratch using the tools below! 🎨" }]);
-      } else {
-        const occasionNote = intent.occasion ? ` for a ${intent.occasion}` : "";
-        const recipientNote = intent.recipient ? ` for ${intent.recipient}` : "";
-        const topTemplate: TemplateMatch = { ...suggestions[0], custom_card_id: data.custom_card_id ?? undefined };
-        setMessages((prev) => [...prev, {
-          id: (Date.now() + 1).toString(), role: "assistant",
-          text: `Here's a template that fits${occasionNote}${recipientNote} — tap "Use this" to load it onto your card!`,
-          templatePreview: topTemplate,
-        }]);
+      let req = supabase
+        .from("templates2")
+        .select("id, name, card_color, text_1, text_2, text_3, text_4, text_5, sticker_1, sticker_2, sticker_3, sticker_4, sticker_5, gif_1, gif_2")
+        .limit(30);
+
+      if (query.trim()) {
+        req = req.ilike("name", `%${query.trim()}%`);
       }
-    } catch (err: any) {
-      const msg = err?.name === "AbortError" ? "This is taking too long. Try again!" : "Oops, something went wrong. Try again!";
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", text: msg }]);
-    } finally {
-      setLoading(false);
-    }
+
+      const { data, error } = await req;
+      if (!error && data) setTemplates(data as TemplateMatch[]);
+    } catch {}
+    setLoading(false);
   };
 
-  const renderMessage = ({ item }: { item: Message }) => {
-    const isUser = item.role === "user";
-    return (
-      <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.assistantBubble]}>
-        <View style={{ maxWidth: "78%" }}>
-          <View style={[styles.bubbleContent, isUser ? styles.userBubbleContent : styles.assistantBubbleContent]}>
-            <Text style={[styles.bubbleText, isUser ? styles.userBubbleText : styles.assistantBubbleText]}>
-              {String(item.text ?? "")}
-            </Text>
-          </View>
-          {!isUser && item.templatePreview && <TemplateCard template={item.templatePreview} onApply={handleApplyTemplate} />}
-        </View>
-      </View>
-    );
+  const handleApply = (template: TemplateMatch) => {
+    onApplyTemplate(template);
+    onClose();
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalSheet}>
-          <View style={styles.handleBar} />
-          <View style={styles.modalHeader}>
-            <View style={styles.modalHeaderLeft}>
-              <View style={styles.sparkleIcon}><Ionicons name="sparkles" size={16} color="#f5ede0" /></View>
+      <View style={tmStyles.overlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={tmStyles.sheet}
+        >
+          <View style={tmStyles.handle} />
+
+          <View style={tmStyles.header}>
+            <View style={tmStyles.headerLeft}>
+              <View style={tmStyles.sparkleIcon}>
+                <Ionicons name="albums-outline" size={16} color="#f5ede0" />
+              </View>
               <View>
-                <Text style={styles.modalTitle}>Card Assistant</Text>
-                <Text style={styles.modalSubtitle}>Powered by AI</Text>
+                <Text style={tmStyles.title}>Templates</Text>
+                <Text style={tmStyles.subtitle}>Pick a starting point</Text>
               </View>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity onPress={onClose} style={tmStyles.closeBtn}>
               <Ionicons name="close" size={20} color="#5A390E" />
             </TouchableOpacity>
           </View>
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={(item) => item.id}
-            renderItem={renderMessage}
-            contentContainerStyle={styles.messageList}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            showsVerticalScrollIndicator={false}
-          />
-          {loading && (
-            <View style={styles.typingRow}>
-              <View style={styles.avatarDot}><Ionicons name="sparkles" size={12} color="#f5ede0" /></View>
-              <View style={styles.typingBubble}><ActivityIndicator size="small" color="#8B6A3E" /></View>
-            </View>
-          )}
-          <View style={styles.inputRow}>
+
+          <View style={tmStyles.searchRow}>
+            <Ionicons name="search-outline" size={16} color="#9a7a60" style={{ marginLeft: 12 }} />
             <TextInput
-              style={styles.chatInput}
-              placeholder="Ask me anything about your card..."
+              style={tmStyles.searchInput}
+              placeholder="Search templates..."
               placeholderTextColor="#9a7a60"
-              value={input}
-              onChangeText={setInput}
-              multiline
-              maxLength={500}
-              returnKeyType="send"
-              onSubmitEditing={sendMessage}
+              value={search}
+              onChangeText={setSearch}
+              returnKeyType="search"
+              autoCorrect={false}
             />
-            <TouchableOpacity
-              style={[styles.sendIconBtn, (!input.trim() || loading) && styles.sendIconBtnDisabled]}
-              onPress={sendMessage}
-              disabled={!input.trim() || loading}
-            >
-              <Ionicons name="arrow-up" size={18} color="#f5ede0" />
-            </TouchableOpacity>
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch("")} style={{ marginRight: 10 }}>
+                <Ionicons name="close-circle" size={16} color="#9a7a60" />
+              </TouchableOpacity>
+            )}
           </View>
+
+          {loading ? (
+            <View style={tmStyles.loadingWrap}>
+              <ActivityIndicator color="#7a1a1a" />
+              <Text style={tmStyles.loadingText}>Loading templates...</Text>
+            </View>
+          ) : templates.length === 0 ? (
+            <View style={tmStyles.emptyWrap}>
+              <Ionicons name="search" size={32} color="#d7c3ac" />
+              <Text style={tmStyles.emptyText}>No templates found</Text>
+            </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={tmStyles.scrollContent}
+              style={tmStyles.scrollArea}
+            >
+              {templates.map((template) => {
+                // Map local sticker keys → require() sources (mirrors the STICKERS array)
+                const LOCAL_STICKER_MAP: Record<string, any> = {
+                  "star-sticker":          require("../../assets/images/star-sticker.png"),
+                  "heart-sticker":         require("../../assets/images/heart-sticker.png"),
+                  "orange-flower-stamp":   require("../../assets/images/orange-flower-stamp.png"),
+                  "photo-strip":           require("../../assets/images/photo-strip.png"),
+                  "cake-sticker":          require("../../assets/images/cake-sticker.png"),
+                  "sun-sticker":           require("../../assets/images/sun-sticker.png"),
+                  "grass-sticker":         require("../../assets/images/grass-sticker.png"),
+                  "butterfly-sticker":     require("../../assets/images/butterfly-sticker.png"),
+                  "balloon-sticker":       require("../../assets/images/balloon-sticker.png"),
+                  "banner-sticker":        require("../../assets/images/banner-sticker.png"),
+                  "gradguy-sticker":       require("../../assets/images/gradguy-sticker.png"),
+                  "snowman-sticker":       require("../../assets/images/snowman-sticker.png"),
+                  "snowflake-sticker":     require("../../assets/images/snowflake-sticker.png"),
+                  // legacy ids without suffix
+                  "star":      require("../../assets/images/star-sticker.png"),
+                  "heart":     require("../../assets/images/heart-sticker.png"),
+                  "flower":    require("../../assets/images/orange-flower-stamp.png"),
+                  "strip":     require("../../assets/images/photo-strip.png"),
+                  "cake":      require("../../assets/images/cake-sticker.png"),
+                  "sun":       require("../../assets/images/sun-sticker.png"),
+                  "grass":     require("../../assets/images/grass-sticker.png"),
+                  "butterfly": require("../../assets/images/butterfly-sticker.png"),
+                  "balloon":   require("../../assets/images/balloon-sticker.png"),
+                  "banner":    require("../../assets/images/banner-sticker.png"),
+                  "gradguy":   require("../../assets/images/gradguy-sticker.png"),
+                  "snowman":   require("../../assets/images/snowman-sticker.png"),
+                  "snowflake": require("../../assets/images/snowflake-sticker.png"),
+                };
+
+                // Returns { type: "local", source } | { type: "uri", uri } | null
+                const parseStickerSource = (raw: string | undefined): { type: "local"; source: any } | { type: "uri"; uri: string } | null => {
+                  if (!raw) return null;
+                  try {
+                    const p = JSON.parse(raw);
+                    const key = p.sticker || p.image_url || p.url || "";
+                    if (key && LOCAL_STICKER_MAP[key]) return { type: "local", source: LOCAL_STICKER_MAP[key] };
+                    if (key && key.startsWith("http")) return { type: "uri", uri: key };
+                    if (p.image_url?.startsWith("http")) return { type: "uri", uri: p.image_url };
+                  } catch {
+                    if (typeof raw === "string" && raw.startsWith("http")) return { type: "uri", uri: raw };
+                  }
+                  return null;
+                };
+
+                const parseTextContent = (raw: string | undefined): string => {
+                  if (!raw) return "";
+                  try {
+                    const p = JSON.parse(raw);
+                    return p.content || p.text || "";
+                  } catch {
+                    return typeof raw === "string" ? raw : "";
+                  }
+                };
+
+                const allStickerFields = [
+                  template.sticker_1, template.sticker_2, template.sticker_3,
+                  template.sticker_4, template.sticker_5, template.gif_1, template.gif_2,
+                ];
+                const previewStickers = allStickerFields
+                  .map(parseStickerSource)
+                  .filter(Boolean) as ({ type: "local"; source: any } | { type: "uri"; uri: string })[];
+
+                const allTextFields = [
+                  template.text_1, template.text_2, template.text_3,
+                  template.text_4, template.text_5,
+                ];
+                const previewTexts = allTextFields.map(parseTextContent).filter(Boolean);
+
+                return (
+                  <TouchableOpacity
+                    key={template.id}
+                    style={tmStyles.card}
+                    onPress={() => handleApply(template)}
+                    activeOpacity={0.85}
+                  >
+                    <View style={[tmStyles.cardPreview, { backgroundColor: template.card_color || "#fffaf4" }]}>
+                      {previewStickers.length > 0 && (
+                        <View style={tmStyles.stickerRow}>
+                          {previewStickers.slice(0, 3).map((s, i) => (
+                            <Image
+                              key={i}
+                              source={s.type === "local" ? s.source : { uri: (s as any).uri }}
+                              style={[tmStyles.stickerPreview, { transform: [{ rotate: `${(i - 1) * 10}deg` }] }]}
+                              resizeMode="contain"
+                            />
+                          ))}
+                        </View>
+                      )}
+                      {previewTexts.length > 0 && (
+                        <View style={tmStyles.textPreviewWrap}>
+                          {previewTexts.slice(0, 2).map((t, i) => (
+                            <Text key={i} style={tmStyles.previewText} numberOfLines={2}>{t}</Text>
+                          ))}
+                        </View>
+                      )}
+                      {previewStickers.length === 0 && previewTexts.length === 0 && (
+                        <Ionicons name="card-outline" size={32} color="rgba(90,57,14,0.2)" />
+                      )}
+                    </View>
+
+                    <View style={tmStyles.cardLabel}>
+                      <Text style={tmStyles.cardName} numberOfLines={1}>{template.name}</Text>
+                      <View style={tmStyles.useBtn}>
+                        <Text style={tmStyles.useBtnText}>Use</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
+
+          <TouchableOpacity style={tmStyles.scratchBtn} onPress={onClose}>
+            <Ionicons name="brush-outline" size={16} color="#7a1a1a" />
+            <Text style={tmStyles.scratchText}>Start from scratch</Text>
+          </TouchableOpacity>
         </KeyboardAvoidingView>
       </View>
     </Modal>
   );
 }
+
+const tmStyles = StyleSheet.create({
+  overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.45)" },
+  sheet: {
+    backgroundColor: "#fdf6ed",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingBottom: Platform.OS === "ios" ? 34 : 16,
+    maxHeight: "80%",
+  },
+  handle: { width: 40, height: 4, backgroundColor: "#d7c3ac", borderRadius: 2, alignSelf: "center", marginTop: 10, marginBottom: 6 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#ede0cc" },
+  headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
+  sparkleIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: "#7a1a1a", alignItems: "center", justifyContent: "center" },
+  title: { fontSize: 16, fontWeight: "700", color: "#3a2010" },
+  subtitle: { fontSize: 11, color: "#9a7a60", marginTop: 1 },
+  closeBtn: { padding: 6, borderRadius: 20, backgroundColor: "#ede0cc" },
+  searchRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#ede0cc", borderRadius: 14, marginHorizontal: 16, marginVertical: 14, borderWidth: 1, borderColor: "#d7c3ac" },
+  searchInput: { flex: 1, paddingVertical: 10, paddingHorizontal: 8, fontSize: 14, color: "#3a2010" },
+  scrollArea: { flexGrow: 0 },
+  scrollContent: { paddingHorizontal: 16, paddingBottom: 8, gap: 12 },
+  card: { width: 150, borderRadius: 16, overflow: "hidden", backgroundColor: "#fff", borderWidth: 1, borderColor: "#d7c3ac" },
+  cardPreview: { height: 160, alignItems: "center", justifyContent: "center", padding: 10 },
+  stickerRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, marginBottom: 6 },
+  stickerPreview: { width: 44, height: 44 },
+  textPreviewWrap: { alignItems: "center", paddingHorizontal: 8, marginTop: 4, gap: 2 },
+  previewText: { fontSize: 11, color: "#5A390E", fontStyle: "italic", textAlign: "center" },
+  cardLabel: { flexDirection: "row", alignItems: "center", paddingHorizontal: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: "#ede0cc", backgroundColor: "#fdf6ed", gap: 6 },
+  cardName: { flex: 1, fontSize: 12, fontWeight: "600", color: "#3a2010" },
+  useBtn: { backgroundColor: "#7a1a1a", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  useBtnText: { color: "#f5ede0", fontSize: 11, fontWeight: "600" },
+  loadingWrap: { paddingVertical: 40, alignItems: "center", gap: 10 },
+  loadingText: { fontSize: 13, color: "#9a7a60" },
+  emptyWrap: { paddingVertical: 40, alignItems: "center", gap: 8 },
+  emptyText: { fontSize: 13, color: "#9a7a60" },
+  scratchBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 12, marginHorizontal: 16, paddingVertical: 12, borderRadius: 16, borderWidth: 1, borderColor: "#d7c3ac", backgroundColor: "#ede0cc" },
+  scratchText: { fontSize: 13, color: "#7a1a1a", fontWeight: "600" },
+});
 
 // ─── Send/Share Modal ─────────────────────────────────────────────────────────
 
@@ -323,7 +407,6 @@ function SendShareModal({ visible, onClose, onSend }: { visible: boolean; onClos
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function CreateCard() {
-  // Fonts loaded so template text renders correctly
   const [fontsLoaded] = useFonts({
     DancingScript_400Regular,
     Pacifico_400Regular,
@@ -341,13 +424,6 @@ export default function CreateCard() {
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
   const [aiModalVisible, setAiModalVisible] = useState(false);
   const [sendModalVisible, setSendModalVisible] = useState(false);
-  const [userId, setUserId] = useState<string>("guest");
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user?.id) setUserId(data.session.user.id);
-    });
-  }, []);
 
   const STICKERS = [
     { id: "star",      image: require("../../assets/images/star-sticker.png") },
@@ -438,11 +514,10 @@ export default function CreateCard() {
 
   return (
     <View style={styles.container}>
-      <AIChatModal
+      <TemplateSearchModal
         visible={aiModalVisible}
         onClose={() => setAiModalVisible(false)}
         onApplyTemplate={handleApplyTemplate}
-        userId={userId}
       />
 
       <SendShareModal
@@ -503,7 +578,6 @@ export default function CreateCard() {
 
           <View style={styles.footerWrapper}>
 
-            {/* ── Tool panels (only when no item is selected) ── */}
             {activeTool && !selectedId && (
               <View style={styles.panel}>
                 <View style={styles.panelHeader}>
@@ -595,7 +669,6 @@ export default function CreateCard() {
 
             <View style={styles.toolbarRow}>
               {selectedId ? (
-                // ── Selection toolbar ──
                 <View style={[styles.toolbar, styles.toolbarSelected]}>
                   <TouchableOpacity style={styles.toolButton} onPress={() => {
                     const item = items.find((i) => i.id === selectedId);
@@ -640,7 +713,6 @@ export default function CreateCard() {
                   </TouchableOpacity>
                 </View>
               ) : (
-                // ── Normal toolbar ──
                 <View style={styles.toolbar}>
                   <Pressable style={[styles.toolButton, activeTool === "background" && styles.activeToolBtn]} onPress={() => setActiveTool(activeTool === "background" ? null : "background")}>
                     <Ionicons name="color-palette-outline" size={24} color="#5A390E" />
@@ -661,7 +733,7 @@ export default function CreateCard() {
               )}
 
               <TouchableOpacity style={styles.plusButton} activeOpacity={0.8} onPress={() => setAiModalVisible(true)}>
-                <Image source={require("../../assets/images/sparkle-chat.png")} style={{ marginLeft: 2, width: 45, height: 45, resizeMode: "contain" }} />
+                <Ionicons name="albums-outline" size={22} color="#f5ede0" />
               </TouchableOpacity>
             </View>
 
@@ -735,32 +807,6 @@ const styles = StyleSheet.create({
   cancelText: { color: "#8b1a1a", fontSize: 14 },
   sendBtn: { flex: 1, paddingVertical: 10, borderRadius: 20, backgroundColor: "#7a1a1a", alignItems: "center", justifyContent: "center" },
   gifInput: { backgroundColor: "#F5EEE1", borderWidth: 1, borderColor: "#c8b89a", borderRadius: 10, padding: 10, fontSize: 14, color: "#3a2010", marginBottom: 8 },
-  modalOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.45)" },
-  modalSheet: { backgroundColor: "#fdf6ed", borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: Platform.OS === "ios" ? 34 : 16, maxHeight: "95%" },
-  handleBar: { width: 40, height: 4, backgroundColor: "#d7c3ac", borderRadius: 2, alignSelf: "center", marginTop: 10, marginBottom: 6 },
-  modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#ede0cc", marginBottom: 5 },
-  modalHeaderLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
-  sparkleIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: "#4A7568", alignItems: "center", justifyContent: "center" },
-  modalTitle: { fontSize: 16, fontWeight: "700", color: "#3a2010", fontFamily: "Calistoga" },
-  modalSubtitle: { fontSize: 11, color: "#9a7a60", marginTop: 1 },
-  closeBtn: { padding: 6, borderRadius: 20, backgroundColor: "#ede0cc" },
-  messageList: { paddingHorizontal: 16, paddingTop: 12, gap: 10, paddingBottom: 20 },
-  messageBubble: { flexDirection: "row", alignItems: "flex-end", gap: 8, marginBottom: 6 },
-  userBubble: { justifyContent: "flex-end" },
-  assistantBubble: { justifyContent: "flex-start" },
-  avatarDot: { width: 26, height: 26, borderRadius: 13, backgroundColor: "#4A7568", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  bubbleContent: { maxWidth: "78%", borderRadius: 18, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 2 },
-  userBubbleContent: { backgroundColor: "#7a1a1a", borderBottomRightRadius: 4 },
-  assistantBubbleContent: { backgroundColor: "#ede0cc", borderBottomLeftRadius: 4 },
-  bubbleText: { fontSize: 14, lineHeight: 20 },
-  userBubbleText: { color: "#f5ede0" },
-  assistantBubbleText: { color: "#3a2010" },
-  typingRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 6 },
-  typingBubble: { backgroundColor: "#ede0cc", borderRadius: 18, paddingVertical: 10, paddingHorizontal: 18 },
-  inputRow: { flexDirection: "row", alignItems: "flex-end", gap: 8, paddingHorizontal: 16, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#ede0cc", paddingBottom: 30 },
-  chatInput: { flex: 1, backgroundColor: "#ede0cc", borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: "#3a2010", maxHeight: 100 },
-  sendIconBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#7a1a1a", alignItems: "center", justifyContent: "center" },
-  sendIconBtnDisabled: { backgroundColor: "#c8b89a" },
   sendModalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end", paddingBottom: 110, paddingHorizontal: 16 },
   sendModalBox: { backgroundColor: "#fdf6ee", borderRadius: 20, padding: 20 },
   sendModalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },

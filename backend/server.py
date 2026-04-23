@@ -9,7 +9,6 @@ def patched_array(*args, **kwargs):
     try:
         return original_array(*args, **kwargs)
     except ValueError:
-        # If it fails, we force it to be an 'object' array
         kwargs['dtype'] = object
         return original_array(*args, **kwargs)
 
@@ -18,27 +17,22 @@ np.array = patched_array
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-from dotenv import load_dotenv
 import os
-load_dotenv()  
 load_dotenv()
 from pillow_heif import register_heif_opener
 import requests
 from openai import OpenAI
-import os
 import json
 
-from ocr import process_ocr, get_card_images, update_card_ocr  # Import the OCR function from ocr.py
-from tagging import generate_tags, save_tags_to_supabase # Import tagging functions from tagging.py
-from embedding import get_card_text, generate_embedding, save_embedding # Import embedding functions from embedding.py
+from ocr import process_ocr, get_card_images, update_card_ocr
+from tagging import generate_tags, save_tags_to_supabase
+from embedding import get_card_text, generate_embedding, save_embedding
 
-register_heif_opener()  # enables HEIC/HEIF support
-load_dotenv()
+register_heif_opener()
 
 app = Flask(__name__)
 CORS(app)
 
-# Supabase connection details
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 HEADERS = {
@@ -132,79 +126,6 @@ def process_card():
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
-    try:
-        data = request.json
-        card_id = data['card_id']
-        user_id = data['user_id']
-        use_mock = data.get('use_mock', True)
-
-        # Initialize placeholders for the response
-        card_title = "Unknown"
-        card_caption = ""
-
-        results = {
-            'card_id': card_id,
-            'ocr': None,
-            'tagging': None,
-            'embedding': None,
-            'errors': []
-        }
-
-        # ── Step 1: OCR ──────────────────────────────────────────
-        try:
-            card_images = get_card_images(card_id)
-            if not card_images:
-                results['errors'].append('OCR: No images found')
-            else:
-                all_ocr_text = []
-                for image in card_images:
-                    ocr_result = process_ocr(image['image_url'])
-                    all_ocr_text.append(ocr_result)
-                combined_ocr_text = "\n".join(all_ocr_text)
-                update_card_ocr(card_id, combined_ocr_text)
-                results['ocr'] = {'success': True, 'images_processed': len(card_images), 'ocr_text': combined_ocr_text}
-        except Exception as e:
-            results['errors'].append(f'OCR failed: {str(e)}')
-
-        # ── Step 2: Tagging ──────────────────────────────────────
-        try:
-            card_response = requests.get(
-                f"{SUPABASE_URL}/rest/v1/cards?id=eq.{card_id}&select=ocr_text,caption,title",
-                headers=HEADERS
-            ).json()
-            if card_response:
-                card = card_response[0]
-
-                # EXTRACT TITLE AND CAPTION HERE
-                card_title = card.get('title', 'Untitled Card')
-                card_caption = card.get('caption', '')
-
-                tags = generate_tags(card.get('ocr_text', ''), card_caption, card_title, use_mock)
-                saved_tags = save_tags_to_supabase(card_id, user_id, tags)
-                results['tagging'] = {'success': True, 'tags': [t['name'] for t in saved_tags]}
-        except Exception as e:
-            results['errors'].append(f'Tagging failed: {str(e)}')
-
-        # ── Step 3: Embedding ────────────────────────────────────
-        try:
-            combined_text, card = get_card_text(card_id)
-            if combined_text:
-                embedding = generate_embedding(combined_text)
-                save_embedding(card_id, embedding)
-                results['embedding'] = {'success': True, 'dimensions': len(embedding)}
-        except Exception as e:
-            results['errors'].append(f'Embedding failed: {str(e)}')
-
-        return jsonify({
-            'success': len(results['errors']) == 0,
-            'card_id': card_id,
-            'card_name': card_title,
-            'caption' : card_caption,
-            'results': results
-        }), 200
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # ================================================================
@@ -216,7 +137,6 @@ def run_ocr():
         data = request.json
         card_id = data['card_id']
 
-        # Fetch all images for this card from Supabase ordered by order_index
         card_images = get_card_images(card_id)
 
         if not card_images:
@@ -224,27 +144,24 @@ def run_ocr():
                 'success': False,
                 'error': 'No images found for this card'
             }), 404
-        
-        # Run OCR on each image and concatente results
+
         all_ocr_text = []
         for image in card_images:
             image_url = image['image_url']
             ocr_result = process_ocr(image_url)
-            print(f"OCR result for image {image_url}: {ocr_result}") #TESTING
+            print(f"OCR result for image {image_url}: {ocr_result}")
             all_ocr_text.append(ocr_result)
 
-        # Join all image OC results into one string
         combined_ocr_text = "\n".join(all_ocr_text)
         print(f"Combined OCR text: {combined_ocr_text}")
 
-        # Save combined OCR text to Supabase cards table
         update_card_ocr(card_id, str(combined_ocr_text))
-        print(f"OCR text saved to card: {card_id}") #TESTING
+        print(f"OCR text saved to card: {card_id}")
 
         return jsonify({
             'success': True,
             'card_id': card_id,
-            'ocr_text': combined_ocr_text,  # the full concatenated text
+            'ocr_text': combined_ocr_text,
             'images_processed': len(card_images)
         }), 200
 
@@ -255,6 +172,7 @@ def run_ocr():
             'error': str(e)
         }), 500
 
+
 # ================================================================
 # AUTO TAGGING ENDPOINT
 # ================================================================
@@ -264,9 +182,8 @@ def auto_tag():
         data = request.json
         card_id = data['card_id']
         user_id = data['user_id']
-        use_mock = data.get('use_mock', True)  # defaults to mock to save API credits
+        use_mock = data.get('use_mock', True)
 
-        # Fetch ocr_text and caption from Supabase for this card
         card_response = requests.get(
             f"{SUPABASE_URL}/rest/v1/cards?id=eq.{card_id}&select=ocr_text,caption,title",
             headers=HEADERS
@@ -279,16 +196,14 @@ def auto_tag():
                 'success': False,
                 'error': 'Card not found'
             }), 404
-        
+
         ocr_text = card[0].get('ocr_text', '')
         caption = card[0].get('caption', '')
         title = card[0].get('title', '')
 
-        # Generate tags from tagging.py
         tags = generate_tags(ocr_text, caption, title, use_mock)
         print(f"Tags generated: {tags}")
 
-        # Save to Supabase from tagging.py
         saved_tags = save_tags_to_supabase(card_id, user_id, tags)
 
         return jsonify({
@@ -304,6 +219,7 @@ def auto_tag():
             'error': str(e)
         }), 500
 
+
 # ================================================================
 # EMBED ENDPOINT
 # ================================================================
@@ -313,7 +229,6 @@ def embed_card():
         data = request.json
         card_id = data['card_id']
 
-        # Fetch card text and tags
         combined_text, card = get_card_text(card_id)
 
         if not combined_text:
@@ -324,11 +239,9 @@ def embed_card():
 
         print(f"Embedding text: {combined_text}")
 
-        # Generate embedding via OpenAI
         embedding = generate_embedding(combined_text)
         print(f"Embedding generated: {len(embedding)} dimensions")
 
-        # Save embedding to Supabase
         save_embedding(card_id, embedding)
         print(f"Embedding saved to card: {card_id}")
 
@@ -346,9 +259,10 @@ def embed_card():
             'error': str(e)
         }), 500
 
+
 # ================================================================
 # PERSONA ENDPOINT (for testing LLM responses)
-    
+# ================================================================
 @app.route("/persona", methods=["POST"])
 def persona():
     prompt = request.json["prompt"]
@@ -364,6 +278,7 @@ def persona():
 
     return jsonify({"raw": raw})
 
+
 # ================================================================
 # SEARCH ENDPOINT
 # ================================================================
@@ -373,14 +288,12 @@ def search_cards():
         data = request.json
         query = data['query']
         user_id = data['user_id']
-        match_count = data.get('match_count', 5)      # how many results to return
-        match_threshold = data.get('match_threshold', 0.3)  # similarity threshold 0-1
+        match_count = data.get('match_count', 5)
+        match_threshold = data.get('match_threshold', 0.3)
 
-        # Generate embedding for the search query
         query_embedding = generate_embedding(query)
         print(f"Query embedding generated for: {query}")
 
-        # Search Supabase using match_cards function
         response = requests.post(
             f"{SUPABASE_URL}/rest/v1/rpc/match_cards",
             json={
@@ -403,7 +316,6 @@ def search_cards():
                 'message': 'No matches found'
             }), 200
 
-        # Fetch folder name for each matched card
         results = []
         for match in matches:
             folder_response = requests.get(
@@ -435,183 +347,7 @@ def search_cards():
             'error': str(e)
         }), 500
 
-# ================================================================
-# TEMPLATE RECOMMENDATION ENDPOINT
-# ================================================================
-def get_user_headers(token):
-    return {
-        'apikey': SUPABASE_KEY,
-        'Authorization': f'Bearer {token}',
-        'Content-Type': 'application/json'
-    }
 
-@app.route('/recommend-template', methods=['POST'])
-def recommend_template():
-    try:
-        data = request.json
-        user_prompt = data['prompt']
-        user_id = data.get('user_id')
-        match_count = data.get('match_count', 5)
-
-        auth_header = request.headers.get('Authorization', '')
-        user_token = auth_header.replace('Bearer ', '') if auth_header else SUPABASE_KEY
-        user_headers = get_user_headers(user_token)
-
-        # ── Step 1: Ask OpenAI to structure the prompt ────────────
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        completion = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": """You are a card design assistant. Convert the user's request into structured JSON.
-                    Return ONLY valid JSON, no extra text, in this exact format:
-                    {
-                        "occasion": "",
-                        "recipient": "",
-                        "age": null,
-                        "vibe": [],
-                        "color_preference": null,
-                        "avoid_colors": [],
-                        "sticker_preferences": [],
-                        "music_mood": "",
-                        "embedding_text": "one sentence summarizing the card vibe and purpose"
-                    }"""
-                },
-                {"role": "user", "content": user_prompt}
-            ]
-        )
-
-        raw = completion.choices[0].message.content.strip()
-        print("OpenAI raw response:", raw)
-        if raw.startswith("```"):
-            raw = raw.split("```")[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
-        card_json = json.loads(raw.strip())
-
-        # ── Step 2: Insert into card_requests ─────────────────────
-        insert_response = requests.post(
-            f"{SUPABASE_URL}/rest/v1/card_requests",
-            json={
-                "user_id": user_id,
-                "occasion": card_json.get("occasion"),
-                "recipient": card_json.get("recipient"),
-                "age": card_json.get("age"),
-                "vibe": card_json.get("vibe"),
-                "color_preference": card_json.get("color_preference"),
-                "avoid_colors": card_json.get("avoid_colors"),
-                "sticker_preferences": card_json.get("sticker_preferences"),
-                "music_mood": card_json.get("music_mood"),
-                "embedding_text": card_json.get("embedding_text")
-            },
-            headers={**HEADERS, "Prefer": "return=representation"}
-        )
-        print("card_requests status:", insert_response.status_code)
-        print("card_requests response:", insert_response.text)
-        if insert_response.status_code != 201:
-            raise Exception(f"card_requests insert failed: {insert_response.status_code} {insert_response.text}")
-        card_request_id = insert_response.json()[0]['id']
-        # ── Step 3: Generate embedding + save it ──────────────────
-        embedding = generate_embedding(card_json.get("embedding_text", user_prompt))
-        requests.patch(
-            f"{SUPABASE_URL}/rest/v1/card_requests?id=eq.{card_request_id}",
-            json={"embedding": embedding},
-            headers=HEADERS
-        )
-
-        # ── Step 4: Match against templates2 ─────────────────────
-        match_response = requests.post(
-            f"{SUPABASE_URL}/rest/v1/rpc/match_templates",
-            json={"query_embedding": embedding, "match_count": match_count},
-            headers=HEADERS
-        )
-        print("match_templates status:", match_response.status_code)
-        print("match_templates response:", match_response.text)
-        matches = match_response.json()
-
-        if not matches:
-            return jsonify({
-                "success": True,
-                "design_intent": card_json,
-                "suggested_templates": [],
-                "custom_card_id": None
-            }), 200
-
-        
-        # ── Step 5: Copy best match into custom_cards ─────────────
-        best = matches[0]
-
-        # Fetch sticker URL map from Supabase
-        stickers_response = requests.get(
-            f"{SUPABASE_URL}/rest/v1/stickers?is_preset=eq.true&select=name,image_url",
-            headers=HEADERS
-        ).json()
-
-        sticker_url_map = {}
-        for s in stickers_response:
-            sticker_url_map[s['name']] = s['image_url']
-
-        # Parse and resolve sticker fields
-        resolved_stickers = []
-        for i in range(1, 6):
-            raw = best.get(f"sticker_{i}")
-            if not raw or not raw.strip():
-                continue
-            try:
-                s = json.loads(raw)
-            except (json.JSONDecodeError, TypeError):
-                continue
-            sticker_id = s.get("sticker")
-            s["image_url"] = sticker_url_map.get(sticker_id, "")
-            resolved_stickers.append(json.dumps(s))
-
-        # Parse text fields safely
-        resolved_texts = []
-        for i in range(1, 6):
-            raw = best.get(f"text_{i}")
-            if not raw or not raw.strip():
-                continue
-            resolved_texts.append(raw)
-
-        # Parse gif fields safely
-        resolved_gifs = []
-        for i in range(1, 3):
-            raw = best.get(f"gif_{i}")
-            if not raw or not raw.strip():
-                continue
-            resolved_gifs.append(raw)
-
-        # Build card_items JSON
-        card_items = json.dumps({
-            "texts": resolved_texts,
-            "stickers": resolved_stickers,
-            "gifs": resolved_gifs,
-        })
-
-        custom_card_response = requests.post(
-            f"{SUPABASE_URL}/rest/v1/custom_cards",
-            json={
-                "created_by": user_id,
-                "card_color": best.get("card_color"),
-                "card_items": card_items
-            },
-            headers={**HEADERS, "Prefer": "return=representation"}
-        )
-        print("custom_cards status:", custom_card_response.status_code)
-        print("custom_cards response:", custom_card_response.text)
-        custom_card = custom_card_response.json()[0]
-
-        return jsonify({
-            "success": True,
-            "design_intent": card_json,
-            "suggested_templates": matches,
-            "custom_card_id": custom_card['id']
-        }), 200
-
-    except Exception as e:
-        print(f"Recommend template error: {str(e)}")
-        return jsonify({"success": False, "error": str(e)}), 500
 # ================================================================
 # SEED TEMPLATE EMBEDDINGS (temporary - remove after testing)
 # ================================================================
@@ -650,8 +386,7 @@ def seed_template_embeddings():
     except Exception as e:
         print(f"Seed error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
-    
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", debug=True, port=8000)
-
-    
