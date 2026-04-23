@@ -450,7 +450,13 @@ export default function CreateCard() {
         onClose={() => setSendModalVisible(false)}
         onSend={() => {
           setSendModalVisible(false);
-          router.push({ pathname: "/send-card", params: { cardId: cardId ?? "" } } as any);
+          router.push({
+            pathname: "/send-card",
+            params: {
+              cardColor: cardColor,
+              cardItems: JSON.stringify(items),
+            },
+          } as any);
         }}
       />
 
