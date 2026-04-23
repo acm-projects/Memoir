@@ -141,6 +141,8 @@ function TemplateSearchModal({
       }
 
       const { data, error } = await req;
+      console.log("TEMPLATES DATA:", JSON.stringify(data));
+      console.log("TEMPLATES ERROR:", JSON.stringify(error));
       if (!error && data) setTemplates(data as TemplateMatch[]);
     } catch {}
     setLoading(false);
