@@ -241,24 +241,25 @@ export default function DraggableItem({
     }
 
     if (item.type === "text") {
-      return (
-        <View style={styles.textContainer}>
-          <TextInput
-            value={item.content}
-            multiline
-            editable={isSelected}
-            style={[
-                styles.draggableText,
-                { color: item.color || "#5A390E" },
-                item.font ? { fontFamily: item.font } : {},  // ← add this
-                !isSelected && { borderColor: "transparent" },
-              ]}
-            placeholder="Type here..."
-            onChangeText={(text) => onContentChange(item.id, text)}
-          />
-        </View>
-      );
-    }
+  return (
+    <View style={styles.textContainer}>
+      <TextInput
+        value={item.content}
+        multiline
+        editable={isSelected}  
+        autoFocus={isSelected}  // 👈 add this
+        style={[
+          styles.draggableText,
+          { color: item.color || "#5A390E" },
+          item.font ? { fontFamily: item.font } : {},
+          !isSelected && { borderColor: "transparent" },
+        ]}
+        placeholder="Type here..."
+        onChangeText={(text) => onContentChange(item.id, text)}
+      />
+    </View>
+  );
+}
 
     return null;
   }
