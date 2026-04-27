@@ -228,7 +228,7 @@ function SendShareModal({ visible, onClose, onSend }) {
 function ChatRoomHeader({ name, avatar, router }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, paddingTop: 56, backgroundColor: '#7a1a1a', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)' }}>
-      <Pressable onPress={() => router.back()} style={{ padding: 8 }}>
+      <Pressable onPress={() => router.push("/messages")} style={{ padding: 8 }}>
         <Ionicons name="chevron-back" size={24} color="#f5ede0" />
       </Pressable>
       <View style={{ flex: 1, alignItems: 'center', marginHorizontal: 12 }}>
