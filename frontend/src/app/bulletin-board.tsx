@@ -51,6 +51,79 @@ const ACCENT_COLORS = ["#557263", "#7B1D1D", "#8B6A3E", "#4A6741", "#6B4F6B"];
 
 const BOARD_CONTENT_HEIGHT = 1500;
 
+const HARDCODED_TRACKS = [
+  {
+    id: "1",
+    name: "Blinding Lights",
+    artists: [{ name: "The Weeknd" }],
+    external_urls: { spotify: "https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b" },
+    album: { images: [{ url: "https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36" }] },
+  },
+  {
+    id: "2",
+    name: "As It Was",
+    artists: [{ name: "Harry Styles" }],
+    external_urls: { spotify: "https://open.spotify.com/track/4Dvkj6JhhA12EX05fT7y2e" },
+    album: { images: [{ url: "https://i.scdn.co/image/ab67616d0000b273b46f74097655d7f353caab14" }] },
+  },
+  {
+    id: "3",
+    name: "Stay",
+    artists: [{ name: "The Kid LAROI & Justin Bieber" }],
+    external_urls: { spotify: "https://open.spotify.com/track/5HCyWlXZPP0y6Gqq8TgA20" },
+    album: { images: [{ url: "https://i.scdn.co/image/ab67616d0000b273e6f407c7f3a0ec98845e4431" }] },
+  },
+  {
+    id: "4",
+    name: "Levitating",
+    artists: [{ name: "Dua Lipa" }],
+    external_urls: { spotify: "https://open.spotify.com/track/463CkQjx2Zk1yXoBuierM9" },
+    album: { images: [{ url: "https://i.scdn.co/image/ab67616d0000b2734bc66095f8a70bc4e6593f4f" }] },
+  },
+  {
+    id: "5",
+    name: "good 4 u",
+    artists: [{ name: "Olivia Rodrigo" }],
+    external_urls: { spotify: "https://open.spotify.com/track/4ZtFanR9U6ndgddUvNcjcG" },
+    album: { images: [{ url: "https://i.scdn.co/image/ab67616d0000b273a91c10fe9472d9bd89802e5a" }] },
+  },
+  {
+    id: "6",
+    name: "Anti-Hero",
+    artists: [{ name: "Taylor Swift" }],
+    external_urls: { spotify: "https://open.spotify.com/track/0V3wPSX9ygBnCm8psDIegu" },
+    album: { images: [{ url: "https://i.scdn.co/image/ab67616d0000b273bb54dde68cd23e2a268ae0f5" }] },
+  },
+  {
+    id: "7",
+    name: "Flowers",
+    artists: [{ name: "Miley Cyrus" }],
+    external_urls: { spotify: "https://open.spotify.com/track/4Dvkj6JhhA12EX05fT7y2e" },
+    album: { images: [{ url: "https://i.scdn.co/image/ab67616d0000b2736985d1057abe7bcff98f3a53" }] },
+  },
+  {
+    id: "8",
+    name: "Cruel Summer",
+    artists: [{ name: "Taylor Swift" }],
+    external_urls: { spotify: "https://open.spotify.com/track/1BxfuPKGuaTgP7aM0Bbdwr" },
+    album: { images: [{ url: "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647" }] },
+  },
+  {
+    id: "9",
+    name: "Unholy",
+    artists: [{ name: "Sam Smith & Kim Petras" }],
+    external_urls: { spotify: "https://open.spotify.com/track/3nqQXoyQOWXiESFLlDF1hG" },
+    album: { images: [{ url: "https://i.scdn.co/image/ab67616d0000b2730a3fc0e9f59b3cfd6f6091d5" }] },
+  },
+  {
+    id: "10",
+    name: "Heat Waves",
+    artists: [{ name: "Glass Animals" }],
+    external_urls: { spotify: "https://open.spotify.com/track/02MWAaffLxlfxAUY7c5dvx" },
+    album: { images: [{ url: "https://i.scdn.co/image/ab67616d0000b2739e495fb707973f3390850eea" }] },
+  },
+];
+
 // ─────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────
@@ -291,39 +364,52 @@ export default function BulletinBoard() {
     }
   }
 
-  async function addMusicItem(track: any) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log(process.env.EXPO_PUBLIC_SUPABASE_URL);
-      console.log("FOLDER ID:", id);
-      console.log("TYPE:", typeof id);
-      console.log("SUPABASE USER:", user);
-      const { data, error } = await supabase
-        .from("board_music")
-        .insert({
-          folder_id: id,
-          spotify_url: track.external_urls.spotify,
-          track_name: track.name,
-          artist_name: track.artists?.[0]?.name ?? "",
-          album_image_url: track.album.images[0]?.url ?? "",
-        })
-        .select()
-        .single();
+async function addMusicItem(track: any) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log(process.env.EXPO_PUBLIC_SUPABASE_URL);
+    console.log("FOLDER ID:", id);
+    console.log("TYPE:", typeof id);
+    console.log("SUPABASE USER:", user);
 
-      if (error) throw error;
+    const { data, error } = await supabase
+      .from("board_music")
+      .insert({
+        folder_id: id,
+        spotify_url: track.external_urls.spotify,
+        track_name: track.name,
+        artist_name: track.artists?.[0]?.name ?? "",
+        album_image_url: track.album.images[0]?.url ?? "",
+        x: boardSize.width / 2 - 50,
+        y: boardSize.height / 2 - 50,
+        rotation: seededRotation(String(Date.now())),
+        scale: 1,
+      })
+      .select()
+      .single();
 
-      setItems((prev) => [
-        ...prev,
-        { ...data, rotation: seededRotation(data.id) }
-      ]);
-    } catch (e) {
-      console.error("Failed to add music item:", e);
-    }
-    setActiveTool(null);
-    setTracks([]);
-    setMusicSearch("");
+    if (error) throw error;
+
+    setItems((prev) => [
+      ...prev,
+      {
+        id: data.id,
+        type: "music" as ItemType,
+        content: data.track_name,
+        x: boardSize.width / 2 - 50,
+        y: 200,
+        rotation: seededRotation(data.id),
+        scale: 1,
+        spotifyUrl: data.spotify_url,
+        artistName: data.artist_name,
+        sticker: data.album_image_url,
+      },
+    ]);
+  } catch (e) {
+    console.error("Failed to add music item:", e);
   }
-
+  setActiveTool(null);
+}
   // ─────────────────────────────────────────────
   // GIFs
   // ─────────────────────────────────────────────
@@ -482,40 +568,24 @@ export default function BulletinBoard() {
                     </View>
                   )}
 
-                  {activeTool === "music" && (
-                    <View>
-                      <TextInput
-                        style={styles.searchInput}
-                        placeholder="Search a song..."
-                        placeholderTextColor="#9a7a60"
-                        value={musicSearch}
-                        onChangeText={(t) => { setMusicSearch(t); searchSpotify(t); }}
-                        returnKeyType="search"
-                        onSubmitEditing={() => searchSpotify(musicSearch)}
-                      />
-                      {musicLoading && (
-                        <ActivityIndicator size="small" color="#1DB954" style={{ marginVertical: 8 }} />
-                      )}
-                      {!musicLoading && tracks.length === 0 && musicSearch.length > 0 && (
-                        <Text style={styles.noResultsText}>No tracks found.</Text>
-                      )}
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-                        {tracks.map((track) => (
-                          <TouchableOpacity key={track.id} style={styles.musicTrackCard} onPress={() => addMusicItem(track)}>
-                            <Image source={{ uri: track.album.images[0]?.url }} style={styles.musicAlbumArt} />
-                            <View style={styles.spotifyBadge}>
-                              <Ionicons name="musical-note" size={8} color="#fff" />
-                            </View>
-                            <Text style={styles.musicTrackName} numberOfLines={2}>{track.name}</Text>
-                            <Text style={styles.musicArtistName} numberOfLines={1}>{track.artists?.[0]?.name}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    </View>
+                {activeTool === "music" && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+                      {HARDCODED_TRACKS.map((track) => (
+                        <TouchableOpacity key={track.id} style={styles.musicTrackCard} onPress={() => addMusicItem(track)}>
+                          <Image source={{ uri: track.album.images[0]?.url }} style={styles.musicAlbumArt} />
+                          <View style={styles.spotifyBadge}>
+                            <Ionicons name="musical-note" size={8} color="#fff" />
+                          </View>
+                          <Text style={styles.musicTrackName} numberOfLines={2}>{track.name}</Text>
+                          <Text style={styles.musicArtistName} numberOfLines={1}>{track.artists?.[0]?.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
                   )}
                 </View>
               )}
 
+  
               {/* Toolbar: item selected vs default */}
               {selectedId ? (
                 <View style={styles.toolbar}>
