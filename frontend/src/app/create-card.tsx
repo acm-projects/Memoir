@@ -58,7 +58,12 @@ type Item = {
 
 const FLASK_URL = process.env.EXPO_PUBLIC_FLASK_URL;
 
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getStickerUrl(key: string): string {
+  return `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/stickers/${key}.png`;
+}
 
 function seededRotation(id: string) {
   let hash = 0;
@@ -92,16 +97,32 @@ function templateToItems(template: TemplateMatch): Item[] {
   stickerFields.filter(Boolean).forEach((raw, i) => {
     try {
       const parsed = JSON.parse(raw!);
+      console.log("STICKER PARSED:", JSON.stringify(parsed)); // 👈 check logs
+
+      const imageUrl = parsed.image_url || parsed.sticker || parsed.url || "";
+      
+      // If it's a valid remote URL, use it directly
+      // If it's a local key, fall back to LOCAL_STICKER_MAP
+     
+
+   const resolvedSticker = imageUrl.startsWith("http")
+  ? imageUrl
+  : getStickerUrl(imageUrl); // 👈 build Supabase URL from key
+
+if (!resolvedSticker) return;
+
       const id = `tpl-sticker-${i}-${Date.now()}`;
       items.push({
         id, type: "sticker",
-        content: parsed.sticker ?? "",
-        sticker: parsed.image_url || parsed.sticker,
+        content: imageUrl,
+        sticker: resolvedSticker,
         x: parsed.x ?? 30, y: parsed.y ?? 30,
         rotation: parsed.rotation ?? seededRotation(id),
         scale: parsed.scale ?? 1,
       });
-    } catch {}
+    } catch (e) {
+      console.log("STICKER PARSE ERROR:", e, "raw:", raw);
+    }
   });
 
   return items;
