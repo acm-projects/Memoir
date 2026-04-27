@@ -744,7 +744,7 @@ export default function CreateCard() {
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.sendBtn} onPress={() => setSendModalVisible(true)}>
-                <Ionicons name="ellipsis-horizontal" size={18} color="#f5ede0" />
+                <Text style={{ color: "#f5ede0", fontSize: 14, fontWeight: "600" }}>Next</Text>
               </TouchableOpacity>
             </View>
           </View>
